@@ -11,6 +11,7 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
     <style>
         [x-cloak] { display: none !important; }
@@ -32,9 +33,6 @@
                 <button @click="activeTab = 'dashboard'" :class="{'active': activeTab === 'dashboard'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-th-large w-5"></i> <span class="font-medium">Dashboard</span>
                 </button>
-                <button @click="activeTab = 'builder'" :class="{'active': activeTab === 'builder'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-layer-group w-5"></i> <span class="font-medium">Course Builder</span>
-                </button>
                 <button @click="activeTab = 'admissions'" :class="{'active': activeTab === 'admissions'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-chart-line w-5"></i> <span class="font-medium">Analytics</span>
                 </button>
@@ -43,6 +41,12 @@
                 </button>
                 <button @click="activeTab = 'live'" :class="{'active': activeTab === 'live'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-video w-5"></i> <span class="font-medium">Live Class</span>
+                </button>
+                <button @click="activeTab = 'resources'" :class="{'active': activeTab === 'resources'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
+                    <i class="fas fa-file-upload w-5"></i> <span class="font-medium">Upload Resources</span>
+                </button>
+                <button @click="activeTab = 'notifications'" :class="{'active': activeTab === 'notifications'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
+                    <i class="fas fa-bell w-5"></i> <span class="font-medium">Notifications</span>
                 </button>
             </nav>
         </aside>
@@ -74,46 +78,17 @@
                 </div>
             </div>
 
-            <!-- COURSE BUILDER (New) -->
-            <div x-show="activeTab === 'builder'" x-cloak class="space-y-6">
-                <div class="bg-white p-6 rounded-3xl border flex justify-between items-center">
-                    <h2 class="font-bold text-lg">Course Curriculum</h2>
-                    <button class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-sm">+ Add Chapter</button>
-                </div>
-                <!-- Draggable Chapter List Simulation -->
-                <div class="space-y-4">
-                    <div class="bg-white p-6 rounded-2xl border shadow-sm group">
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-lg">Chapter 1: Introduction to Algebra</h3>
-                            <div class="flex gap-2">
-                                <button class="text-slate-400 hover:text-blue-600"><i class="fas fa-edit"></i></button>
-                                <button class="text-slate-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                        <div class="bg-slate-50 p-4 rounded-xl space-y-2">
-                            <div class="flex justify-between items-center bg-white p-3 rounded-lg border">
-                                <div class="flex items-center gap-3">
-                                    <i class="fas fa-grip-vertical text-slate-300"></i>
-                                    <i class="fas fa-video text-blue-500"></i>
-                                    <span class="text-sm font-medium">Lesson 1.1: What are Variables?</span>
-                                </div>
-                                <span class="text-xs font-bold bg-green-100 text-green-700 px-2 py-1 rounded">Published</span>
-                            </div>
-                            <button class="w-full py-2 border-2 border-dashed border-slate-300 rounded-lg text-slate-400 font-bold text-sm hover:border-blue-400 hover:text-blue-500 transition">
-                                + Add Lesson Content
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
             <!-- BATCHES & RESOURCES -->
             <div x-show="activeTab === 'batches'" x-cloak>
                 <div class="bg-white p-6 rounded-3xl border mb-8">
                     <h3 class="font-bold mb-4">Create New Batch</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                         <input type="text" x-model="newBatch.name" placeholder="Batch Name (e.g. Class 10 Math)" class="bg-slate-50 border-none rounded-xl p-3">
                         <input type="text" x-model="newBatch.timing" placeholder="Timing (e.g. 4 PM - 5 PM)" class="bg-slate-50 border-none rounded-xl p-3">
+                        <input type="number" x-model="newBatch.fee" placeholder="Fee (₹)" class="bg-slate-50 border-none rounded-xl p-3">
+                        <textarea x-model="newBatch.description" placeholder="Batch Description..." class="md:col-span-2 bg-slate-50 border-none rounded-xl p-3" rows="2"></textarea>
+                    </div>
+                    <div class="flex justify-end">
                         <button @click="addBatch()" class="bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition">Add Batch</button>
                     </div>
                 </div>
@@ -123,7 +98,7 @@
                         <div class="bg-white p-6 rounded-2xl border flex justify-between items-center shadow-sm">
                             <div>
                                 <h4 class="font-bold text-lg" x-text="batch.name"></h4>
-                                <p class="text-slate-500 text-sm" x-text="batch.timing"></p>
+                                <p class="text-slate-500 text-sm" x-text="(batch.timing || 'Flexible') + ' • ₹' + (batch.fee || 0)"></p>
                             </div>
                             <button @click="deleteItem('batches', batch.id)" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
                         </div>
@@ -138,25 +113,77 @@
                     <p class="text-slate-500 mb-6 text-sm">Start a live session for your batches. Students will see a "Join Live" button on their dashboard.</p>
                     <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Meeting Platform</label>
-                            <select class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                                <option>Google Meet</option>
-                                <option>Zoom</option>
-                            </select>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Meeting URL</label>
+                            <input type="url" x-model="newLiveClass.url" placeholder="https://meet.google.com/..." class="w-full bg-slate-50 border-none rounded-xl p-4">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Meeting URL</label>
-                            <input type="url" placeholder="https://meet.google.com/..." class="w-full bg-slate-50 border-none rounded-xl p-4">
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Scheduled Time</label>
+                            <input type="datetime-local" x-model="newLiveClass.time" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-600">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Select Batch to Notify</label>
-                            <select class="w-full bg-slate-50 border-none rounded-xl p-4">
+                            <select x-model="newLiveClass.batchId" class="w-full bg-slate-50 border-none rounded-xl p-4">
                                 <option>All Students</option>
-                                <template x-for="batch in batches"><option x-text="batch.name"></option></template>
+                                <template x-for="batch in batches"><option :value="batch.id" x-text="batch.name"></option></template>
                             </select>
                         </div>
-                        <button class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition animate-pulse">
+                        <button @click="scheduleLiveClass()" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition animate-pulse">
                             Start Session & Notify
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- UPLOAD RESOURCES (New) -->
+            <div x-show="activeTab === 'resources'" x-cloak>
+                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-xl">
+                    <h2 class="text-xl font-bold mb-6 text-green-600"><i class="fas fa-file-upload mr-2"></i> Upload Resources</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource Title</label>
+                            <input type="text" x-model="newResource.title" placeholder="e.g. Algebra Worksheet #1" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Assign to Batch</label>
+                            <select x-model="newResource.batchId" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                                <option value="">Select a batch...</option>
+                                <template x-for="batch in batches"><option :value="batch.id" x-text="batch.name"></option></template>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource Type</label>
+                            <select x-model="newResource.type" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                                <option value="pdf">PDF Document</option>
+                                <option value="video">Recorded Video Link</option>
+                            </select>
+                        </div>
+                        <div x-show="newResource.type === 'video'">
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Video URL</label>
+                            <input type="url" x-model="newResource.link" placeholder="https://youtube.com/watch?v=..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                        </div>
+                        <button @click="uploadResource()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition">
+                            <span x-show="newResource.type === 'pdf'">Upload PDF</span>
+                            <span x-show="newResource.type !== 'pdf'">Save Resource</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- NOTIFICATIONS (New) -->
+            <div x-show="activeTab === 'notifications'" x-cloak>
+                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-sm">
+                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> Push Notification</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Notification Title</label>
+                            <input type="text" x-model="notification.title" placeholder="e.g. New Assignment Uploaded!" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Message Body</label>
+                            <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium"></textarea>
+                        </div>
+                        <button @click="sendNotification()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition">
+                            Send Broadcast
                         </button>
                     </div>
                 </div>
@@ -166,7 +193,10 @@
             <div x-show="activeTab === 'admissions'" x-cloak>
                <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
                    <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                       <h3 class="font-bold text-lg">Student Performance</h3>
+                       <div>
+                           <h3 class="font-bold text-lg">Student Management</h3>
+                           <input type="text" x-model="searchQuery" placeholder="Search by name or phone..." class="mt-2 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm">
+                       </div>
                        <button class="text-blue-600 font-bold text-xs uppercase">Export CSV</button>
                    </div>
                    <table class="w-full text-left">
@@ -179,7 +209,7 @@
                            </tr>
                        </thead>
                        <tbody>
-                           <template x-for="student in admissionList" :key="student.id">
+                           <template x-for="student in filteredAdmissions" :key="student.id">
                                <tr class="border-b hover:bg-slate-50 transition">
                                    <td class="p-4">
                                        <p class="font-bold" x-text="student.name"></p>
@@ -197,8 +227,11 @@
                                        <p class="text-[10px] text-right mt-1 font-bold text-slate-400">65% Avg.</p>
                                    </td>
                                    <td class="p-4">
-                                       <button class="text-slate-400 hover:text-blue-600 mr-2"><i class="fas fa-eye"></i></button>
-                                       <button class="text-slate-400 hover:text-red-600"><i class="fas fa-ban"></i></button>
+                                       <button @click="toggleStatus(student)" class="text-xs font-bold uppercase px-2 py-1 rounded mr-2 transition" 
+                                            :class="student.status === 'Confirmed' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'">
+                                            <i class="fas" :class="student.status === 'Confirmed' ? 'fa-times' : 'fa-check'"></i>
+                                       </button>
+                                       <button @click="deleteItem('admissions', student.id)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
                                    </td>
                                </tr>
                            </template>
@@ -230,8 +263,18 @@
                 admissionList: [],
                 batches: [],
                 resources: [],
-                newBatch: { name: '', timing: '' },
-                newResource: { title: '', batchId: '', link: '' },
+                newBatch: { name: '', timing: '', fee: '', description: '' },
+                newResource: { title: '', batchId: '', link: '', type: 'pdf' },
+                notification: { title: '', body: '' },
+                newLiveClass: { url: '', time: '', batchId: '' },
+                searchQuery: '',
+
+                get filteredAdmissions() {
+                    if (!this.searchQuery) {
+                        return this.admissionList;
+                    }
+                    return this.admissionList.filter(student => student.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || student.phone.includes(this.searchQuery));
+                },
 
                 init() {
                     this.fetchData('admissions', 'admissionList');
@@ -246,21 +289,60 @@
                 },
 
                 addBatch() {
-                    if (!this.newBatch.name) return alert('Batch name required');
+                    if (!this.newBatch.name || !this.newBatch.fee) return alert('Batch name and fee are required');
                     db.collection('batches').add(this.newBatch).then(() => {
-                        this.newBatch = { name: '', timing: '' };
+                        this.newBatch = { name: '', timing: '', fee: '', description: '' };
                     });
                 },
 
-                uploadResource() {
-                    if (!this.newResource.title || !this.newResource.link) return alert('Title and Link are required');
+                async uploadResource() {
+                    if (!this.newResource.title || !this.newResource.batchId) {
+                        return alert('Title and Batch are required.');
+                    }
+
+                    if (this.newResource.type === 'pdf') {
+                        const input = document.createElement('input');
+                        input.type = 'file';
+                        input.accept = 'application/pdf';
+                        input.onchange = async (e) => {
+                            const file = e.target.files[0];
+                            if (!file) return;
+                            const storageRef = firebase.storage().ref(`resources/${Date.now()}_${file.name}`);
+                            try {
+                                alert('Uploading PDF... Please wait.');
+                                const snapshot = await storageRef.put(file);
+                                const url = await snapshot.ref.getDownloadURL();
+                                this.newResource.link = url;
+                                this.saveResourceToDb();
+                            } catch (err) {
+                                console.error(err);
+                                alert('Upload failed.');
+                            }
+                        };
+                        input.click();
+                    } else {
+                        if (!this.newResource.link) return alert('Video URL is required.');
+                        this.saveResourceToDb();
+                    }
+                },
+
+                saveResourceToDb() {
                     db.collection('resources').add({
                         ...this.newResource,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     }).then(() => {
-                        alert('Resource Published!');
-                        this.newResource = { title: '', batchId: '', link: '' };
-                        this.activeTab = 'dashboard';
+                        alert('Resource saved successfully!');
+                        this.newResource = { title: '', batchId: '', link: '', type: 'pdf' };
+                    });
+                },
+
+                scheduleLiveClass() {
+                    if (!this.newLiveClass.url || !this.newLiveClass.time || !this.newLiveClass.batchId) {
+                        return alert('All fields are required to schedule a live class.');
+                    }
+                    db.collection('live_classes').add(this.newLiveClass).then(() => {
+                        alert('Live class scheduled!');
+                        this.newLiveClass = { url: '', time: '', batchId: '' };
                     });
                 },
 
@@ -268,6 +350,22 @@
                     if (confirm('Are you sure?')) {
                         db.collection(collection).doc(id).delete();
                     }
+                },
+
+                toggleStatus(student) {
+                    const newStatus = student.status === 'Confirmed' ? 'Pending' : 'Confirmed';
+                    db.collection('admissions').doc(student.id).update({ status: newStatus });
+                },
+
+                sendNotification() {
+                    if(!this.notification.title || !this.notification.body) return alert("Fill all fields");
+                    // Simulating sending to a Cloud Function
+                    alert(`Notification Queued:\nTitle: ${this.notification.title}\nTo: All Students`);
+                    db.collection('notifications').add({
+                        ...this.notification,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => { this.notification = { title: '', body: '' };
+                    });
                 },
 
                 logout() {

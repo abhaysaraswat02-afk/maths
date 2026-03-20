@@ -26,6 +26,7 @@
             --primary-red: #dc2626;
             --accent-blue: #3b82f6;
             --accent-red: #ef4444;
+            --brand-dark: #0f172a;
         }
         body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
         .text-gradient {
@@ -50,23 +51,32 @@
 
 <body class="bg-slate-50 text-slate-900" x-data="mathAnticsWebsite()" x-init="init()">
 
+    <!-- Top Notification Bar -->
+    <div class="bg-slate-900 text-white py-2 text-xs font-bold text-center tracking-widest uppercase hidden md:block">
+        <span class="text-yellow-400 mr-2">New Batch Alert:</span> Admissions open for Academic Year 2025-26 | <a href="#apply" class="underline hover:text-blue-300">Register Now</a>
+    </div>
+
     <nav class="fixed top-0 w-full z-50 transition-all duration-300" 
-         :class="scrolled ? 'bg-white/90 backdrop-blur-md shadow-md py-2' : 'bg-transparent py-4'">
-        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+         :class="scrolled ? 'bg-white/95 backdrop-blur-md shadow-md top-0' : 'bg-white top-0 md:top-8'">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <img src="channels4_profile (1).jpg" alt="Logo" class="w-10 h-10 rounded-lg shadow-sm">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
                 <div class="leading-none">
-                    <span class="font-extrabold text-blue-700 text-xl tracking-tight">Era of</span><br>
-                    <span class="font-bold text-red-600 text-xs tracking-widest uppercase">MathAntics</span>
+                    <span class="font-extrabold text-slate-900 text-xl tracking-tight">Era of <span class="text-blue-600">MathAntics</span></span><br>
+                    <span class="font-bold text-slate-400 text-[10px] tracking-widest uppercase">Master Mathematics</span>
                 </div>
             </div>
 
-            <div class="hidden md:flex items-center space-x-8 font-semibold text-sm">
+            <div class="hidden md:flex items-center space-x-8 font-bold text-sm text-slate-600">
                 <a href="#home" class="hover:text-blue-600 transition">Home</a>
-                <a href="#about" class="hover:text-blue-600 transition">About</a>
-                <a href="#courses" class="hover:text-blue-600 transition">Courses</a>
-                <a href="#contact" class="hover:text-blue-600 transition">Contact</a>
-                <a href="student.html" class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 shadow-md">Student Portal</a>
+                <a href="#courses" class="hover:text-blue-600 transition">Live Batches</a>
+                <a href="#results" class="hover:text-blue-600 transition">Selections</a>
+                <a href="#apply" class="hover:text-blue-600 transition">Admissions</a>
+                <a href="student.html" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
+                    <i class="fas fa-user-circle"></i> Login
+                </a>
             </div>
 
             <button @click="mobileMenu = !mobileMenu" class="md:hidden text-2xl text-slate-800">
@@ -82,115 +92,229 @@
         </div>
     </nav>
 
-    <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden bg-white">
-        <div class="absolute top-0 right-0 w-1/3 h-full bg-blue-50/50 -skew-x-12 transform translate-x-20"></div>
+    <section id="home" class="relative pt-32 pb-20 overflow-hidden bg-gradient-to-b from-blue-50 to-white">
+        <div class="absolute top-0 right-0 w-1/2 h-full bg-white skew-x-12 transform translate-x-32 hidden md:block"></div>
         
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
             <div class="reveal" id="hero-text">
-                <span class="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 inline-block">
-                    Interactive Math Excellence
-                </span>
-                <h1 class="text-5xl md:text-7xl font-black text-slate-900 leading-tight mb-6">
-                    Master Math <br>
+                <div class="inline-flex items-center gap-2 bg-white border border-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 shadow-sm">
+                    <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Admissions Open 2025
+                </div>
+                <h1 class="text-5xl md:text-7xl font-black text-slate-900 leading-[1.1] mb-6">
+                    Crack Your <br>
                     <span class="text-gradient" x-text="typewriterText"></span><span class="animate-pulse">|</span>
                 </h1>
-                <p class="text-lg text-slate-600 mb-8 max-w-lg">
-                    Simplifying complex concepts through visual storytelling and expert-led interactive lessons. Start your journey today.
+                <p class="text-lg text-slate-600 mb-8 max-w-lg font-medium">
+                    India's most trusted math learning platform. Join live batches, get personalized mentorship, and achieve your dream rank.
                 </p>
                 <div class="flex flex-wrap gap-4">
-                    <a href="#courses" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 shadow-xl transition-all hover:-translate-y-1">Start Learning</a>
-                    <a href="#contact" class="bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all">Visit Center</a>
+                    <a href="#courses" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 flex items-center gap-2">
+                        Explore Batches <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <a href="student.html" class="bg-white text-slate-900 border-2 border-slate-200 px-8 py-4 rounded-xl font-bold hover:border-blue-600 hover:text-blue-600 transition-all flex items-center gap-2">
+                        <i class="fas fa-play-circle"></i> Watch Demo
+                    </a>
+                </div>
+                <div class="mt-8 flex items-center gap-4 text-sm font-bold text-slate-500">
+                    <div class="flex -space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-slate-200 border-2 border-white"></div>
+                        <div class="w-8 h-8 rounded-full bg-slate-300 border-2 border-white"></div>
+                        <div class="w-8 h-8 rounded-full bg-slate-400 border-2 border-white"></div>
+                    </div>
+                    <p>Trusted by 10,000+ Students</p>
                 </div>
             </div>
-            <div class="hidden md:block relative animate-float">
-                <div class="bg-gradient-to-br from-blue-600 to-red-600 w-96 h-96 rounded-3xl rotate-6 absolute inset-0 blur-2xl opacity-20"></div>
-                <img src="channels4_profile (1).jpg" alt="Hero" class="relative z-10 w-full max-w-md mx-auto rounded-3xl shadow-2xl grayscale hover:grayscale-0 transition duration-500">
+            <div class="hidden md:block relative">
+                <!-- Placeholder for Hero Image (Student/Teacher) -->
+                <div class="bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-500 border-4 border-white relative z-10">
+                    <div class="absolute -top-6 -right-6 bg-yellow-400 text-slate-900 font-black px-4 py-2 rounded-lg shadow-lg rotate-12 z-20">
+                        AIR 1 Produced!
+                    </div>
+                    <div class="bg-slate-800 rounded-3xl overflow-hidden aspect-[4/3] flex items-center justify-center">
+                        <i class="fas fa-chalkboard-teacher text-6xl text-slate-600"></i>
+                    </div>
+                    <div class="mt-4 flex justify-between items-center text-white">
+                        <div>
+                            <p class="font-bold text-lg">Live Class Setup</p>
+                            <p class="text-slate-400 text-xs">Interactive & Engaging</p>
+                        </div>
+                        <div class="bg-red-500 p-3 rounded-full animate-pulse">
+                            <i class="fas fa-video"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute -bottom-10 -left-10 w-64 h-64 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
+                <div class="absolute -top-10 -right-10 w-64 h-64 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
             </div>
         </div>
     </section>
 
-    <section class="py-12 bg-slate-900 text-white">
-        <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-            <div>
-                <p class="text-4xl font-black text-blue-400" x-text="animatedStats.students + '+'">0</p>
-                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">Active Students</p>
+    <!-- Stats Strip -->
+    <div class="bg-slate-900 text-white py-12 border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-800">
+            <div class="text-center px-4">
+                <div class="text-4xl font-black text-yellow-400 mb-1" x-text="animatedStats.students + '+'"></div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Happy Students</div>
             </div>
-            <div>
-                <p class="text-4xl font-black text-red-400" x-text="animatedStats.courses + '+'">0</p>
-                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">Courses</p>
+            <div class="text-center px-4">
+                <div class="text-4xl font-black text-blue-400 mb-1">500+</div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Selections</div>
             </div>
-            <div>
-                <p class="text-4xl font-black text-green-400" x-text="animatedStats.lessons + '+'">0</p>
-                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">HD Lessons</p>
+            <div class="text-center px-4">
+                <div class="text-4xl font-black text-red-400 mb-1">4.9</div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">App Rating</div>
             </div>
-            <div>
-                <p class="text-4xl font-black text-purple-400" x-text="animatedStats.years + '+'">0</p>
-                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">Years Experience</p>
+            <div class="text-center px-4">
+                <div class="text-4xl font-black text-green-400 mb-1">Daily</div>
+                <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Classes</div>
             </div>
         </div>
-    </section>
+    </div>
 
     <section id="courses" class="py-24">
         <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16 reveal">
-                <h2 class="text-4xl font-black mb-4">Popular <span class="text-gradient">Programs</span></h2>
-                <p class="text-slate-500">Expertly crafted curriculum for foundational and competitive success.</p>
+            <div class="flex justify-between items-end mb-12">
+                <div class="reveal">
+                    <h2 class="text-4xl font-black mb-2 text-slate-900">Live <span class="text-blue-600">Batches</span></h2>
+                    <p class="text-slate-500 font-medium">Choose your target and start preparing with the best.</p>
+                </div>
+                <a href="student.html" class="hidden md:inline-block text-blue-600 font-bold hover:underline">View All Batches <i class="fas fa-arrow-right"></i></a>
             </div>
+            
             <div class="grid md:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl transition-all group reveal">
-                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-blue-600 group-hover:text-white transition">
-                        <i class="fas fa-calculator"></i>
+                <!-- Dynamic Batches from Firebase -->
+                <template x-if="batches.length === 0">
+                     <div class="col-span-3 text-center py-10">
+                         <p class="text-slate-500">Loading available batches...</p>
+                     </div>
+                </template>
+
+                <template x-for="(batch, index) in batches" :key="batch.id">
+                    <div class="bg-white rounded-3xl p-6 shadow-lg border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group reveal">
+                        <div class="relative mb-6">
+                            <div class="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Live</div>
+                            <!-- Generates a gradient based on index -->
+                            <div class="h-40 rounded-2xl flex items-center justify-center text-white" 
+                                 :class="['bg-gradient-to-br from-blue-600 to-blue-800', 'bg-gradient-to-br from-red-600 to-red-800', 'bg-gradient-to-br from-green-600 to-green-800'][index % 3]">
+                                <i class="fas fa-chalkboard-teacher text-5xl opacity-50"></i>
+                            </div>
+                            <div class="absolute -bottom-4 left-4 bg-white p-2 rounded-lg shadow-md border">
+                                <div class="text-xs font-bold text-slate-400 uppercase">Timing</div>
+                                <div class="font-black text-slate-900" x-text="batch.timing || 'Flexible'"></div>
+                                <div class="mt-2">
+                                    <div class="text-xs font-bold text-slate-400 uppercase">Fee</div>
+                                    <div class="font-black text-slate-900" x-text="'₹' + (batch.fee || '5000')"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <h3 class="text-xl font-black text-slate-900 mb-2 transition" 
+                                :class="['group-hover:text-blue-600', 'group-hover:text-red-600', 'group-hover:text-green-600'][index % 3]"
+                                x-text="batch.name"></h3>
+                            <ul class="space-y-2 mb-6">
+                                <li class="flex items-center text-sm text-slate-500 font-medium"><i class="fas fa-check-circle text-green-500 mr-2"></i> Live Classes</li>
+                                <li class="flex items-center text-sm text-slate-500 font-medium"><i class="fas fa-check-circle text-green-500 mr-2"></i> Recorded Backup</li>
+                                <li class="flex items-center text-sm text-slate-500 font-medium"><i class="fas fa-check-circle text-green-500 mr-2"></i> PDF Resources</li>
+                            </ul>
+                            <div class="flex items-center justify-between border-t pt-4">
+                                <a href="#apply" class="w-full text-center bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition shadow-lg">Enroll Now</a>
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Arithmetic</h3>
-                    <p class="text-slate-500 text-sm mb-6 leading-relaxed">Master the fundamentals of numbers, decimals, and fractions with visual tools.</p>
-                    <a href="#" class="text-blue-600 font-bold text-sm flex items-center hover:underline">View Lessons <i class="fas fa-arrow-right ml-2"></i></a>
+                </template>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results / Hall of Fame -->
+    <section id="results" class="py-16 bg-blue-50 overflow-hidden">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-black text-slate-900">Our Star <span class="text-gradient">Achievers</span></h2>
+            <p class="text-slate-500 font-bold mt-2">Consistent Results in Board Exams</p>
+        </div>
+        
+        <!-- Scrolling Marquee -->
+        <div class="marquee-scroll gap-6 px-6">
+            <!-- Repeater for demo -->
+            <template x-for="i in 8">
+                <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300">
+                    <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
+                        <img :src="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + i" alt="Student">
+                    </div>
+                    <h4 class="font-bold text-lg text-slate-900">Student Name</h4>
+                    <p class="text-blue-600 font-black">98% in Maths</p>
+                    <p class="text-xs text-slate-400 font-bold uppercase mt-1">Class 10 Board 2024</p>
                 </div>
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl transition-all group reveal" style="transition-delay: 100ms;">
-                    <div class="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-red-600 group-hover:text-white transition">
-                        <i class="fas fa-variable"></i>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3">Algebra Mastery</h3>
-                    <p class="text-slate-500 text-sm mb-6 leading-relaxed">Solving for X becomes second nature with our step-by-step logic framework.</p>
-                    <a href="#" class="text-red-600 font-bold text-sm flex items-center hover:underline">View Lessons <i class="fas fa-arrow-right ml-2"></i></a>
+            </template>
+        </div>
+    </section>
+
+    <!-- App Download Section -->
+    <section class="py-20 bg-slate-900 text-white relative overflow-hidden">
+        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
+            <div>
+                <span class="text-yellow-400 font-bold tracking-widest uppercase text-xs">Learn Anywhere</span>
+                <h2 class="text-4xl md:text-5xl font-black mt-2 mb-6">Download the <br><span class="text-blue-400">MathAntics App</span></h2>
+                <ul class="space-y-4 mb-8">
+                    <li class="flex items-center gap-3 font-medium text-slate-300"><i class="fas fa-download text-blue-500"></i> Offline Downloads</li>
+                    <li class="flex items-center gap-3 font-medium text-slate-300"><i class="fas fa-tv text-blue-500"></i> Live Classes on Mobile</li>
+                    <li class="flex items-center gap-3 font-medium text-slate-300"><i class="fas fa-file-pdf text-blue-500"></i> Instant Notes Access</li>
+                </ul>
+                <div class="flex gap-4">
+                    <button class="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold flex items-center gap-3 hover:bg-slate-100 transition">
+                        <i class="fab fa-google-play text-2xl text-green-600"></i>
+                        <div class="text-left leading-none">
+                            <div class="text-[10px] uppercase font-bold">Get it on</div>
+                            <div class="text-sm">Google Play</div>
+                        </div>
+                    </button>
                 </div>
-                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl transition-all group reveal" style="transition-delay: 200ms;">
-                    <div class="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-green-600 group-hover:text-white transition">
-                        <i class="fas fa-shapes"></i>
+            </div>
+            <div class="flex justify-center">
+                <!-- Phone Mockup CSS -->
+                <div class="w-64 h-[500px] bg-slate-800 rounded-[3rem] border-8 border-slate-700 shadow-2xl relative overflow-hidden">
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-700 rounded-b-xl"></div>
+                    <div class="w-full h-full bg-slate-600 flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-6xl text-slate-400 opacity-50"></i>
                     </div>
-                    <h3 class="text-xl font-bold mb-3">Geometry</h3>
-                    <p class="text-slate-500 text-sm mb-6 leading-relaxed">Visualize shapes and proofs in 3D. Perfect for building spatial reasoning.</p>
-                    <a href="#" class="text-green-600 font-bold text-sm flex items-center hover:underline">View Lessons <i class="fas fa-arrow-right ml-2"></i></a>
                 </div>
             </div>
         </div>
     </section>
 
-    <section id="apply" class="py-24 bg-slate-100">
-        <div class="max-w-3xl mx-auto px-6 bg-white p-10 rounded-[2.5rem] shadow-2xl reveal">
+    <section id="apply" class="py-24 bg-white">
+        <div class="max-w-4xl mx-auto px-6">
             <div class="text-center mb-10">
-                <h2 class="text-3xl font-black mb-2">Join the Academy</h2>
-                <p class="text-slate-500" x-show="applicationStep !== 'success'">Fill the form below to register your interest. Our team will contact you shortly.</p>
+                <h2 class="text-3xl font-black mb-2 text-slate-900">Start Your Journey</h2>
+                <p class="text-slate-500 font-medium" x-show="applicationStep !== 'success'">Register now to get access to free demo classes and scholarship tests.</p>
             </div>
             
-            <!-- Step 1: Application Form -->
+            <div class="bg-white border-2 border-slate-100 p-8 md:p-12 rounded-[2.5rem] shadow-2xl reveal relative overflow-hidden">
+                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-red-500"></div>
+                
+                <!-- Step 1: Application Form -->
             <form x-show="applicationStep === 'form'" @submit.prevent="handleApplicationSubmit" class="space-y-6">
                 <div class="grid md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Full Name</label>
-                        <input type="text" x-model="applicationForm.name" required class="w-full bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 font-medium">
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Full Name</label>
+                            <input type="text" x-model="applicationForm.name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter student name">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Phone Number</label>
-                        <input type="tel" x-model="applicationForm.phone" required pattern="[6-9]{1}[0-9]{9}" title="Please enter a valid 10-digit Indian mobile number" class="w-full bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 font-medium">
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Phone Number</label>
+                            <div class="relative">
+                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">+91</span>
+                                <input type="tel" x-model="applicationForm.phone" required pattern="[6-9]{1}[0-9]{9}" class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Mobile number">
+                            </div>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Select Course</label>
-                    <select x-model="applicationForm.course" class="w-full bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 font-medium">
-                        <option>Arithmetic Fundamentals</option>
-                        <option>Algebra Mastery</option>
-                        <option>Geometry Essentials</option>
-                        <option>Other / Not Sure</option>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Target Batch</label>
+                        <select x-model="applicationForm.batchId" @change="updateCourseName($event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none">
+                            <option value="">Select a Batch...</option>
+                            <template x-for="batch in batches" :key="batch.id">
+                                <option :value="batch.id" x-text="batch.name"></option>
+                            </template>
                     </select>
                 </div>
                 <!-- reCAPTCHA container for Firebase Auth -->
@@ -204,10 +328,10 @@
     
             <!-- Step 2: OTP Verification -->
             <form x-show="applicationStep === 'otp'" @submit.prevent="verifyOtpAndRegister" class="space-y-6 text-center">
-                <p class="text-slate-600">Please enter the 4-digit OTP sent to <strong x-text="applicationForm.phone"></strong>.</p>
+                <p class="text-slate-600">Please enter the 6-digit OTP sent to <strong x-text="applicationForm.phone"></strong>.</p>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Verification Code</label>
-                    <input type="text" x-model="enteredOtp" required maxlength="4" class="w-full max-w-xs mx-auto bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-[1rem] font-bold">
+                    <input type="text" x-model="enteredOtp" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="w-full max-w-xs mx-auto bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-[0.75rem] font-bold">
                 </div>
                 <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl hover:bg-blue-700 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
                     <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
@@ -219,7 +343,7 @@
             <!-- Step 3: Success Message -->
             <div x-show="applicationStep === 'success'" x-cloak class="text-center py-10">
                 <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <i class="fas fa-check-circle text-5xl"></i>
+                        <i class="fas fa-check-circle text-5xl animate-bounce"></i>
                 </div>
                 <h3 class="text-2xl font-black text-slate-900 mb-2">Registration Successful!</h3>
                 <p class="text-slate-600 mb-8">Welcome, <strong x-text="applicationForm.name"></strong>! You are being automatically redirected to the Student Portal to complete your enrollment.</p>
@@ -228,26 +352,28 @@
                     <span>Redirecting...</span>
                 </div>
             </div>
+            </div>
         </div>
     </section>
 
-    <footer class="bg-white border-t py-20">
+    <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 py-20">
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
             <div class="col-span-2">
                 <div class="flex items-center space-x-3 mb-6">
-                    <img src="channels4_profile (1).jpg" class="w-12 h-12 rounded-xl">
-                    <span class="font-black text-2xl tracking-tighter">Era of MathAntics</span>
+                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <span class="font-black text-2xl tracking-tighter text-white">Era of MathAntics</span>
                 </div>
-                <p class="text-slate-500 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. Join the 5000+ students already learning with us.</p>
+                <p class="text-slate-400 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. The most trusted platform for math enthusiasts.</p>
                 <div class="flex space-x-4">
-                    <a href="#" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fab fa-youtube"></i></a>
-                    <a href="#" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-pink-500 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                    <a href="#" class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
                 </div>
             </div>
             <div>
-                <h4 class="font-bold mb-6">Navigation</h4>
-                <ul class="space-y-4 text-slate-500 text-sm font-medium">
+                <h4 class="font-bold mb-6 text-white">Quick Links</h4>
+                <ul class="space-y-4 text-sm font-medium">
                     <li><a href="#home" class="hover:text-blue-600">Home</a></li>
                     <li><a href="#courses" class="hover:text-blue-600">Courses</a></li>
                     <li><a href="student.html" class="hover:text-blue-600">Student Portal</a></li>
@@ -255,15 +381,15 @@
                 </ul>
             </div>
             <div>
-                <h4 class="font-bold mb-6">Office</h4>
-                <p class="text-slate-500 text-sm leading-loose">
+                <h4 class="font-bold mb-6 text-white">Contact</h4>
+                <p class="text-slate-400 text-sm leading-loose">
                     H. No. 114, Kashishon road,<br>
                     Block Colony, Khair, UP 202138<br>
                     <strong>+91 8445837333</strong>
                 </p>
             </div>
         </div>
-        <div class="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+        <div class="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-slate-800 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">
             © 2026 Era of MathAntics. Designed for Excellence.
         </div>
     </footer>
@@ -289,9 +415,10 @@
                 typewriterText: '',
                 typeWords: ['Modern Math', 'Logic Skills', 'Clear Results', 'Your Future'],
                 animatedStats: { students: 0, courses: 0, lessons: 0, years: 0 },
+                batches: [],
 
                 // New properties for application form
-                applicationForm: { name: '', phone: '', course: 'Arithmetic Fundamentals' },
+                applicationForm: { name: '', phone: '', course: '', batchId: '' },
                 applicationStep: 'form', // 'form', 'otp', 'success'
                 generatedOtp: null,
                 enteredOtp: '',
@@ -304,6 +431,13 @@
                     this.initRecaptcha();
                     // Initial Reveal check
                     setTimeout(() => this.checkReveal(), 100);
+                    this.fetchBatches();
+                },
+
+                fetchBatches() {
+                    db.collection('batches').get().then(snap => {
+                        this.batches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    });
                 },
 
                 startTypewriter() {
@@ -358,6 +492,11 @@
                     }, 500);
                 },
 
+                updateCourseName(event) {
+                    const select = event.target;
+                    this.applicationForm.course = select.options[select.selectedIndex].text;
+                },
+
                 // New methods for application
                 async handleApplicationSubmit() {
                     if (!this.applicationForm.name || !this.applicationForm.phone) {
@@ -366,6 +505,10 @@
                     }
                     if (!/^[6-9]{1}[0-9]{9}$/.test(this.applicationForm.phone)) {
                         alert('Please enter a valid 10-digit Indian mobile number.');
+                        return;
+                    }
+                    if (!this.applicationForm.batchId) {
+                        alert('Please select a batch.');
                         return;
                     }
 
@@ -408,7 +551,11 @@
                                 this.isSubmitting = false;
                             }).catch((error) => {
                                 console.error("SMS not sent", error);
-                                alert("Error sending OTP: " + error.message);
+                                if (error.code === 'auth/billing-not-enabled') {
+                                    alert("Billing Error: You entered a real phone number, but billing is disabled. Please enter the TEST NUMBER you added in Firebase Console.");
+                                } else {
+                                    alert("Error sending OTP: " + error.message);
+                                }
                                 // In case of error, you might need to reset reCAPTCHA
                                 this.isSubmitting = false;
                             });
@@ -428,8 +575,9 @@
                         console.log("User verified:", result.user.uid);
 
                         // Now, save the application to Firestore
-                        const courseFees = { 'Arithmetic Fundamentals': 5000, 'Algebra Mastery': 6000, 'Geometry Essentials': 7000, 'Other / Not Sure': 5000 };
-                        const fee = courseFees[this.applicationForm.course] || 5000;
+                        const selectedBatch = this.batches.find(b => b.id === this.applicationForm.batchId);
+                        const fee = selectedBatch && selectedBatch.fee ? Number(selectedBatch.fee) : 5000;
+                        
                         await db.collection("admissions").add({ ...this.applicationForm, status: 'Pending', totalFee: fee, feePaid: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
 
                         localStorage.setItem('isStudentLoggedIn', 'true');

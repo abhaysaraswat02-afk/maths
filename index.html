@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Era of MathAntics - Master Mathematics with Interactive Learning. Comprehensive math education platform offering arithmetic, algebra, geometry, and advanced topics.">
+    <meta name="author" content="Era of MathAntics">
+    <title>Era of MathAntics | Master Mathematics</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+
+    <style>
+        :root {
+            --primary-blue: #1e40af;
+            --primary-red: #dc2626;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+        }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        .text-gradient {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-morphism {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s ease-out; }
+        .reveal.revealed { opacity: 1; transform: translateY(0); }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
+        .animate-float { animation: float 5s ease-in-out infinite; }
+        .marquee-scroll { animation: marquee 25s linear infinite; display: flex; }
+        @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900" x-data="mathAnticsWebsite()" x-init="init()">
+
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300" 
+         :class="scrolled ? 'bg-white/90 backdrop-blur-md shadow-md py-2' : 'bg-transparent py-4'">
+        <div class="max-w-7xl mx-auto px-6 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <img src="channels4_profile (1).jpg" alt="Logo" class="w-10 h-10 rounded-lg shadow-sm">
+                <div class="leading-none">
+                    <span class="font-extrabold text-blue-700 text-xl tracking-tight">Era of</span><br>
+                    <span class="font-bold text-red-600 text-xs tracking-widest uppercase">MathAntics</span>
+                </div>
+            </div>
+
+            <div class="hidden md:flex items-center space-x-8 font-semibold text-sm">
+                <a href="#home" class="hover:text-blue-600 transition">Home</a>
+                <a href="#about" class="hover:text-blue-600 transition">About</a>
+                <a href="#courses" class="hover:text-blue-600 transition">Courses</a>
+                <a href="#contact" class="hover:text-blue-600 transition">Contact</a>
+                <a href="student.html" class="bg-blue-600 text-white px-5 py-2 rounded-full hover:bg-blue-700 shadow-md">Student Portal</a>
+            </div>
+
+            <button @click="mobileMenu = !mobileMenu" class="md:hidden text-2xl text-slate-800">
+                <i class="fas" :class="mobileMenu ? 'fa-times' : 'fa-bars'"></i>
+            </button>
+        </div>
+
+        <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t p-6 space-y-4 absolute w-full shadow-xl">
+            <a @click="mobileMenu = false" href="#home" class="block font-medium">Home</a>
+            <a @click="mobileMenu = false" href="#about" class="block font-medium">About</a>
+            <a @click="mobileMenu = false" href="#courses" class="block font-medium">Courses</a>
+            <a href="student.html" class="block text-blue-600 font-bold">Student Portal</a>
+        </div>
+    </nav>
+
+    <section id="home" class="relative min-h-screen flex items-center pt-20 overflow-hidden bg-white">
+        <div class="absolute top-0 right-0 w-1/3 h-full bg-blue-50/50 -skew-x-12 transform translate-x-20"></div>
+        
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
+            <div class="reveal" id="hero-text">
+                <span class="bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 inline-block">
+                    Interactive Math Excellence
+                </span>
+                <h1 class="text-5xl md:text-7xl font-black text-slate-900 leading-tight mb-6">
+                    Master Math <br>
+                    <span class="text-gradient" x-text="typewriterText"></span><span class="animate-pulse">|</span>
+                </h1>
+                <p class="text-lg text-slate-600 mb-8 max-w-lg">
+                    Simplifying complex concepts through visual storytelling and expert-led interactive lessons. Start your journey today.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#courses" class="bg-blue-600 text-white px-8 py-4 rounded-2xl font-bold hover:bg-blue-700 shadow-xl transition-all hover:-translate-y-1">Start Learning</a>
+                    <a href="#contact" class="bg-white text-slate-900 border border-slate-200 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all">Visit Center</a>
+                </div>
+            </div>
+            <div class="hidden md:block relative animate-float">
+                <div class="bg-gradient-to-br from-blue-600 to-red-600 w-96 h-96 rounded-3xl rotate-6 absolute inset-0 blur-2xl opacity-20"></div>
+                <img src="channels4_profile (1).jpg" alt="Hero" class="relative z-10 w-full max-w-md mx-auto rounded-3xl shadow-2xl grayscale hover:grayscale-0 transition duration-500">
+            </div>
+        </div>
+    </section>
+
+    <section class="py-12 bg-slate-900 text-white">
+        <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+                <p class="text-4xl font-black text-blue-400" x-text="animatedStats.students + '+'">0</p>
+                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">Active Students</p>
+            </div>
+            <div>
+                <p class="text-4xl font-black text-red-400" x-text="animatedStats.courses + '+'">0</p>
+                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">Courses</p>
+            </div>
+            <div>
+                <p class="text-4xl font-black text-green-400" x-text="animatedStats.lessons + '+'">0</p>
+                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">HD Lessons</p>
+            </div>
+            <div>
+                <p class="text-4xl font-black text-purple-400" x-text="animatedStats.years + '+'">0</p>
+                <p class="text-slate-400 text-sm font-medium uppercase tracking-widest mt-2">Years Experience</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="courses" class="py-24">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-4xl font-black mb-4">Popular <span class="text-gradient">Programs</span></h2>
+                <p class="text-slate-500">Expertly crafted curriculum for foundational and competitive success.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl transition-all group reveal">
+                    <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-blue-600 group-hover:text-white transition">
+                        <i class="fas fa-calculator"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Arithmetic</h3>
+                    <p class="text-slate-500 text-sm mb-6 leading-relaxed">Master the fundamentals of numbers, decimals, and fractions with visual tools.</p>
+                    <a href="#" class="text-blue-600 font-bold text-sm flex items-center hover:underline">View Lessons <i class="fas fa-arrow-right ml-2"></i></a>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl transition-all group reveal" style="transition-delay: 100ms;">
+                    <div class="w-14 h-14 bg-red-50 text-red-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-red-600 group-hover:text-white transition">
+                        <i class="fas fa-variable"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Algebra Mastery</h3>
+                    <p class="text-slate-500 text-sm mb-6 leading-relaxed">Solving for X becomes second nature with our step-by-step logic framework.</p>
+                    <a href="#" class="text-red-600 font-bold text-sm flex items-center hover:underline">View Lessons <i class="fas fa-arrow-right ml-2"></i></a>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl transition-all group reveal" style="transition-delay: 200ms;">
+                    <div class="w-14 h-14 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center mb-6 text-2xl group-hover:bg-green-600 group-hover:text-white transition">
+                        <i class="fas fa-shapes"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-3">Geometry</h3>
+                    <p class="text-slate-500 text-sm mb-6 leading-relaxed">Visualize shapes and proofs in 3D. Perfect for building spatial reasoning.</p>
+                    <a href="#" class="text-green-600 font-bold text-sm flex items-center hover:underline">View Lessons <i class="fas fa-arrow-right ml-2"></i></a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="apply" class="py-24 bg-slate-100">
+        <div class="max-w-3xl mx-auto px-6 bg-white p-10 rounded-[2.5rem] shadow-2xl reveal">
+            <div class="text-center mb-10">
+                <h2 class="text-3xl font-black mb-2">Join the Academy</h2>
+                <p class="text-slate-500" x-show="applicationStep !== 'success'">Fill the form below to register your interest. Our team will contact you shortly.</p>
+            </div>
+            
+            <!-- Step 1: Application Form -->
+            <form x-show="applicationStep === 'form'" @submit.prevent="handleApplicationSubmit" class="space-y-6">
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Full Name</label>
+                        <input type="text" x-model="applicationForm.name" required class="w-full bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Phone Number</label>
+                        <input type="tel" x-model="applicationForm.phone" required pattern="[6-9]{1}[0-9]{9}" title="Please enter a valid 10-digit Indian mobile number" class="w-full bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 font-medium">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Select Course</label>
+                    <select x-model="applicationForm.course" class="w-full bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 font-medium">
+                        <option>Arithmetic Fundamentals</option>
+                        <option>Algebra Mastery</option>
+                        <option>Geometry Essentials</option>
+                        <option>Other / Not Sure</option>
+                    </select>
+                </div>
+                <!-- reCAPTCHA container for Firebase Auth -->
+                <div id="recaptcha-container" class="flex justify-center"></div>
+
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-blue-600 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
+                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
+                    <span x-text="isSubmitting ? 'Sending OTP...' : 'Get OTP to Register'"></span>
+                </button>
+            </form>
+    
+            <!-- Step 2: OTP Verification -->
+            <form x-show="applicationStep === 'otp'" @submit.prevent="verifyOtpAndRegister" class="space-y-6 text-center">
+                <p class="text-slate-600">Please enter the 4-digit OTP sent to <strong x-text="applicationForm.phone"></strong>.</p>
+                <div>
+                    <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Verification Code</label>
+                    <input type="text" x-model="enteredOtp" required maxlength="4" class="w-full max-w-xs mx-auto bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-[1rem] font-bold">
+                </div>
+                <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl hover:bg-blue-700 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
+                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
+                    <span x-text="isSubmitting ? 'Verifying...' : 'Verify & Complete Registration'"></span>
+                </button>
+                <button type="button" @click="applicationStep = 'form'" class="text-sm text-slate-500 hover:text-blue-600">Change phone number</button>
+            </form>
+    
+            <!-- Step 3: Success Message -->
+            <div x-show="applicationStep === 'success'" x-cloak class="text-center py-10">
+                <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-check-circle text-5xl"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 mb-2">Registration Successful!</h3>
+                <p class="text-slate-600 mb-8">Welcome, <strong x-text="applicationForm.name"></strong>! You are being automatically redirected to the Student Portal to complete your enrollment.</p>
+                <div class="flex items-center justify-center gap-2 font-bold text-slate-500">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <span>Redirecting...</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="bg-white border-t py-20">
+        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
+            <div class="col-span-2">
+                <div class="flex items-center space-x-3 mb-6">
+                    <img src="channels4_profile (1).jpg" class="w-12 h-12 rounded-xl">
+                    <span class="font-black text-2xl tracking-tighter">Era of MathAntics</span>
+                </div>
+                <p class="text-slate-500 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. Join the 5000+ students already learning with us.</p>
+                <div class="flex space-x-4">
+                    <a href="#" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fab fa-youtube"></i></a>
+                    <a href="#" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center hover:bg-pink-500 hover:text-white transition"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div>
+                <h4 class="font-bold mb-6">Navigation</h4>
+                <ul class="space-y-4 text-slate-500 text-sm font-medium">
+                    <li><a href="#home" class="hover:text-blue-600">Home</a></li>
+                    <li><a href="#courses" class="hover:text-blue-600">Courses</a></li>
+                    <li><a href="student.html" class="hover:text-blue-600">Student Portal</a></li>
+                    <li><a href="#contact" class="hover:text-blue-600">Contact Us</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold mb-6">Office</h4>
+                <p class="text-slate-500 text-sm leading-loose">
+                    H. No. 114, Kashishon road,<br>
+                    Block Colony, Khair, UP 202138<br>
+                    <strong>+91 8445837333</strong>
+                </p>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t text-center text-xs font-bold text-slate-400 uppercase tracking-widest">
+            © 2026 Era of MathAntics. Designed for Excellence.
+        </div>
+    </footer>
+
+    <script>
+        // Firebase Config (Your Existing)
+        const firebaseConfig = {
+            apiKey: "AIzaSyCGWDBlk10C4g43PDj5WRXqhYxn4_649VQ",
+            authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
+            projectId: "era-of-mathantics-8b6d1",
+            storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
+            messagingSenderId: "521238168559",
+            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
+            measurementId: "G-QDT3QZQFFQ"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        function mathAnticsWebsite() {
+            return {
+                mobileMenu: false,
+                scrolled: false,
+                typewriterText: '',
+                typeWords: ['Modern Math', 'Logic Skills', 'Clear Results', 'Your Future'],
+                animatedStats: { students: 0, courses: 0, lessons: 0, years: 0 },
+
+                // New properties for application form
+                applicationForm: { name: '', phone: '', course: 'Arithmetic Fundamentals' },
+                applicationStep: 'form', // 'form', 'otp', 'success'
+                generatedOtp: null,
+                enteredOtp: '',
+                isSubmitting: false,
+
+                init() {
+                    this.startTypewriter();
+                    this.initStats();
+                    this.setupScroll();
+                    this.initRecaptcha();
+                    // Initial Reveal check
+                    setTimeout(() => this.checkReveal(), 100);
+                },
+
+                startTypewriter() {
+                    let i = 0, j = 0, isDeleting = false;
+                    const loop = () => {
+                        const word = this.typeWords[i];
+                        this.typewriterText = isDeleting ? word.substring(0, j--) : word.substring(0, j++);
+                        if (!isDeleting && j > word.length) { isDeleting = true; setTimeout(loop, 2000); }
+                        else if (isDeleting && j === 0) { isDeleting = false; i = (i + 1) % this.typeWords.length; setTimeout(loop, 500); }
+                        else setTimeout(loop, isDeleting ? 50 : 150);
+                    };
+                    loop();
+                },
+
+                initStats() {
+                    const animate = (key, val) => {
+                        let start = 0;
+                        let interval = setInterval(() => {
+                            if (start >= val) clearInterval(interval);
+                            this.animatedStats[key] = start++;
+                        }, 2000 / val);
+                    };
+                    animate('students', 5000);
+                    animate('courses', 12);
+                    animate('lessons', 200);
+                    animate('years', 8);
+                },
+
+                setupScroll() {
+                    window.addEventListener('scroll', () => {
+                        this.scrolled = window.scrollY > 50;
+                        this.checkReveal();
+                    });
+                },
+
+                checkReveal() {
+                    document.querySelectorAll('.reveal').forEach(el => {
+                        if (el.getBoundingClientRect().top < window.innerHeight - 100) {
+                            el.classList.add('revealed');
+                        }
+                    });
+                },
+
+                initRecaptcha() {
+                    // Renders the reCAPTCHA widget required for Firebase phone auth
+                    // This needs to be run after the page loads
+                    setTimeout(() => {
+                        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+                            'size': 'normal',
+                            'callback': (response) => { /* reCAPTCHA solved, user can now click "Get OTP" */ }
+                        });
+                    }, 500);
+                },
+
+                // New methods for application
+                async handleApplicationSubmit() {
+                    if (!this.applicationForm.name || !this.applicationForm.phone) {
+                        alert('Please fill in your name and phone number.');
+                        return;
+                    }
+                    if (!/^[6-9]{1}[0-9]{9}$/.test(this.applicationForm.phone)) {
+                        alert('Please enter a valid 10-digit Indian mobile number.');
+                        return;
+                    }
+
+                    this.isSubmitting = true;
+
+                    const phoneNumber = "+91" + this.applicationForm.phone;
+                    const appVerifier = window.recaptchaVerifier;
+                    try {
+                        // Check if phone number is already registered and confirmed
+                        const snap = await db.collection("admissions")
+                                             .where("phone", "==", this.applicationForm.phone)
+                                             .where("status", "==", "Confirmed")
+                                             .get();
+
+                        if (!snap.empty) {
+                            alert('This phone number is already registered with a confirmed student. Please log in via the Student Portal.');
+                            this.isSubmitting = false;
+                            return;
+                        }
+
+                        // Use Firebase to send a real OTP
+                        firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
+                            .then((confirmationResult) => {
+                                // SMS sent. Show form to enter the code.
+                                window.confirmationResult = confirmationResult;
+                                this.applicationStep = 'otp';
+                                this.isSubmitting = false;
+                            }).catch((error) => {
+                                console.error("SMS not sent", error);
+                                alert("Error sending OTP. Please check the phone number or reCAPTCHA and try again.");
+                                // In case of error, you might need to reset reCAPTCHA
+                                this.isSubmitting = false;
+                            });
+
+                    } catch (error) {
+                        console.error("Error checking phone number: ", error);
+                        alert('An error occurred. Please try again.');
+                        this.isSubmitting = false;
+                    }
+                },
+
+                async verifyOtpAndRegister() {
+                    if (!this.enteredOtp) return alert("Please enter the OTP.");
+                    this.isSubmitting = true;
+
+                    window.confirmationResult.confirm(this.enteredOtp).then(async (result) => {
+                        // User signed in successfully.
+                        console.log("User verified:", result.user.uid);
+
+                        // Now, save the application to Firestore
+                        const courseFees = { 'Arithmetic Fundamentals': 5000, 'Algebra Mastery': 6000, 'Geometry Essentials': 7000, 'Other / Not Sure': 5000 };
+                        const fee = courseFees[this.applicationForm.course] || 5000;
+                        await db.collection("admissions").add({ ...this.applicationForm, status: 'Pending', totalFee: fee, feePaid: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+
+                        localStorage.setItem('isStudentLoggedIn', 'true');
+                        localStorage.setItem('student_phone', this.applicationForm.phone);
+                        this.applicationStep = 'success';
+                        setTimeout(() => { window.location.href = 'student.html'; }, 3000);
+                    }).catch((error) => {
+                        console.error("Verification failed:", error);
+                        alert("Invalid OTP. Please try again.");
+                        this.isSubmitting = false;
+                    });
+                }
+            }
+        }
+    </script>
+</body>
+</html>

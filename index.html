@@ -60,9 +60,7 @@
          :class="scrolled ? 'bg-white/95 backdrop-blur-md shadow-md top-0' : 'bg-white top-0 md:top-8'">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shadow-lg">
-                    <i class="fas fa-graduation-cap"></i>
-                </div>
+                <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg shadow-lg">
                 <div class="leading-none">
                     <span class="font-extrabold text-slate-900 text-xl tracking-tight">Era of <span class="text-blue-600">MathAntics</span></span><br>
                     <span class="font-bold text-slate-400 text-[10px] tracking-widest uppercase">Master Mathematics</span>
@@ -99,7 +97,7 @@
                 <div class="inline-flex items-center gap-2 bg-white border border-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-6 shadow-sm">
                     <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span> Admissions Open 2025
                 </div>
-                <h1 class="text-5xl md:text-7xl font-black text-slate-900 leading-[1.1] mb-6">
+                <h1 class="text-4xl md:text-7xl font-black text-slate-900 leading-[1.1] mb-6">
                     Crack Your <br>
                     <span class="text-gradient" x-text="typewriterText"></span><span class="animate-pulse">|</span>
                 </h1>
@@ -152,19 +150,19 @@
     <div class="bg-slate-900 text-white py-12 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-800">
             <div class="text-center px-4">
-                <div class="text-4xl font-black text-yellow-400 mb-1" x-text="animatedStats.students + '+'"></div>
+                <div class="text-3xl md:text-4xl font-black text-yellow-400 mb-1" x-text="animatedStats.students + '+'"></div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Happy Students</div>
             </div>
             <div class="text-center px-4">
-                <div class="text-4xl font-black text-blue-400 mb-1">500+</div>
+                <div class="text-3xl md:text-4xl font-black text-blue-400 mb-1">500+</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Selections</div>
             </div>
             <div class="text-center px-4">
-                <div class="text-4xl font-black text-red-400 mb-1">4.9</div>
+                <div class="text-3xl md:text-4xl font-black text-red-400 mb-1">4.9</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">App Rating</div>
             </div>
             <div class="text-center px-4">
-                <div class="text-4xl font-black text-green-400 mb-1">Daily</div>
+                <div class="text-3xl md:text-4xl font-black text-green-400 mb-1">Daily</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Classes</div>
             </div>
         </div>
@@ -214,7 +212,7 @@
         <div class="max-w-7xl mx-auto px-6 relative z-10">
             <div>
                 <span class="text-yellow-400 font-bold tracking-widest uppercase text-xs">Coaching Instructions</span>
-                <h2 class="text-4xl md:text-5xl font-black mt-2 mb-6">How to Start Learning</h2>
+                <h2 class="text-3xl md:text-5xl font-black mt-2 mb-6">How to Start Learning</h2>
                 <div class="grid md:grid-cols-3 gap-8 mt-12">
                     <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">1</div>
@@ -240,15 +238,15 @@
     <section id="apply" class="py-24 bg-white">
         <div class="max-w-4xl mx-auto px-6">
             <div class="text-center mb-10">
-                <h2 class="text-3xl font-black mb-2 text-slate-900">Start Your Journey</h2>
+                <h2 class="text-3xl md:text-4xl font-black mb-2 text-slate-900">Start Your Journey</h2>
                 <p class="text-slate-500 font-medium" x-show="applicationStep !== 'success'">Register now to get access to free demo classes and scholarship tests.</p>
             </div>
             
-            <div class="bg-white border-2 border-slate-100 p-8 md:p-12 rounded-[2.5rem] shadow-2xl reveal relative overflow-hidden">
+            <div class="bg-white border-2 border-slate-100 p-6 md:p-12 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl reveal relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-red-500"></div>
                 
                 <!-- Login/Register Toggle -->
-                <div class="flex space-x-6 mb-8 border-b border-slate-100">
+                <div class="flex space-x-6 mb-8 border-b border-slate-100 overflow-x-auto no-scrollbar">
                     <button @click="isLoginMode = false" :class="!isLoginMode ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'" class="pb-3 font-bold text-sm uppercase tracking-widest transition-all">New Admission</button>
                     <button @click="isLoginMode = true" :class="isLoginMode ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'" class="pb-3 font-bold text-sm uppercase tracking-widest transition-all">Student Login</button>
                 </div>
@@ -350,7 +348,7 @@
                     </div>
 
                     <div class="bg-slate-200 rounded-3xl overflow-hidden shadow-inner h-64 border-4 border-white">
-                        <iframe width="100%" height="100%" id="gmap_canvas" src="https://maps.google.com/maps?q=H.+No.+114,+Kashishon+road,+Block+Colony,+Khair,+Uttar+Pradesh+202138&t=&z=15&ie=UTF8&iwloc=&output=embed" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3524.678259296409!2d77.83013597458682!3d27.942507076048546!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39735b50067acd5b%3A0xcf3ec1a02260939b!2sEra%20of%20Mathantics!5e0!3m2!1sen!2sin!4v1774021688809!5m2!1sen!2sin" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
                     </div>
                 </div>
             </div>
@@ -361,9 +359,7 @@
         <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-12">
             <div class="col-span-2">
                 <div class="flex items-center space-x-3 mb-6">
-                    <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
+                    <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg">
                     <span class="font-black text-2xl tracking-tighter text-white">Era of MathAntics</span>
                 </div>
                 <p class="text-slate-400 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. The most trusted platform for math enthusiasts.</p>

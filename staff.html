@@ -28,11 +28,17 @@
 </head>
 <body class="bg-slate-100 text-slate-900 font-sans" x-data="staffPortal()" x-init="init()">
 
+    <!-- Mobile Overlay -->
+    <div x-show="mobileMenu" x-transition.opacity class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm md:hidden" @click="mobileMenu = false" x-cloak></div>
+
     <div class="flex min-h-screen">
-        <aside class="w-64 bg-white border-r p-6 hidden md:block">
-            <div class="flex items-center space-x-3 mb-10">
-                <div class="w-8 h-8 bg-blue-600 rounded-lg"></div>
+        <aside :class="mobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r p-6 transition-transform duration-300 md:relative md:translate-x-0 shadow-2xl md:shadow-none h-full overflow-y-auto">
+            <div class="flex items-center justify-between mb-10">
+                <div class="flex items-center space-x-3">
+                <img src="channels4_profile (1).jpg" alt="Logo" class="w-8 h-8 rounded-lg">
                 <span class="font-bold text-xl tracking-tight">StaffPanel</span>
+                </img>
+                <button @click="mobileMenu = false" class="md:hidden text-slate-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
             </div>
 
             <nav class="space-y-2">
@@ -57,10 +63,15 @@
             </nav>
         </aside>
 
-        <main class="flex-1 p-4 md:p-10 overflow-y-auto">
+        <main class="flex-1 p-4 md:p-10 overflow-y-auto w-full">
             
-            <header class="flex justify-between items-center mb-10">
-                <h1 class="text-2xl font-black capitalize" x-text="activeTab === 'admissions' ? 'Student Analytics' : activeTab"></h1>
+            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
+                <div class="flex items-center gap-4">
+                    <button @click="mobileMenu = true" class="md:hidden text-slate-600 hover:text-blue-600 transition">
+                        <i class="fas fa-bars text-2xl"></i>
+                    </button>
+                    <h1 class="text-2xl font-black capitalize" x-text="activeTab === 'admissions' ? 'Student Analytics' : activeTab"></h1>
+                </div>
                 <div class="flex items-center space-x-4">
                     <span class="text-sm font-bold text-slate-400" x-text="todayDate"></span>
                     <button @click="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-600 hover:text-white transition">Logout</button>
@@ -266,6 +277,7 @@
                        </div>
                        <button class="text-blue-600 font-bold text-xs uppercase">Export CSV</button>
                    </div>
+                   <div class="overflow-x-auto">
                    <table class="w-full text-left">
                        <thead class="bg-white border-b">
                            <tr>
@@ -304,6 +316,7 @@
                            </template>
                        </tbody>
                    </table>
+                   </div>
                </div>
             </div>
 
@@ -361,6 +374,7 @@
 
         function staffPortal() {
             return {
+                mobileMenu: false,
                 activeTab: 'dashboard',
                 todayDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
                 admissionList: [],

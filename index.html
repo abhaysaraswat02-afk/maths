@@ -373,8 +373,16 @@
 
                     const phoneNumber = "+91" + this.applicationForm.phone;
                     const appVerifier = window.recaptchaVerifier;
+
+                    if (!appVerifier) {
+                        alert("Security check is initializing. Please wait 2 seconds or refresh the page.");
+                        this.isSubmitting = false;
+                        return;
+                    }
+
+                    // 1. Attempt Duplicate Check (Fail-safe)
+                    // We wrap this in its own try-catch so permission errors don't block the OTP
                     try {
-                        // Check if phone number is already registered and confirmed
                         const snap = await db.collection("admissions")
                                              .where("phone", "==", this.applicationForm.phone)
                                              .where("status", "==", "Confirmed")
@@ -385,8 +393,13 @@
                             this.isSubmitting = false;
                             return;
                         }
+                    } catch (dbError) {
+                        console.warn("Skipping duplicate check due to permissions:", dbError);
+                        // We proceed even if this check fails
+                    }
 
-                        // Use Firebase to send a real OTP
+                    // 2. Send OTP
+                    try {
                         firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
                             .then((confirmationResult) => {
                                 // SMS sent. Show form to enter the code.
@@ -395,14 +408,13 @@
                                 this.isSubmitting = false;
                             }).catch((error) => {
                                 console.error("SMS not sent", error);
-                                alert("Error sending OTP. Please check the phone number or reCAPTCHA and try again.");
+                                alert("Error sending OTP: " + error.message);
                                 // In case of error, you might need to reset reCAPTCHA
                                 this.isSubmitting = false;
                             });
-
                     } catch (error) {
-                        console.error("Error checking phone number: ", error);
-                        alert('An error occurred. Please try again.');
+                        console.error("General error:", error);
+                        alert('An unexpected error occurred: ' + error.message);
                         this.isSubmitting = false;
                     }
                 },

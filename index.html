@@ -71,11 +71,11 @@
 
             <div class="hidden md:flex items-center space-x-8 font-bold text-sm text-slate-600">
                 <a href="#home" class="hover:text-blue-600 transition">Home</a>
-                <a href="#courses" class="hover:text-blue-600 transition">Live Batches</a>
                 <a href="#results" class="hover:text-blue-600 transition">Selections</a>
                 <a href="#apply" class="hover:text-blue-600 transition">Admissions</a>
-                <a href="student.html" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
-                    <i class="fas fa-user-circle"></i> Login
+                <a :href="isLoggedIn ? 'student.html' : '#apply'" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
+                    <i class="fas" :class="isLoggedIn ? 'fa-th-large' : 'fa-user-circle'"></i> 
+                    <span x-text="isLoggedIn ? 'Dashboard' : 'Login'"></span>
                 </a>
             </div>
 
@@ -87,8 +87,7 @@
         <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t p-6 space-y-4 absolute w-full shadow-xl">
             <a @click="mobileMenu = false" href="#home" class="block font-medium">Home</a>
             <a @click="mobileMenu = false" href="#about" class="block font-medium">About</a>
-            <a @click="mobileMenu = false" href="#courses" class="block font-medium">Courses</a>
-            <a href="student.html" class="block text-blue-600 font-bold">Student Portal</a>
+            <a @click="mobileMenu = false" href="#apply" class="block text-blue-600 font-bold">Student Portal</a>
         </div>
     </nav>
 
@@ -108,10 +107,10 @@
                     India's most trusted math learning platform. Join live batches, get personalized mentorship, and achieve your dream rank.
                 </p>
                 <div class="flex flex-wrap gap-4">
-                    <a href="#courses" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 flex items-center gap-2">
+                    <a href="#apply" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 flex items-center gap-2">
                         Explore Batches <i class="fas fa-arrow-right"></i>
                     </a>
-                    <a href="student.html" class="bg-white text-slate-900 border-2 border-slate-200 px-8 py-4 rounded-xl font-bold hover:border-blue-600 hover:text-blue-600 transition-all flex items-center gap-2">
+                    <a href="#apply" class="bg-white text-slate-900 border-2 border-slate-200 px-8 py-4 rounded-xl font-bold hover:border-blue-600 hover:text-blue-600 transition-all flex items-center gap-2">
                         <i class="fas fa-play-circle"></i> Watch Demo
                     </a>
                 </div>
@@ -171,61 +170,6 @@
         </div>
     </div>
 
-    <section id="courses" class="py-24">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="flex justify-between items-end mb-12">
-                <div class="reveal">
-                    <h2 class="text-4xl font-black mb-2 text-slate-900">Live <span class="text-blue-600">Batches</span></h2>
-                    <p class="text-slate-500 font-medium">Choose your target and start preparing with the best.</p>
-                </div>
-                <a href="student.html" class="hidden md:inline-block text-blue-600 font-bold hover:underline">View All Batches <i class="fas fa-arrow-right"></i></a>
-            </div>
-            
-            <div class="grid md:grid-cols-3 gap-8">
-                <!-- Dynamic Batches from Firebase -->
-                <template x-if="batches.length === 0">
-                     <div class="col-span-3 text-center py-10">
-                         <p class="text-slate-500">Loading available batches...</p>
-                     </div>
-                </template>
-
-                <template x-for="(batch, index) in batches" :key="batch.id">
-                    <div class="bg-white rounded-3xl p-6 shadow-lg border border-slate-100 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 group reveal">
-                        <div class="relative mb-6">
-                            <div class="absolute top-0 right-0 bg-red-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider">Live</div>
-                            <!-- Generates a gradient based on index -->
-                            <div class="h-40 rounded-2xl flex items-center justify-center text-white" 
-                                 :class="['bg-gradient-to-br from-blue-600 to-blue-800', 'bg-gradient-to-br from-red-600 to-red-800', 'bg-gradient-to-br from-green-600 to-green-800'][index % 3]">
-                                <i class="fas fa-chalkboard-teacher text-5xl opacity-50"></i>
-                            </div>
-                            <div class="absolute -bottom-4 left-4 bg-white p-2 rounded-lg shadow-md border">
-                                <div class="text-xs font-bold text-slate-400 uppercase">Timing</div>
-                                <div class="font-black text-slate-900" x-text="batch.timing || 'Flexible'"></div>
-                                <div class="mt-2">
-                                    <div class="text-xs font-bold text-slate-400 uppercase">Fee</div>
-                                    <div class="font-black text-slate-900" x-text="'₹' + (batch.fee || '5000')"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-6">
-                            <h3 class="text-xl font-black text-slate-900 mb-2 transition" 
-                                :class="['group-hover:text-blue-600', 'group-hover:text-red-600', 'group-hover:text-green-600'][index % 3]"
-                                x-text="batch.name"></h3>
-                            <ul class="space-y-2 mb-6">
-                                <li class="flex items-center text-sm text-slate-500 font-medium"><i class="fas fa-check-circle text-green-500 mr-2"></i> Live Classes</li>
-                                <li class="flex items-center text-sm text-slate-500 font-medium"><i class="fas fa-check-circle text-green-500 mr-2"></i> Recorded Backup</li>
-                                <li class="flex items-center text-sm text-slate-500 font-medium"><i class="fas fa-check-circle text-green-500 mr-2"></i> PDF Resources</li>
-                            </ul>
-                            <div class="flex items-center justify-between border-t pt-4">
-                                <a href="#apply" class="w-full text-center bg-slate-900 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-600 transition shadow-lg">Enroll Now</a>
-                            </div>
-                        </div>
-                    </div>
-                </template>
-            </div>
-        </div>
-    </section>
-
     <!-- Results / Hall of Fame -->
     <section id="results" class="py-16 bg-blue-50 overflow-hidden">
         <div class="text-center mb-12">
@@ -234,55 +178,65 @@
         </div>
         
         <!-- Scrolling Marquee -->
-        <div class="marquee-scroll gap-6 px-6">
-            <!-- Repeater for demo -->
-            <template x-for="i in 8">
-                <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300">
-                    <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
-                        <img :src="'https://api.dicebear.com/7.x/avataaars/svg?seed=' + i" alt="Student">
-                    </div>
-                    <h4 class="font-bold text-lg text-slate-900">Student Name</h4>
-                    <p class="text-blue-600 font-black">98% in Maths</p>
-                    <p class="text-xs text-slate-400 font-bold uppercase mt-1">Class 10 Board 2024</p>
-                </div>
-            </template>
-        </div>
-    </section>
-
-    <!-- App Download Section -->
-    <section class="py-20 bg-slate-900 text-white relative overflow-hidden">
-        <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-        <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center relative z-10">
-            <div>
-                <span class="text-yellow-400 font-bold tracking-widest uppercase text-xs">Learn Anywhere</span>
-                <h2 class="text-4xl md:text-5xl font-black mt-2 mb-6">Download the <br><span class="text-blue-400">MathAntics App</span></h2>
-                <ul class="space-y-4 mb-8">
-                    <li class="flex items-center gap-3 font-medium text-slate-300"><i class="fas fa-download text-blue-500"></i> Offline Downloads</li>
-                    <li class="flex items-center gap-3 font-medium text-slate-300"><i class="fas fa-tv text-blue-500"></i> Live Classes on Mobile</li>
-                    <li class="flex items-center gap-3 font-medium text-slate-300"><i class="fas fa-file-pdf text-blue-500"></i> Instant Notes Access</li>
-                </ul>
-                <div class="flex gap-4">
-                    <button class="bg-white text-slate-900 px-6 py-3 rounded-xl font-bold flex items-center gap-3 hover:bg-slate-100 transition">
-                        <i class="fab fa-google-play text-2xl text-green-600"></i>
-                        <div class="text-left leading-none">
-                            <div class="text-[10px] uppercase font-bold">Get it on</div>
-                            <div class="text-sm">Google Play</div>
+        <div class="overflow-hidden">
+            <div class="marquee-scroll">
+                <!-- Content is duplicated for seamless scroll effect -->
+                <div class="flex gap-6 px-3">
+                    <template x-for="(student, index) in starAchievers" :key="index">
+                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300">
+                            <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
+                                <img :src="student.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + student.avatarSeed" alt="Student" class="w-full h-full object-cover">
+                            </div>
+                            <h4 class="font-bold text-lg text-slate-900" x-text="student.name"></h4>
+                            <p class="text-blue-600 font-black" x-text="student.achievement"></p>
+                            <p class="text-xs text-slate-400 font-bold uppercase mt-1" x-text="student.details"></p>
                         </div>
-                    </button>
+                    </template>
                 </div>
+                <div class="flex gap-6 px-3" aria-hidden="true">
+                    <template x-for="(student, index) in starAchievers" :key="index">
+                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300">
+                            <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
+                                <img :src="student.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + student.avatarSeed" alt="Student" class="w-full h-full object-cover">
+                            </div>
+                            <h4 class="font-bold text-lg text-slate-900" x-text="student.name"></h4>
+                            <p class="text-blue-600 font-black" x-text="student.achievement"></p>
+                            <p class="text-xs text-slate-400 font-bold uppercase mt-1" x-text="student.details"></p>
+                        </div>
+                    </template>
+                    </div>
             </div>
-            <div class="flex justify-center">
-                <!-- Phone Mockup CSS -->
-                <div class="w-64 h-[500px] bg-slate-800 rounded-[3rem] border-8 border-slate-700 shadow-2xl relative overflow-hidden">
-                    <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-700 rounded-b-xl"></div>
-                    <div class="w-full h-full bg-slate-600 flex items-center justify-center">
-                        <i class="fas fa-graduation-cap text-6xl text-slate-400 opacity-50"></i>
+        </div>
+    </section>
+
+    <!-- Instruction Section -->
+    <section class="py-20 bg-slate-900 text-white relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div>
+                <span class="text-yellow-400 font-bold tracking-widest uppercase text-xs">Coaching Instructions</span>
+                <h2 class="text-4xl md:text-5xl font-black mt-2 mb-6">How to Start Learning</h2>
+                <div class="grid md:grid-cols-3 gap-8 mt-12">
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">1</div>
+                        <h3 class="text-xl font-bold mb-2">Register Online</h3>
+                        <p class="text-slate-400">Fill out the form below with your name and phone number to create your student account.</p>
+                    </div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">2</div>
+                        <h3 class="text-xl font-bold mb-2">Access Portal</h3>
+                        <p class="text-slate-400">Log in to the student dashboard to access free study notes, resources, and recorded videos.</p>
+                    </div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">3</div>
+                        <h3 class="text-xl font-bold mb-2">Join Classes</h3>
+                        <p class="text-slate-400">Check the dashboard for live class schedules and join sessions directly from your browser.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
 
+  
     <section id="apply" class="py-24 bg-white">
         <div class="max-w-4xl mx-auto px-6">
             <div class="text-center mb-10">
@@ -293,12 +247,18 @@
             <div class="bg-white border-2 border-slate-100 p-8 md:p-12 rounded-[2.5rem] shadow-2xl reveal relative overflow-hidden">
                 <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 to-red-500"></div>
                 
+                <!-- Login/Register Toggle -->
+                <div class="flex space-x-6 mb-8 border-b border-slate-100">
+                    <button @click="isLoginMode = false" :class="!isLoginMode ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'" class="pb-3 font-bold text-sm uppercase tracking-widest transition-all">New Admission</button>
+                    <button @click="isLoginMode = true" :class="isLoginMode ? 'text-blue-600 border-b-2 border-blue-600' : 'text-slate-400 hover:text-slate-600'" class="pb-3 font-bold text-sm uppercase tracking-widest transition-all">Student Login</button>
+                </div>
+
                 <!-- Step 1: Application Form -->
             <form x-show="applicationStep === 'form'" @submit.prevent="handleApplicationSubmit" class="space-y-6">
                 <div class="grid md:grid-cols-2 gap-6">
-                    <div>
+                    <div x-show="!isLoginMode">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Full Name</label>
-                            <input type="text" x-model="applicationForm.name" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter student name">
+                            <input type="text" x-model="applicationForm.name" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter student name">
                     </div>
                     <div>
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Phone Number</label>
@@ -308,21 +268,12 @@
                             </div>
                     </div>
                 </div>
-                <div>
-                        <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Target Batch</label>
-                        <select x-model="applicationForm.batchId" @change="updateCourseName($event)" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none">
-                            <option value="">Select a Batch...</option>
-                            <template x-for="batch in batches" :key="batch.id">
-                                <option :value="batch.id" x-text="batch.name"></option>
-                            </template>
-                    </select>
-                </div>
                 <!-- reCAPTCHA container for Firebase Auth -->
                 <div id="recaptcha-container" class="flex justify-center"></div>
 
                 <button type="submit" :disabled="isSubmitting" class="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-blue-600 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
                     <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
-                    <span x-text="isSubmitting ? 'Sending OTP...' : 'Get OTP to Register'"></span>
+                    <span x-text="isSubmitting ? 'Sending OTP...' : (isLoginMode ? 'Get Login OTP' : 'Get OTP to Register')"></span>
                 </button>
             </form>
     
@@ -340,6 +291,13 @@
                 <button type="button" @click="applicationStep = 'form'" class="text-sm text-slate-500 hover:text-blue-600">Change phone number</button>
             </form>
     
+            <div x-show="applicationStep === 'otp'" class="mt-4 text-center">
+                <button type="button" @click="resendOtp()" :disabled="resendDisabled" class="text-sm text-blue-600 hover:underline disabled:text-slate-400 disabled:cursor-not-allowed">
+                    <span x-show="!resendDisabled">Resend OTP</span>
+                    <span x-show="resendDisabled" x-text="`Resend in ${resendTimer}s`"></span>
+                </button>
+            </div>
+
             <!-- Step 3: Success Message -->
             <div x-show="applicationStep === 'success'" x-cloak class="text-center py-10">
                 <div class="w-24 h-24 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -352,6 +310,49 @@
                     <span>Redirecting...</span>
                 </div>
             </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Map Section -->
+    <section id="contact" class="py-24 bg-slate-50 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="text-center mb-16">
+                <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Get Support</span>
+                <h2 class="text-3xl md:text-4xl font-black text-slate-900 mt-2">Contact <span class="text-gradient">Us</span></h2>
+            </div>
+
+            <div class="max-w-4xl mx-auto">
+                <!-- Info & Map -->
+                <div class="space-y-8">
+                    <div class="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 flex items-start gap-6">
+                        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg text-slate-900 mb-1">Our Location</h4>
+                            <p class="text-slate-500 font-medium leading-relaxed">
+                                H. No. 114, Kashishon road,<br>
+                                Block Colony, Khair, Uttar Pradesh 202138
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-3xl shadow-lg border border-slate-100 flex items-start gap-6">
+                        <div class="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0">
+                            <i class="fas fa-phone-alt"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-lg text-slate-900 mb-1">Call Us</h4>
+                            <p class="text-slate-500 font-medium">084458 37333</p>
+                            <p class="text-xs text-slate-400 mt-1 font-bold uppercase">Mon - Sat, 9am - 6pm</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-200 rounded-3xl overflow-hidden shadow-inner h-64 border-4 border-white">
+                        <iframe width="100%" height="100%" id="gmap_canvas" src="https://maps.google.com/maps?q=H.+No.+114,+Kashishon+road,+Block+Colony,+Khair,+Uttar+Pradesh+202138&t=&z=15&ie=UTF8&iwloc=&output=embed" frameborder="0" scrolling="no" marginheight="0" marginwidth="0"></iframe>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -375,8 +376,7 @@
                 <h4 class="font-bold mb-6 text-white">Quick Links</h4>
                 <ul class="space-y-4 text-sm font-medium">
                     <li><a href="#home" class="hover:text-blue-600">Home</a></li>
-                    <li><a href="#courses" class="hover:text-blue-600">Courses</a></li>
-                    <li><a href="student.html" class="hover:text-blue-600">Student Portal</a></li>
+                    <li><a href="#apply" class="hover:text-blue-600">Student Portal</a></li>
                     <li><a href="#contact" class="hover:text-blue-600">Contact Us</a></li>
                 </ul>
             </div>
@@ -384,8 +384,8 @@
                 <h4 class="font-bold mb-6 text-white">Contact</h4>
                 <p class="text-slate-400 text-sm leading-loose">
                     H. No. 114, Kashishon road,<br>
-                    Block Colony, Khair, UP 202138<br>
-                    <strong>+91 8445837333</strong>
+                    Block Colony, Khair, Uttar Pradesh 202138<br>
+                    <strong>084458 37333</strong>
                 </p>
             </div>
         </div>
@@ -393,6 +393,22 @@
             © 2026 Era of MathAntics. Designed for Excellence.
         </div>
     </footer>
+
+    <!-- Custom Notification Modal -->
+    <div x-show="modal.open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 transform transition-all" @click.away="modal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-4">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4 border-white">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 mb-2" x-text="modal.title">Notification</h3>
+                <p class="text-slate-500 font-medium mb-8 leading-relaxed" x-text="modal.message"></p>
+                <button @click="modal.open = false" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-blue-600 transition shadow-xl hover:-translate-y-1">
+                    Okay, Got it
+                </button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Firebase Config (Your Existing)
@@ -415,14 +431,23 @@
                 typewriterText: '',
                 typeWords: ['Modern Math', 'Logic Skills', 'Clear Results', 'Your Future'],
                 animatedStats: { students: 0, courses: 0, lessons: 0, years: 0 },
+                starAchievers: [],
                 batches: [],
 
                 // New properties for application form
+                contactForm: { name: '', email: '', message: '' },
                 applicationForm: { name: '', phone: '', course: '', batchId: '' },
+                staffNumbers: ['8445837333', '9719909279'], // Add Owner/Staff numbers here
                 applicationStep: 'form', // 'form', 'otp', 'success'
-                generatedOtp: null,
                 enteredOtp: '',
                 isSubmitting: false,
+                isLoginMode: false,
+                isExistingUser: false, // For returning users
+                resendDisabled: false, // For OTP resend button
+                resendTimer: 30,       // Timer for resend
+                isLoggedIn: false,
+                modal: { open: false, title: '', message: '' },
+                youtubeVideos: [],
 
                 init() {
                     this.startTypewriter();
@@ -432,12 +457,53 @@
                     // Initial Reveal check
                     setTimeout(() => this.checkReveal(), 100);
                     this.fetchBatches();
+                    this.fetchStaffVideos();
+                    this.fetchAchievers();
+                    this.isLoggedIn = localStorage.getItem('isStudentLoggedIn') === 'true';
                 },
 
                 fetchBatches() {
                     db.collection('batches').get().then(snap => {
                         this.batches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     });
+                },
+
+                fetchAchievers() {
+                    db.collection('achievers').orderBy('timestamp', 'desc').get().then(snap => {
+                        this.starAchievers = snap.docs.map(doc => {
+                            const data = doc.data();
+                            return {
+                                ...data,
+                                id: doc.id,
+                                // Generate avatarSeed from the first name for consistency
+                                avatarSeed: data.name ? data.name.split(' ')[0] : 'Star'
+                            };
+                        });
+                    });
+                },
+
+                showAlert(title, message) {
+                    this.modal.title = title;
+                    this.modal.message = message;
+                    this.modal.open = true;
+                },
+
+                fetchStaffVideos() {
+                    // Fetch videos uploaded by staff from Firestore 'resources' collection
+                    db.collection('resources')
+                        .where('type', '==', 'youtube')
+                        .orderBy('timestamp', 'desc')
+                        .limit(3)
+                        .get()
+                        .then(snap => {
+                            this.youtubeVideos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                        })
+                        .catch(error => console.error('Error fetching staff videos:', error));
+                },
+
+                getThumbnail(url) {
+                    const videoId = url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=))([\w\-]{10,12})\b/)?.[1];
+                    return videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://via.placeholder.com/640x360?text=Video';
                 },
 
                 startTypewriter() {
@@ -493,52 +559,96 @@
                 },
 
                 updateCourseName(event) {
-                    const select = event.target;
-                    this.applicationForm.course = select.options[select.selectedIndex].text;
+                    // Removed batch select
+                },
+
+                startResendTimer() {
+                    this.resendDisabled = true;
+                    this.resendTimer = 30;
+                    const interval = setInterval(() => {
+                        this.resendTimer--;
+                        if (this.resendTimer <= 0) {
+                            clearInterval(interval);
+                            this.resendDisabled = false;
+                        }
+                    }, 1000);
+                },
+
+                resendOtp() {
+                    if (this.resendDisabled) return;
+
+                    const phoneNumber = "+91" + this.applicationForm.phone;
+                    const appVerifier = window.recaptchaVerifier;
+
+                    // Re-trigger the sign-in process to get a new OTP
+                    firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
+                        .then((confirmationResult) => {
+                            window.confirmationResult = confirmationResult;
+                            this.showAlert('OTP Sent', 'A new verification code has been sent to your phone.');
+                            this.startResendTimer();
+                        }).catch((error) => {
+                            this.showAlert("Error", "Failed to resend OTP: " + error.message);
+                            // Don't start timer on failure, allow user to try again
+                            this.resendDisabled = false;
+                        });
                 },
 
                 // New methods for application
                 async handleApplicationSubmit() {
-                    if (!this.applicationForm.name || !this.applicationForm.phone) {
-                        alert('Please fill in your name and phone number.');
+                    // In login mode, we only need a phone number. For new admission, we need a name too.
+                    if (!this.isLoginMode && !this.applicationForm.name) {
+                        this.showAlert('Missing Information', 'Please fill in your name to register.');
+                        return;
+                    }
+                    if (!this.applicationForm.phone) {
+                        this.showAlert('Missing Information', 'Please enter your phone number.');
                         return;
                     }
                     if (!/^[6-9]{1}[0-9]{9}$/.test(this.applicationForm.phone)) {
-                        alert('Please enter a valid 10-digit Indian mobile number.');
-                        return;
-                    }
-                    if (!this.applicationForm.batchId) {
-                        alert('Please select a batch.');
+                        this.showAlert('Invalid Phone', 'Please enter a valid 10-digit Indian mobile number.');
                         return;
                     }
 
                     this.isSubmitting = true;
+                    this.isExistingUser = false; // Reset on each submission
 
                     const phoneNumber = "+91" + this.applicationForm.phone;
                     const appVerifier = window.recaptchaVerifier;
 
                     if (!appVerifier) {
-                        alert("Security check is initializing. Please wait 2 seconds or refresh the page.");
+                        this.showAlert("Please Wait", "Security check is initializing. Please wait a moment or refresh the page.");
                         this.isSubmitting = false;
                         return;
                     }
 
                     // 1. Attempt Duplicate Check (Fail-safe)
-                    // We wrap this in its own try-catch so permission errors don't block the OTP
+                    // Note: Removed "Confirmed" status check to allow Pending students to log in and pay
                     try {
                         const snap = await db.collection("admissions")
                                              .where("phone", "==", this.applicationForm.phone)
-                                             .where("status", "==", "Confirmed")
                                              .get();
 
                         if (!snap.empty) {
-                            alert('This phone number is already registered with a confirmed student. Please log in via the Student Portal.');
+                            this.isExistingUser = true;
+                        }
+                    } catch (dbError) {
+                        // We proceed even if this check fails
+                    }
+
+                    // Check if Login Mode but user not found
+                    if (this.isLoginMode && !this.isExistingUser) {
+                        this.showAlert("Account Not Found", "No account found with this phone number. Please switch to 'New Admission' to register.");
+                        this.isSubmitting = false;
+                        return;
+                    }
+
+                    // 2. If it's a NEW user, validate the remaining fields
+                    if (!this.isLoginMode && !this.isExistingUser) {
+                        if (!this.applicationForm.name) {
+                            this.showAlert('Name Required', 'To register as a new student, please provide your name.');
                             this.isSubmitting = false;
                             return;
                         }
-                    } catch (dbError) {
-                        console.warn("Skipping duplicate check due to permissions:", dbError);
-                        // We proceed even if this check fails
                     }
 
                     // 2. Send OTP
@@ -549,46 +659,68 @@
                                 window.confirmationResult = confirmationResult;
                                 this.applicationStep = 'otp';
                                 this.isSubmitting = false;
+                                this.startResendTimer(); // Start cooldown timer
                             }).catch((error) => {
                                 console.error("SMS not sent", error);
                                 if (error.code === 'auth/billing-not-enabled') {
-                                    alert("Billing Error: You entered a real phone number, but billing is disabled. Please enter the TEST NUMBER you added in Firebase Console.");
+                                    this.showAlert("Configuration Error", "Billing is disabled. Please use the test numbers configured in Firebase.");
                                 } else {
-                                    alert("Error sending OTP: " + error.message);
+                                    this.showAlert("OTP Error", "Error sending OTP: " + error.message);
                                 }
                                 // In case of error, you might need to reset reCAPTCHA
                                 this.isSubmitting = false;
                             });
                     } catch (error) {
                         console.error("General error:", error);
-                        alert('An unexpected error occurred: ' + error.message);
+                        this.showAlert('Error', 'An unexpected error occurred: ' + error.message);
                         this.isSubmitting = false;
                     }
                 },
 
                 async verifyOtpAndRegister() {
-                    if (!this.enteredOtp) return alert("Please enter the OTP.");
+                    if (!this.enteredOtp) return this.showAlert("Missing OTP", "Please enter the 6-digit verification code.");
                     this.isSubmitting = true;
 
                     window.confirmationResult.confirm(this.enteredOtp).then(async (result) => {
+                        // 1. Check if the user is a Staff Member or Owner
+                        if (this.staffNumbers.includes(this.applicationForm.phone)) {
+                            // Allow owner to choose portal
+                            if (confirm("Staff Access Detected.\n\nPress OK to enter Staff Dashboard.\nPress Cancel to login as a Student.")) {
+                                localStorage.setItem('isStaffLoggedIn', 'true');
+                                localStorage.removeItem('isStudentLoggedIn'); // Clear student session if exists
+                                window.location.href = 'staff.html';
+                                return;
+                            }
+                        }
+
                         // User signed in successfully.
-                        console.log("User verified:", result.user.uid);
 
-                        // Now, save the application to Firestore
-                        const selectedBatch = this.batches.find(b => b.id === this.applicationForm.batchId);
-                        const fee = selectedBatch && selectedBatch.fee ? Number(selectedBatch.fee) : 5000;
-                        
-                        await db.collection("admissions").add({ ...this.applicationForm, status: 'Pending', totalFee: fee, feePaid: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                        if (this.isExistingUser) {
+                            // This is a returning user, just log them in.
+                        } else {
+                            // This is a new user, create a new admission record.
+                            await db.collection("admissions").add({ ...this.applicationForm, status: 'Pending', feePaid: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                        }
 
+                        // Common logic for both new and existing users
                         localStorage.setItem('isStudentLoggedIn', 'true');
                         localStorage.setItem('student_phone', this.applicationForm.phone);
                         this.applicationStep = 'success';
                         setTimeout(() => { window.location.href = 'student.html'; }, 3000);
                     }).catch((error) => {
                         console.error("Verification failed:", error);
-                        alert("Invalid OTP. Please try again.");
+                        this.showAlert("Verification Failed", "Invalid OTP. Please check the code and try again.");
                         this.isSubmitting = false;
                     });
+                },
+
+                sendMessage() {
+                    if (!this.contactForm.name || !this.contactForm.email || !this.contactForm.message) {
+                        return this.showAlert('Incomplete Form', 'Please fill in all fields to send a message.');
+                    }
+                    // Simulate sending message
+                    this.showAlert('Message Sent', `Thank you, ${this.contactForm.name}! Your message has been received. We will get back to you soon.`);
+                    this.contactForm = { name: '', email: '', message: '' };
                 }
             }
         }

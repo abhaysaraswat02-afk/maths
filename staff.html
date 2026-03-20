@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Hub | Era of MathAntics</title>
+    <script>
+        // Security Check: Redirect to home if not logged in as staff
+        if (localStorage.getItem('isStaffLoggedIn') !== 'true') {
+            window.location.href = 'index.html';
+        }
+    </script>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -36,9 +42,6 @@
                 <button @click="activeTab = 'admissions'" :class="{'active': activeTab === 'admissions'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-chart-line w-5"></i> <span class="font-medium">Analytics</span>
                 </button>
-                <button @click="activeTab = 'batches'" :class="{'active': activeTab === 'batches'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-users w-5"></i> <span class="font-medium">Batches</span>
-                </button>
                 <button @click="activeTab = 'live'" :class="{'active': activeTab === 'live'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-video w-5"></i> <span class="font-medium">Live Class</span>
                 </button>
@@ -47,6 +50,9 @@
                 </button>
                 <button @click="activeTab = 'notifications'" :class="{'active': activeTab === 'notifications'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-bell w-5"></i> <span class="font-medium">Notifications</span>
+                </button>
+                <button @click="activeTab = 'achievers'" :class="{'active': activeTab === 'achievers'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
+                    <i class="fas fa-star w-5"></i> <span class="font-medium">Star Achievers</span>
                 </button>
             </nav>
         </aside>
@@ -63,46 +69,14 @@
 
             <div x-show="activeTab === 'dashboard'" class="space-y-8">
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 col-span-2">
                         <p class="text-slate-400 text-xs font-bold uppercase">Total Students</p>
                         <h2 class="text-3xl font-black mt-2" x-text="admissionList.length">0</h2>
-                    </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                        <p class="text-slate-400 text-xs font-bold uppercase">Active Batches</p>
-                        <h2 class="text-3xl font-black mt-2" x-text="batches.length">0</h2>
                     </div>
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                         <p class="text-slate-400 text-xs font-bold uppercase">Resources Shared</p>
                         <h2 class="text-3xl font-black mt-2" x-text="resources.length">0</h2>
                     </div>
-                </div>
-            </div>
-
-            <!-- BATCHES & RESOURCES -->
-            <div x-show="activeTab === 'batches'" x-cloak>
-                <div class="bg-white p-6 rounded-3xl border mb-8">
-                    <h3 class="font-bold mb-4">Create New Batch</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                        <input type="text" x-model="newBatch.name" placeholder="Batch Name (e.g. Class 10 Math)" class="bg-slate-50 border-none rounded-xl p-3">
-                        <input type="text" x-model="newBatch.timing" placeholder="Timing (e.g. 4 PM - 5 PM)" class="bg-slate-50 border-none rounded-xl p-3">
-                        <input type="number" x-model="newBatch.fee" placeholder="Fee (₹)" class="bg-slate-50 border-none rounded-xl p-3">
-                        <textarea x-model="newBatch.description" placeholder="Batch Description..." class="md:col-span-2 bg-slate-50 border-none rounded-xl p-3" rows="2"></textarea>
-                    </div>
-                    <div class="flex justify-end">
-                        <button @click="addBatch()" class="bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition">Add Batch</button>
-                    </div>
-                </div>
-
-                <div class="grid md:grid-cols-2 gap-6">
-                    <template x-for="batch in batches" :key="batch.id">
-                        <div class="bg-white p-6 rounded-2xl border flex justify-between items-center shadow-sm">
-                            <div>
-                                <h4 class="font-bold text-lg" x-text="batch.name"></h4>
-                                <p class="text-slate-500 text-sm" x-text="(batch.timing || 'Flexible') + ' • ₹' + (batch.fee || 0)"></p>
-                            </div>
-                            <button @click="deleteItem('batches', batch.id)" class="text-red-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
-                        </div>
-                    </template>
                 </div>
             </div>
 
@@ -120,23 +94,31 @@
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Scheduled Time</label>
                             <input type="datetime-local" x-model="newLiveClass.time" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-600">
                         </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Select Batch to Notify</label>
-                            <select x-model="newLiveClass.batchId" class="w-full bg-slate-50 border-none rounded-xl p-4">
-                                <option>All Students</option>
-                                <template x-for="batch in batches"><option :value="batch.id" x-text="batch.name"></option></template>
-                            </select>
-                        </div>
                         <button @click="scheduleLiveClass()" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition animate-pulse">
                             Start Session & Notify
                         </button>
                     </div>
                 </div>
+
+                <!-- Active Live Classes List -->
+                <div class="mt-8 max-w-2xl mx-auto">
+                    <h3 class="font-bold text-lg mb-4 text-slate-700">Active Live Sessions</h3>
+                    <template x-for="live in liveClasses" :key="live.id">
+                        <div class="bg-white p-6 rounded-2xl border shadow-sm flex justify-between items-center mb-4">
+                            <div>
+                                <a :href="live.url" target="_blank" class="font-bold text-blue-600 hover:underline flex items-center gap-2"><i class="fas fa-link"></i> <span x-text="live.url"></span></a>
+                                <p class="text-xs text-slate-500 mt-1 font-bold">Scheduled: <span x-text="new Date(live.time).toLocaleString()"></span></p>
+                            </div>
+                            <button @click="deleteItem('live_classes', live.id)" class="bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition">End Live</button>
+                        </div>
+                    </template>
+                    <div x-show="liveClasses.length === 0" class="text-center text-slate-400 text-sm italic py-4">No active live sessions running.</div>
+                </div>
             </div>
 
             <!-- UPLOAD RESOURCES (New) -->
             <div x-show="activeTab === 'resources'" x-cloak>
-                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-xl">
+                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-xl mb-8">
                     <h2 class="text-xl font-bold mb-6 text-green-600"><i class="fas fa-file-upload mr-2"></i> Upload Resources</h2>
                     <div class="space-y-4">
                         <div>
@@ -144,27 +126,45 @@
                             <input type="text" x-model="newResource.title" placeholder="e.g. Algebra Worksheet #1" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Assign to Batch</label>
-                            <select x-model="newResource.batchId" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                                <option value="">Select a batch...</option>
-                                <template x-for="batch in batches"><option :value="batch.id" x-text="batch.name"></option></template>
-                            </select>
-                        </div>
-                        <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource Type</label>
                             <select x-model="newResource.type" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                                <option value="pdf">PDF Document</option>
+                                <option value="pdf_upload">Upload PDF File</option>
+                                <option value="pdf_link">PDF Link (from Drive)</option>
                                 <option value="video">Recorded Video Link</option>
+                                <option value="youtube">YouTube Video</option>
                             </select>
                         </div>
-                        <div x-show="newResource.type === 'video'">
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Video URL</label>
-                            <input type="url" x-model="newResource.link" placeholder="https://youtube.com/watch?v=..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                        <div x-show="newResource.type === 'video' || newResource.type === 'pdf_link' || newResource.type === 'youtube'">
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource URL</label>
+                            <input type="url" x-model="newResource.link" placeholder="https://..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
                         </div>
                         <button @click="uploadResource()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition">
-                            <span x-show="newResource.type === 'pdf'">Upload PDF</span>
-                            <span x-show="newResource.type !== 'pdf'">Save Resource</span>
+                            <span x-show="newResource.type === 'pdf_upload'">Upload PDF File</span>
+                            <span x-show="newResource.type !== 'pdf_upload'">Save Resource Link</span>
                         </button>
+                    </div>
+                </div>
+
+                <!-- MANAGE RESOURCES LIST -->
+                <div class="bg-white p-8 rounded-3xl border max-w-4xl mx-auto shadow-sm">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
+                        <h3 class="text-lg font-bold">All Resources</h3>
+                    </div>
+                    
+                    <div class="grid gap-3">
+                        <template x-for="res in filteredResources" :key="res.id">
+                            <div class="flex justify-between items-center p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition">
+                                <div class="overflow-hidden mr-4">
+                                    <div class="font-bold text-slate-800 truncate" x-text="res.title"></div>
+                                    <div class="text-xs text-slate-500 font-medium mt-1 flex items-center gap-2">
+                                        <span class="uppercase tracking-wider text-[10px]" :class="res.type === 'pdf' ? 'text-red-500' : 'text-blue-500'" x-text="res.type"></span>
+                                    </div>
+                                    <a :href="res.link" target="_blank" class="text-xs text-blue-500 hover:underline truncate block mt-1 opacity-75" x-text="res.link"></a>
+                                </div>
+                                <button @click="deleteItem('resources', res.id)" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </template>
+                        <div x-show="filteredResources.length === 0" class="text-center text-slate-400 py-8 font-medium italic">No resources found for the selected view.</div>
                     </div>
                 </div>
             </div>
@@ -176,15 +176,82 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Notification Title</label>
-                            <input type="text" x-model="notification.title" placeholder="e.g. New Assignment Uploaded!" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                            <input type="text" x-model="notification.title" placeholder="e.g. New Assignment Uploaded!" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold focus:ring-2 focus:ring-purple-500 outline-none transition">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Message Body</label>
-                            <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium"></textarea>
+                            <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
                         </div>
                         <button @click="sendNotification()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition">
-                            Send Broadcast
+                            Send Notification
                         </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- STAR ACHIEVERS (New) -->
+            <div x-show="activeTab === 'achievers'" x-cloak>
+                <!-- Form for adding/editing -->
+                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-xl mb-8">
+                    <h2 class="text-xl font-bold mb-6 text-yellow-500"><i class="fas fa-star-half-alt mr-2"></i> <span x-text="isEditingAchiever ? 'Edit Achiever' : 'Add New Achiever'"></span></h2>
+                    <form @submit.prevent="saveAchiever" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Student Name</label>
+                            <input type="text" x-model="newAchiever.name" required placeholder="e.g. Aarav Sharma" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Achievement</label>
+                            <input type="text" x-model="newAchiever.achievement" required placeholder="e.g. 99.5% in Maths" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Details</label>
+                            <input type="text" x-model="newAchiever.details" required placeholder="e.g. Class 12 Board 2024" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Student Photo</label>
+                            <div class="flex items-center gap-4">
+                                <div x-show="newAchiever.image" class="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0">
+                                    <img :src="newAchiever.image" class="w-full h-full object-cover">
+                                    <button type="button" @click="newAchiever.image = ''" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"><i class="fas fa-times"></i></button>
+                                </div>
+                                <input type="file" @change="uploadAchieverImage" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition"/>
+                            </div>
+                            <p class="text-[10px] text-slate-400 mt-1">Powered by Cloudinary</p>
+                        </div>
+                        <div class="flex gap-4 pt-4">
+                            <button type="submit" class="w-full bg-yellow-500 text-white font-bold py-4 rounded-xl hover:bg-yellow-600 transition">
+                                <span x-text="isEditingAchiever ? 'Update Achiever' : 'Add Achiever'"></span>
+                            </button>
+                            <button type="button" x-show="isEditingAchiever" @click="cancelEditAchiever()" class="w-full bg-slate-200 text-slate-800 font-bold py-4 rounded-xl hover:bg-slate-300 transition">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- List of achievers -->
+                <div class="bg-white p-8 rounded-3xl border max-w-4xl mx-auto shadow-sm">
+                    <h3 class="text-lg font-bold mb-6">Manage Star Achievers</h3>
+                    <div class="grid gap-3">
+                        <template x-for="achiever in achievers" :key="achiever.id">
+                            <div class="flex justify-between items-center p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+                                        <img :src="achiever.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (achiever.name ? achiever.name.split(' ')[0] : 'Student')" alt="Student" class="w-full h-full object-cover">
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-slate-800" x-text="achiever.name"></div>
+                                        <div class="text-sm text-blue-600 font-semibold" x-text="achiever.achievement"></div>
+                                        <div class="text-xs text-slate-500 font-medium mt-1" x-text="achiever.details"></div>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button @click="startEditAchiever(achiever)" class="text-slate-400 hover:text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition"><i class="fas fa-pencil-alt"></i></button>
+                                    <button @click="deleteItem('achievers', achiever.id)" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="achievers.length === 0" class="text-center text-slate-400 py-8 font-medium italic">No star achievers added yet.</div>
                     </div>
                 </div>
             </div>
@@ -243,6 +310,42 @@
         </main>
     </div>
 
+    <!-- NEW: Toast Notification -->
+    <div x-show="toast.show" x-transition:enter="transform ease-out duration-300" x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2" x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed top-10 right-10 w-full max-w-sm bg-white shadow-lg rounded-xl pointer-events-auto ring-1 ring-black ring-opacity-5 z-50" x-cloak>
+        <div class="p-4">
+            <div class="flex items-start">
+                <div class="flex-shrink-0 pt-0.5">
+                    <i class="fas text-xl" :class="{ 'fa-check-circle text-green-500': toast.type === 'success', 'fa-exclamation-circle text-red-500': toast.type === 'error' }"></i>
+                </div>
+                <div class="ml-3 w-0 flex-1">
+                    <p class="text-sm font-bold text-gray-900" x-text="toast.message"></p>
+                </div>
+                <div class="ml-4 flex-shrink-0 flex">
+                    <button @click="toast.show = false" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
+                        <span class="sr-only">Close</span>
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal -->
+    <div x-show="modal.open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 transform transition-all" @click.away="modal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-4">
+            <div class="text-center">
+                <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4 border-white">
+                    <i class="fas fa-info-circle"></i>
+                </div>
+                <h3 class="text-2xl font-black text-slate-900 mb-2" x-text="modal.title">Notification</h3>
+                <p class="text-slate-500 font-medium mb-8 leading-relaxed" x-text="modal.message"></p>
+                <button @click="modal.open = false" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-blue-600 transition shadow-xl hover:-translate-y-1">
+                    Okay, Got it
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Use your existing Firebase Config
         const firebaseConfig = {
@@ -261,25 +364,40 @@
                 activeTab: 'dashboard',
                 todayDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
                 admissionList: [],
-                batches: [],
                 resources: [],
-                newBatch: { name: '', timing: '', fee: '', description: '' },
-                newResource: { title: '', batchId: '', link: '', type: 'pdf' },
+                liveClasses: [],
+                achievers: [],
+                newResource: { title: '', link: '', type: 'pdf_upload' },
                 notification: { title: '', body: '' },
-                newLiveClass: { url: '', time: '', batchId: '' },
+                newLiveClass: { url: '', time: '' },
                 searchQuery: '',
+                toast: { show: false, message: '', type: 'success' },
+                modal: { open: false, title: '', message: '' },
+                newAchiever: { name: '', achievement: '', details: '', image: '' },
+                cloudinaryCloudName: 'demo', // Replace with your cloud name
+                cloudinaryUploadPreset: 'docs_upload_example_preset', // Replace with your upload preset
+                isEditingAchiever: false,
+                currentAchieverId: null,
 
                 get filteredAdmissions() {
                     if (!this.searchQuery) {
                         return this.admissionList;
                     }
-                    return this.admissionList.filter(student => student.name.toLowerCase().includes(this.searchQuery.toLowerCase()) || student.phone.includes(this.searchQuery));
+                    return this.admissionList.filter(student => 
+                        (student.name && student.name.toLowerCase().includes(this.searchQuery.toLowerCase())) || 
+                        (student.phone && student.phone.includes(this.searchQuery))
+                    );
+                },
+
+                get filteredResources() {
+                    return this.resources;
                 },
 
                 init() {
                     this.fetchData('admissions', 'admissionList');
-                    this.fetchData('batches', 'batches');
                     this.fetchData('resources', 'resources');
+                    this.fetchData('live_classes', 'liveClasses');
+                    this.fetchData('achievers', 'achievers');
                 },
 
                 fetchData(collection, target) {
@@ -288,19 +406,18 @@
                     });
                 },
 
-                addBatch() {
-                    if (!this.newBatch.name || !this.newBatch.fee) return alert('Batch name and fee are required');
-                    db.collection('batches').add(this.newBatch).then(() => {
-                        this.newBatch = { name: '', timing: '', fee: '', description: '' };
-                    });
+                showAlert(title, message) {
+                    this.modal.title = title;
+                    this.modal.message = message;
+                    this.modal.open = true;
                 },
 
                 async uploadResource() {
-                    if (!this.newResource.title || !this.newResource.batchId) {
-                        return alert('Title and Batch are required.');
+                    if (!this.newResource.title) {
+                        return this.showAlert('Missing Title', 'Please enter a title for this resource.');
                     }
 
-                    if (this.newResource.type === 'pdf') {
+                    if (this.newResource.type === 'pdf_upload') {
                         const input = document.createElement('input');
                         input.type = 'file';
                         input.accept = 'application/pdf';
@@ -309,41 +426,131 @@
                             if (!file) return;
                             const storageRef = firebase.storage().ref(`resources/${Date.now()}_${file.name}`);
                             try {
-                                alert('Uploading PDF... Please wait.');
+                                this.showToast('Uploading PDF... Please wait.', 'success');
                                 const snapshot = await storageRef.put(file);
                                 const url = await snapshot.ref.getDownloadURL();
                                 this.newResource.link = url;
                                 this.saveResourceToDb();
                             } catch (err) {
                                 console.error(err);
-                                alert('Upload failed.');
+                                this.showAlert('Upload Failed', 'There was an error uploading the PDF.');
                             }
                         };
                         input.click();
                     } else {
-                        if (!this.newResource.link) return alert('Video URL is required.');
+                        // For videos or PDF links, we just need the link input
+                        if (!this.newResource.link) {
+                            return this.showAlert('Missing URL', 'A URL is required for this resource type.');
+                        }
                         this.saveResourceToDb();
                     }
                 },
 
                 saveResourceToDb() {
-                    db.collection('resources').add({
-                        ...this.newResource,
+                    let resourceType = 'video'; // Default for recorded videos
+                    if (this.newResource.type.includes('pdf')) {
+                        resourceType = 'pdf';
+                    } else if (this.newResource.type === 'youtube') {
+                        resourceType = 'youtube';
+                    }
+
+                    const resourceToSave = {
+                        title: this.newResource.title,
+                        link: this.newResource.link,
+                        type: resourceType,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => {
-                        alert('Resource saved successfully!');
-                        this.newResource = { title: '', batchId: '', link: '', type: 'pdf' };
+                    };
+                    db.collection('resources').add(resourceToSave).then(() => {
+                        this.showToast('Resource saved successfully!');
+                        this.newResource = { title: '', link: '', type: 'pdf_upload' };
                     });
                 },
 
                 scheduleLiveClass() {
-                    if (!this.newLiveClass.url || !this.newLiveClass.time || !this.newLiveClass.batchId) {
-                        return alert('All fields are required to schedule a live class.');
+                    if (!this.newLiveClass.url || !this.newLiveClass.time) {
+                        return this.showAlert('Missing Fields', 'All fields are required to schedule a live class.');
                     }
                     db.collection('live_classes').add(this.newLiveClass).then(() => {
-                        alert('Live class scheduled!');
-                        this.newLiveClass = { url: '', time: '', batchId: '' };
+                        this.showAlert('Success', 'Live class scheduled successfully!');
+                        this.newLiveClass = { url: '', time: '' };
                     });
+                },
+
+                async uploadAchieverImage(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    // Check if default credentials are still in use
+                    if (this.cloudinaryCloudName === 'demo' || this.cloudinaryUploadPreset === 'docs_upload_example_preset') {
+                        this.showAlert('Configuration Required', 'Please open staff.html and replace "demo" and "docs_upload_example_preset" with your actual Cloudinary Cloud Name and Unsigned Upload Preset.');
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', this.cloudinaryUploadPreset);
+
+                    try {
+                        this.showToast('Uploading to Cloudinary...', 'info');
+                        // Note: Replace 'demo' in the URL with this.cloudinaryCloudName if you change the variable above
+                        const response = await fetch(`https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        const data = await response.json();
+                        
+                        if (!response.ok) {
+                            throw new Error(data.error?.message || 'Upload failed with status ' + response.status);
+                        }
+
+                        if (data.secure_url) {
+                            this.newAchiever.image = data.secure_url;
+                            this.showToast('Image uploaded successfully!');
+                        } else {
+                            throw new Error('No secure_url found in response');
+                        }
+                    } catch (error) {
+                        console.error('Cloudinary upload error:', error);
+                        this.showAlert('Upload Failed', error.message);
+                    }
+                },
+
+                startEditAchiever(achiever) {
+                    this.isEditingAchiever = true;
+                    this.currentAchieverId = achiever.id;
+                    // Deep copy to avoid reactive changes on the list while typing
+                    this.newAchiever = { name: achiever.name, achievement: achiever.achievement, details: achiever.details, image: achiever.image || '' };
+                    // Scroll to the form
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+
+                cancelEditAchiever() {
+                    this.isEditingAchiever = false;
+                    this.currentAchieverId = null;
+                    this.newAchiever = { name: '', achievement: '', details: '', image: '' };
+                },
+
+                saveAchiever() {
+                    const achieverData = {
+                        name: this.newAchiever.name,
+                        achievement: this.newAchiever.achievement,
+                        details: this.newAchiever.details,
+                        image: this.newAchiever.image,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    if (this.isEditingAchiever) {
+                        db.collection('achievers').doc(this.currentAchieverId).update(achieverData).then(() => {
+                            this.showToast('Achiever updated successfully!');
+                            this.cancelEditAchiever();
+                        });
+                    } else {
+                        db.collection('achievers').add(achieverData).then(() => {
+                            this.showToast('New achiever added!');
+                            this.newAchiever = { name: '', achievement: '', details: '', image: '' };
+                        });
+                    }
                 },
 
                 deleteItem(collection, id) {
@@ -358,17 +565,31 @@
                 },
 
                 sendNotification() {
-                    if(!this.notification.title || !this.notification.body) return alert("Fill all fields");
-                    // Simulating sending to a Cloud Function
-                    alert(`Notification Queued:\nTitle: ${this.notification.title}\nTo: All Students`);
+                    if(!this.notification.title || !this.notification.body) {
+                        this.showToast("Title and body are required.", "error");
+                        return;
+                    }
                     db.collection('notifications').add({
                         ...this.notification,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => { this.notification = { title: '', body: '' };
+                    }).then(() => { 
+                        this.notification = { title: '', body: '' };
+                        this.showToast("Notification sent to all students!");
+                    }).catch(err => {
+                        console.error("Error sending notification:", err);
+                        this.showToast("Could not send notification.", "error");
                     });
                 },
 
+                showToast(message, type = 'success') {
+                    this.toast.message = message;
+                    this.toast.type = type;
+                    this.toast.show = true;
+                    setTimeout(() => { this.toast.show = false; }, 4000);
+                },
+
                 logout() {
+                    localStorage.removeItem('isStaffLoggedIn');
                     window.location.href = 'index.html';
                 }
             }

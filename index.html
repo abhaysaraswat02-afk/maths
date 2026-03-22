@@ -459,7 +459,7 @@
                 // New properties for application form
                 contactForm: { name: '', email: '', message: '' },
                 applicationForm: { name: '', email: '', course: '', batchId: '' },
-                staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com'], // Add Owner/Staff emails here
+                staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'], // Add Owner/Staff emails here
                 applicationStep: 'form', // 'form', 'otp', 'success'
                 enteredOtp: '',
                 isSubmitting: false,
@@ -731,9 +731,7 @@
                             try {
                                 const errorData = await res.json();
                                 errorMessage = errorData.error || errorMessage;
-                            } catch (e) {
-                                // Response body is not JSON or empty
-                            }
+                            } catch (e) {}
                             throw new Error(errorMessage);
                         }
 

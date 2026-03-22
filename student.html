@@ -412,9 +412,31 @@
                 },
 
                 saveProfile() {
-                    if (!this.studentId) return;
+                    if (!this.studentId) {
+                        // If no DB record exists for the user, create one now.
+                        if (!this.studentEmail) return;
+                        
+                        firebase.firestore().collection('admissions').add({
+                            name: this.studentName,
+                            email: this.studentEmail,
+                            fatherName: this.fatherName,
+                            studentClass: this.studentClass,
+                            dob: this.dob,
+                            bloodGroup: this.bloodGroup,
+                            photoURL: this.profilePic,
+                            status: 'Pending',
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then((docRef) => {
+                            this.studentId = docRef.id;
+                            this.showAlert('Success', 'Profile created successfully!');
+                            this.generateQRCode();
+                        }).catch(err => {
+                             this.showAlert('Error', 'Failed to create profile: ' + err.message);
+                        });
+                        return;
+                    }
                     
-                    db.collection('admissions').doc(this.studentId).update({
+                    firebase.firestore().collection('admissions').doc(this.studentId).update({
                         name: this.studentName,
                         fatherName: this.fatherName,
                         studentClass: this.studentClass,

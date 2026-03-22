@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "submit-application.js", "use": "@vercel/node" },
+    { "src": "*.{html,css,js,jpg,png,svg,ico}", "use": "@vercel/static" }
+  ],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "/submit-application.js" }
+  ]
+}

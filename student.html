@@ -36,9 +36,13 @@
             </button>
         </div>
         <nav class="mt-6 px-4 space-y-2">
-            <button @click="tab = 'dashboard'; mobileMenu = false" :class="tab === 'dashboard' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🏠 Dashboard</button>
             <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
             <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
+            <button @click="tab = 'notifications'; mobileMenu = false; hasNewNotifications = false" :class="tab === 'notifications' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all relative">
+                <span :class="{'animate-bounce': hasNewNotifications}">🔔</span> <span class="ml-2">Notifications</span>
+                <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+                <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
             <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
         </nav>
     </aside>
@@ -62,23 +66,19 @@
             </div>
         </header>
 
-        <div x-show="tab === 'dashboard'" class="space-y-6">
-            <h3 class="text-xl font-black">Your Learning Progress</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div class="p-6 bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-3xl shadow-lg shadow-blue-300">
-                    <p class="text-sm opacity-80 uppercase font-black">Completed Lessons</p>
-                    <p class="text-3xl font-bold mt-2">12 / 20</p>
-                </div>
-                <div class="p-6 bg-gradient-to-br from-purple-600 to-purple-800 text-white rounded-3xl shadow-lg shadow-purple-300">
-                    <p class="text-sm opacity-80 uppercase font-black">Average Score</p>
-                    <p class="text-3xl font-bold mt-2">88%</p>
-                </div>
-            </div>
-        </div>
-
         <div x-show="tab === 'videos'" class="space-y-6">
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h3 class="text-xl font-black">Video Lectures & Demos</h3>
+                <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                    <select x-model="selectedClass" class="w-full md:w-40 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none transition shadow-sm font-bold text-slate-600">
+                        <option value="All">All Classes</option>
+                        <option value="Class 9">Class 9</option>
+                        <option value="Class 10">Class 10</option>
+                        <option value="Class 11">Class 11</option>
+                        <option value="Class 12">Class 12</option>
+                    </select>
+                    <input type="text" x-model="videoSearchQuery" placeholder="Search videos..." class="w-full md:w-64 bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none transition shadow-sm">
+                </div>
             </div>
 
             <!-- Live Class Section -->
@@ -142,6 +142,22 @@
             </div>
         </div>
 
+        <div x-show="tab === 'notifications'" class="space-y-6">
+            <h3 class="text-xl font-black">Announcements & Updates</h3>
+            <div x-show="notifications.length === 0" class="text-slate-500 italic py-8">No notifications yet.</div>
+            <div class="space-y-4">
+                <template x-for="note in notifications" :key="note.id">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-bold text-lg text-slate-800" x-text="note.title"></h4>
+                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full" x-text="formatDate(note.timestamp)"></span>
+                        </div>
+                        <p class="text-slate-600 text-sm leading-relaxed" x-text="note.body"></p>
+                    </div>
+                </template>
+            </div>
+        </div>
+
         <div x-show="tab === 'profile'" class="max-w-md mx-auto bg-white p-8 rounded-3xl border shadow-sm">
             <h3 class="text-xl font-black mb-6">Profile Settings</h3>
             <div class="flex flex-col items-center gap-4">
@@ -150,11 +166,45 @@
                 <p class="text-[10px] text-slate-400">Allowed: JPG, PNG (Max 2MB) • Powered by Cloudinary</p>
             </div>
             <div class="mt-8 space-y-4">
-                <div>
-                    <label class="text-xs font-black uppercase text-slate-400">Full Name</label>
-                    <input type="text" x-model="studentName" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-xs font-black uppercase text-slate-400">Full Name</label>
+                        <input type="text" x-model="studentName" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold">
+                    </div>
+                    <div>
+                        <label class="text-xs font-black uppercase text-slate-400">Father's Name</label>
+                        <input type="text" x-model="fatherName" placeholder="Guardian Name" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold">
+                    </div>
+                    <div>
+                        <label class="text-xs font-black uppercase text-slate-400">Class / Grade</label>
+                        <select x-model="studentClass" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
+                            <option value="">Select Class</option>
+                            <option value="Class 9">Class 9</option>
+                            <option value="Class 10">Class 10</option>
+                            <option value="Class 11">Class 11</option>
+                            <option value="Class 12">Class 12</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs font-black uppercase text-slate-400">Date of Birth</label>
+                        <input type="date" x-model="dob" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
+                    </div>
+                    <div>
+                        <label class="text-xs font-black uppercase text-slate-400">Blood Group</label>
+                        <select x-model="bloodGroup" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
+                            <option value="">Select</option>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                        </select>
+                    </div>
                 </div>
-                <button class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200">Save Changes</button>
+                <button @click="saveProfile()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Save Changes</button>
                 <button @click="openIdCard()" class="w-full mt-2 bg-slate-800 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg hover:bg-slate-900 transition flex items-center justify-center gap-2">
                     <i class="fas fa-id-card"></i> View ID Card
                 </button>
@@ -164,7 +214,7 @@
     </main>
 
     <!-- ID Card Modal -->
-    <div x-show="showIdCard" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md" x-cloak x-transition.opacity>
+    <div x-show="showIdCard" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" x-cloak x-transition.opacity>
         <div class="relative w-full max-w-[340px]" @click.away="showIdCard = false">
             <div id="id-card-content" class="bg-white rounded-[1.5rem] overflow-hidden shadow-2xl transform transition-all">
                 <!-- Header -->
@@ -189,18 +239,33 @@
                     <h2 class="text-2xl font-black text-slate-900" x-text="studentName"></h2>
                     <div class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase tracking-wide mt-2">Active Student</div>
 
-                    <div class="mt-8 space-y-3 text-left">
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="mt-6 space-y-2 text-left text-sm">
+                        <!-- Personal Info Grid -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Class</span>
+                                <span class="font-bold text-slate-800" x-text="studentClass || '-'"></span>
+                            </div>
+                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
+                                 <span class="block text-[10px] font-bold text-slate-400 uppercase">DOB</span>
+                                <span class="font-bold text-slate-800" x-text="dob || '-'"></span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
+                            <div>
+                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Father's Name</span>
+                                <span class="font-bold text-slate-800" x-text="fatherName || '-'"></span>
+                            </div>
+                            <div class="text-right">
+                                 <span class="block text-[10px] font-bold text-slate-400 uppercase">Blood Grp</span>
+                                <span class="font-bold text-slate-800" x-text="bloodGroup || '-'"></span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl border border-slate-100">
                             <span class="text-xs font-bold text-slate-400 uppercase">Student ID</span>
-                            <span class="font-mono font-bold text-slate-700" x-text="'EMA-' + (studentPhone ? studentPhone.substr(studentPhone.length - 4) : '0000')"></span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold text-slate-400 uppercase">Phone</span>
-                            <span class="font-mono font-bold text-slate-700" x-text="studentPhone"></span>
-                        </div>
-                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold text-slate-400 uppercase">Academic Year</span>
-                            <span class="font-mono font-bold text-slate-700">2025-26</span>
+                            <span class="font-mono font-bold text-slate-700" x-text="studentId ? 'EMA-' + studentId.substring(0, 6).toUpperCase() : 'Generating...'"></span>
                         </div>
                     </div>
 
@@ -247,20 +312,35 @@
         function studentPortal() {
             return {
                 mobileMenu: false,
-                tab: 'dashboard',
+                tab: 'videos',
+                videoSearchQuery: '',
+                selectedClass: 'All',
                 studentName: 'Student Name',
-                studentPhone: '',
+                studentEmail: '',
+                fatherName: '',
+                studentClass: '',
+                dob: '',
+                bloodGroup: '',
                 studentId: '',
                 profilePic: '',
                 studentData: {},
                 modal: { open: false, title: '', message: '' },
+                academicYear: '',
                 showIdCard: false,
                 resources: [],
                 liveClasses: [],
+                notifications: [],
+                hasNewNotifications: false,
                 pageLoadTimestamp: null,
                 cloudinaryCloudName: 'dcxn3j3n6',
                 cloudinaryUploadPreset: 'eraofmathantics',
-                get recordedVideos() { return this.resources.filter(r => r.type === 'video' || r.type === 'youtube') },
+                get recordedVideos() { 
+                    return this.resources.filter(r => 
+                        (r.type === 'video' || r.type === 'youtube') && 
+                        (!this.videoSearchQuery || r.title.toLowerCase().includes(this.videoSearchQuery.toLowerCase())) &&
+                        (this.selectedClass === 'All' || r.classGrade === this.selectedClass)
+                    );
+                },
                 get pdfResources() { return this.resources.filter(r => r.type === 'pdf') },
                 
                 async init() {
@@ -283,20 +363,27 @@
                     const storage = firebase.storage();
                     
                     this.pageLoadTimestamp = new Date();
+                    // Academic year starts in April (Month 3). If Jan-Mar, use previous year.
+                    const startYear = this.pageLoadTimestamp.getMonth() < 3 ? this.pageLoadTimestamp.getFullYear() - 1 : this.pageLoadTimestamp.getFullYear();
+                    this.academicYear = `${startYear}-${(startYear + 1).toString().slice(-2)}`;
                     // Load saved student data
-                    this.studentPhone = localStorage.getItem('student_phone');
+                    this.studentEmail = localStorage.getItem('student_email');
                     
-                    if (this.studentPhone) {
+                    if (this.studentEmail) {
                         // Fetch real data from Firestore
                         try {
                             const snapshot = await db.collection('admissions')
-                                .where('phone', '==', this.studentPhone)
+                                .where('email', '==', this.studentEmail)
                                 .get();
                                 
                             if (!snapshot.empty) {
                                 const doc = snapshot.docs[0];
                                 const data = doc.data();
                                 this.studentName = data.name;
+                                this.fatherName = data.fatherName || '';
+                                this.studentClass = data.studentClass || '';
+                                this.dob = data.dob || '';
+                                this.bloodGroup = data.bloodGroup || '';
                                 this.studentData = data;
                                 this.studentId = doc.id;
                                 this.profilePic = data.photoURL || '';
@@ -308,6 +395,11 @@
                                 db.collection('live_classes').where('time', '>', new Date().toISOString()).onSnapshot(snap => {
                                     this.liveClasses = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
+                                // Fetch Notifications History
+                                const cutoffDate = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 hours ago
+                                db.collection('notifications').where('timestamp', '>=', cutoffDate).orderBy('timestamp', 'desc').onSnapshot(snap => {
+                                    this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                                });
 
                                 // NEW: Notification setup
                                 this.requestNotificationPermission();
@@ -317,6 +409,30 @@
                             console.error("Error fetching profile", e);
                         }
                     }
+                },
+
+                saveProfile() {
+                    if (!this.studentId) return;
+                    
+                    db.collection('admissions').doc(this.studentId).update({
+                        name: this.studentName,
+                        fatherName: this.fatherName,
+                        studentClass: this.studentClass,
+                        dob: this.dob,
+                        bloodGroup: this.bloodGroup
+                    }).then(() => {
+                        this.showAlert('Success', 'Profile updated successfully!');
+                        this.generateQRCode(); // Refresh QR code with new info
+                    }).catch(error => {
+                        console.error("Error updating profile: ", error);
+                        this.showAlert('Error', 'Failed to update profile. Please try again.');
+                    });
+                },
+
+                formatDate(timestamp) {
+                    if (!timestamp) return '';
+                    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 },
 
                 showAlert(title, message) {
@@ -342,15 +458,16 @@
                 },
 
                 listenForNotifications(db) {
-                    if (Notification.permission !== "granted") return;
-
                     db.collection('notifications')
                         .where('timestamp', '>', this.pageLoadTimestamp)
                         .onSnapshot(snapshot => {
                             snapshot.docChanges().forEach(change => {
                                 if (change.type === 'added') {
                                     const notificationData = change.doc.data();
-                                    this.showBrowserNotification(notificationData.title, notificationData.body);
+                                    this.hasNewNotifications = true;
+                                    if (Notification.permission === "granted") {
+                                        this.showBrowserNotification(notificationData.title, notificationData.body);
+                                    }
                                 }
                             });
                         });
@@ -375,11 +492,18 @@
                             body: formData
                         });
                         
-                        const data = await response.json();
-                        
                         if (!response.ok) {
-                            throw new Error(data.error?.message || 'Upload failed with status ' + response.status);
+                            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                            try {
+                                const errorData = await response.json();
+                                errorMessage = errorData.error?.message || errorMessage;
+                            } catch (e) {
+                                // Response body is not JSON or empty
+                            }
+                            throw new Error(errorMessage);
                         }
+
+                        const data = await response.json();
 
                         if (data.secure_url) {
                             this.profilePic = data.secure_url;
@@ -412,9 +536,9 @@
                         container.innerHTML = '';
                         
                         const name = this.studentName || 'Unknown';
-                        const phone = this.studentPhone || '0000000000';
-                        const displayId = 'EMA-' + (phone.length >= 4 ? phone.substr(phone.length - 4) : '0000');
-                        const info = `Name: ${name}\nID: ${displayId}\nPhone: ${phone}\nVerified: Yes`;
+                        const email = this.studentEmail || 'no-email';
+                        const displayId = this.studentId ? 'EMA-' + this.studentId.substring(0, 6).toUpperCase() : 'EMA-PENDING';
+                        const info = `Name: ${name}\nID: ${displayId}\nClass: ${this.studentClass}\nFather: ${this.fatherName}\nEmail: ${email}\nVerified: Yes`;
                         
                         new QRCode(container, {
                             text: info,

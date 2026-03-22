@@ -53,7 +53,7 @@
 
     <!-- Top Notification Bar -->
     <div class="bg-slate-900 text-white py-2 text-xs font-bold text-center tracking-widest uppercase hidden md:block">
-        <span class="text-yellow-400 mr-2">New Batch Alert:</span> Admissions open for Academic Year 2025-26 | <a href="#apply" class="underline hover:text-blue-300">Register Now</a>
+    <span class="text-yellow-400 mr-2">New Batch Alert:</span> Admissions open for Academic Year <span x-text="academicYear"></span> | <a href="#apply" class="underline hover:text-blue-300">Register Now</a>
     </div>
 
     <nav class="fixed top-0 w-full z-50 transition-all duration-300" 
@@ -114,28 +114,39 @@
                 </div>
                 <div class="mt-8 flex items-center gap-4 text-sm font-bold text-slate-500">
                     <div class="flex -space-x-2">
-                        <div class="w-8 h-8 rounded-full bg-slate-200 border-2 border-white"></div>
-                        <div class="w-8 h-8 rounded-full bg-slate-300 border-2 border-white"></div>
-                        <div class="w-8 h-8 rounded-full bg-slate-400 border-2 border-white"></div>
+                        <img src="channels4_profile (1).jpg" class="w-8 h-8 rounded-full border-2 border-white object-cover animate-float" style="animation-delay: 0s">
+                        <img src="channels4_profile (1).jpg" class="w-8 h-8 rounded-full border-2 border-white object-cover animate-float" style="animation-delay: 1s">
+                        <img src="channels4_profile (1).jpg" class="w-8 h-8 rounded-full border-2 border-white object-cover animate-float" style="animation-delay: 2s">
                     </div>
                     <p>Trusted by 10,000+ Students</p>
                 </div>
             </div>
             <div class="hidden md:block relative">
-                <!-- Placeholder for Hero Image (Student/Teacher) -->
-                <div class="bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-500 border-4 border-white relative z-10">
-                    <div class="absolute -top-6 -right-6 bg-yellow-400 text-slate-900 font-black px-4 py-2 rounded-lg shadow-lg rotate-12 z-20">
-                        AIR 1 Produced!
+                <!-- Animated Hero Image (Student/Teacher) -->
+                <div class="bg-slate-900 rounded-[2.5rem] p-6 shadow-2xl transform rotate-2 hover:rotate-0 transition-all duration-500 border-4 border-white relative z-10 group">
+                    <div class="absolute -top-6 -right-6 bg-yellow-400 text-slate-900 font-black px-4 py-2 rounded-lg shadow-lg rotate-12 z-20 transition-transform group-hover:rotate-6" x-text="heroSlides[currentHeroSlide].badge"></div>
+                    
+                    <div class="bg-slate-800 rounded-3xl overflow-hidden aspect-[4/3] relative">
+                        <template x-for="(slide, index) in heroSlides" :key="index">
+                            <img :src="slide.image" class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000 ease-in-out" :class="currentHeroSlide === index ? 'opacity-100 scale-100' : 'opacity-0 scale-110'" alt="Hero Image">
+                        </template>
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-transparent to-transparent"></div>
                     </div>
-                    <div class="bg-slate-800 rounded-3xl overflow-hidden aspect-[4/3] flex items-center justify-center">
-                        <i class="fas fa-chalkboard-teacher text-6xl text-slate-600"></i>
-                    </div>
-                    <div class="mt-4 flex justify-between items-center text-white">
-                        <div>
-                            <p class="font-bold text-lg">Live Class Setup</p>
-                            <p class="text-slate-400 text-xs">Interactive & Engaging</p>
+
+                    <div class="mt-4 flex justify-between items-center text-white relative h-12">
+                        <div class="relative w-full">
+                            <template x-for="(slide, index) in heroSlides" :key="index">
+                                <div x-show="currentHeroSlide === index" 
+                                     x-transition:enter="transition ease-out duration-500"
+                                     x-transition:enter-start="opacity-0 translate-y-2"
+                                     x-transition:enter-end="opacity-100 translate-y-0"
+                                     class="absolute top-0 left-0">
+                                    <p class="font-bold text-lg" x-text="slide.title"></p>
+                                    <p class="text-slate-400 text-xs" x-text="slide.subtitle"></p>
+                                </div>
+                            </template>
                         </div>
-                        <div class="bg-red-500 p-3 rounded-full animate-pulse">
+                        <div class="bg-red-500 p-3 rounded-full animate-pulse shadow-lg shadow-red-500/50 flex-shrink-0 z-10">
                             <i class="fas fa-video"></i>
                         </div>
                     </div>
@@ -259,15 +270,14 @@
                             <input type="text" x-model="applicationForm.name" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter student name">
                     </div>
                     <div>
-                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Phone Number</label>
-                            <div class="relative">
-                                <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-slate-400">+91</span>
-                                <input type="tel" x-model="applicationForm.phone" required pattern="[6-9]{1}[0-9]{9}" class="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Mobile number">
-                            </div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Email Address</label>
+                            <input type="email" x-model="applicationForm.email" required class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="student@example.com">
                     </div>
                 </div>
-                <!-- reCAPTCHA container for Firebase Auth -->
-                <div id="recaptcha-container" class="flex justify-center"></div>
+                
+                <div class="text-xs text-slate-400 text-center">
+                    We will send a verification code to your email.
+                </div>
 
                 <button type="submit" :disabled="isSubmitting" class="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-blue-600 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
                     <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
@@ -277,7 +287,7 @@
     
             <!-- Step 2: OTP Verification -->
             <form x-show="applicationStep === 'otp'" @submit.prevent="verifyOtpAndRegister" class="space-y-6 text-center">
-                <p class="text-slate-600">Please enter the 6-digit OTP sent to <strong x-text="applicationForm.phone"></strong>.</p>
+                <p class="text-slate-600">Please enter the 6-digit OTP sent to <strong x-text="applicationForm.email"></strong>.</p>
                 <div>
                     <label class="block text-xs font-bold uppercase text-slate-400 mb-2">Verification Code</label>
                     <input type="text" x-model="enteredOtp" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="w-full max-w-xs mx-auto bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-[0.75rem] font-bold">
@@ -386,7 +396,7 @@
             </div>
         </div>
         <div class="max-w-7xl mx-auto px-6 pt-12 mt-12 border-t border-slate-800 text-center text-xs font-bold text-slate-500 uppercase tracking-widest">
-            © 2026 Era of MathAntics. Designed for Excellence.
+            © <span x-text="new Date().getFullYear()"></span> Era of MathAntics. Designed for Excellence.
         </div>
     </footer>
 
@@ -427,13 +437,29 @@
                 typewriterText: '',
                 typeWords: ['Modern Math', 'Logic Skills', 'Clear Results', 'Your Future'],
                 animatedStats: { students: 0, courses: 0, lessons: 0, years: 0 },
+                academicYear: '',
+                heroSlides: [
+                    { 
+                        image: 'channels4_profile (1).jpg', 
+                        title: 'Student Success', 
+                        subtitle: 'Learn from the best peers', 
+                        badge: 'Top Rankers' 
+                    },
+                    { 
+                        image: 'channels4_profile (1).jpg', 
+                        title: 'Expert Teachers', 
+                        subtitle: 'Live Interactive Sessions', 
+                        badge: 'AIR 1 Produced' 
+                    }
+                ],
+                currentHeroSlide: 0,
                 starAchievers: [],
                 batches: [],
 
                 // New properties for application form
                 contactForm: { name: '', email: '', message: '' },
-                applicationForm: { name: '', phone: '', course: '', batchId: '' },
-                staffNumbers: ['8445837333', '9719909279'], // Add Owner/Staff numbers here
+                applicationForm: { name: '', email: '', course: '', batchId: '' },
+                staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com'], // Add Owner/Staff emails here
                 applicationStep: 'form', // 'form', 'otp', 'success'
                 enteredOtp: '',
                 isSubmitting: false,
@@ -446,10 +472,11 @@
                 youtubeVideos: [],
 
                 init() {
+                    this.calculateAcademicYear();
                     this.startTypewriter();
                     this.initStats();
+                    this.startHeroSlider();
                     this.setupScroll();
-                    this.initRecaptcha();
                     // Initial Reveal check
                     setTimeout(() => this.checkReveal(), 100);
                     this.fetchBatches();
@@ -476,6 +503,12 @@
                             };
                         });
                     });
+                },
+
+                calculateAcademicYear() {
+                    const date = new Date();
+                    const year = date.getFullYear();
+                    this.academicYear = `${year}-${(year + 1).toString().slice(-2)}`;
                 },
 
                 showAlert(title, message) {
@@ -528,6 +561,12 @@
                     animate('years', 8);
                 },
 
+                startHeroSlider() {
+                    setInterval(() => {
+                        this.currentHeroSlide = (this.currentHeroSlide + 1) % this.heroSlides.length;
+                    }, 4000);
+                },
+
                 setupScroll() {
                     window.addEventListener('scroll', () => {
                         this.scrolled = window.scrollY > 50;
@@ -541,17 +580,6 @@
                             el.classList.add('revealed');
                         }
                     });
-                },
-
-                initRecaptcha() {
-                    // Renders the reCAPTCHA widget required for Firebase phone auth
-                    // This needs to be run after the page loads
-                    setTimeout(() => {
-                        window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
-                            'size': 'normal',
-                            'callback': (response) => { /* reCAPTCHA solved, user can now click "Get OTP" */ }
-                        });
-                    }, 500);
                 },
 
                 updateCourseName(event) {
@@ -572,20 +600,33 @@
 
                 resendOtp() {
                     if (this.resendDisabled) return;
-
-                    const phoneNumber = "+91" + this.applicationForm.phone;
-                    const appVerifier = window.recaptchaVerifier;
-
-                    // Re-trigger the sign-in process to get a new OTP
-                    firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
-                        .then((confirmationResult) => {
-                            window.confirmationResult = confirmationResult;
+                    this.isSubmitting = true;
+                    
+                    fetch('/api/send-otp', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: this.applicationForm.email })
+                    })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(errorData => {
+                                throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+                            }).catch(() => {
+                                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                            if(!data.success) throw new Error(data.error);
                             this.showAlert('OTP Sent', 'A new verification code has been sent to your phone.');
                             this.startResendTimer();
+                            this.isSubmitting = false;
                         }).catch((error) => {
                             this.showAlert("Error", "Failed to resend OTP: " + error.message);
                             // Don't start timer on failure, allow user to try again
                             this.resendDisabled = false;
+                            this.isSubmitting = false;
                         });
                 },
 
@@ -596,32 +637,23 @@
                         this.showAlert('Missing Information', 'Please fill in your name to register.');
                         return;
                     }
-                    if (!this.applicationForm.phone) {
-                        this.showAlert('Missing Information', 'Please enter your phone number.');
+                    if (!this.applicationForm.email) {
+                        this.showAlert('Missing Information', 'Please enter your email address.');
                         return;
                     }
-                    if (!/^[6-9]{1}[0-9]{9}$/.test(this.applicationForm.phone)) {
-                        this.showAlert('Invalid Phone', 'Please enter a valid 10-digit Indian mobile number.');
-                        return;
-                    }
+                    // Basic email regex
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (!emailRegex.test(this.applicationForm.email)) {
+                         this.showAlert('Invalid Email', 'Please enter a valid email address.');
+                         return;
+                     }
 
                     this.isSubmitting = true;
                     this.isExistingUser = false; // Reset on each submission
 
-                    const phoneNumber = "+91" + this.applicationForm.phone;
-                    const appVerifier = window.recaptchaVerifier;
-
-                    if (!appVerifier) {
-                        this.showAlert("Please Wait", "Security check is initializing. Please wait a moment or refresh the page.");
-                        this.isSubmitting = false;
-                        return;
-                    }
-
-                    // 1. Attempt Duplicate Check (Fail-safe)
-                    // Note: Removed "Confirmed" status check to allow Pending students to log in and pay
                     try {
                         const snap = await db.collection("admissions")
-                                             .where("phone", "==", this.applicationForm.phone)
+                                             .where("email", "==", this.applicationForm.email)
                                              .get();
 
                         if (!snap.empty) {
@@ -633,7 +665,7 @@
 
                     // Check if Login Mode but user not found
                     if (this.isLoginMode && !this.isExistingUser) {
-                        this.showAlert("Account Not Found", "No account found with this phone number. Please switch to 'New Admission' to register.");
+                        this.showAlert("Account Not Found", "No account found with this email. Please switch to 'New Admission' to register.");
                         this.isSubmitting = false;
                         return;
                     }
@@ -649,23 +681,32 @@
 
                     // 2. Send OTP
                     try {
-                        firebase.auth().signInWithPhoneNumber(phoneNumber, appVerifier)
-                            .then((confirmationResult) => {
-                                // SMS sent. Show form to enter the code.
-                                window.confirmationResult = confirmationResult;
-                                this.applicationStep = 'otp';
-                                this.isSubmitting = false;
-                                this.startResendTimer(); // Start cooldown timer
-                            }).catch((error) => {
-                                console.error("SMS not sent", error);
-                                if (error.code === 'auth/billing-not-enabled') {
-                                    this.showAlert("Configuration Error", "Billing is disabled. Please use the test numbers configured in Firebase.");
-                                } else {
-                                    this.showAlert("OTP Error", "Error sending OTP: " + error.message);
-                                }
-                                // In case of error, you might need to reset reCAPTCHA
-                                this.isSubmitting = false;
-                            });
+                        const response = await fetch('/api/send-otp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: this.applicationForm.email })
+                        });
+
+                        if (!response.ok) {
+                            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                            try {
+                                const errorData = await response.json();
+                                errorMessage = errorData.error || errorMessage;
+                            } catch (e) {
+                                // Response body is not JSON or empty
+                            }
+                            throw new Error(errorMessage);
+                        }
+
+                        const data = await response.json();
+                        
+                        if (data.success) {
+                             this.applicationStep = 'otp';
+                             this.isSubmitting = false;
+                             this.startResendTimer();
+                        } else {
+                            throw new Error(data.error || 'Failed to send OTP');
+                        }
                     } catch (error) {
                         console.error("General error:", error);
                         this.showAlert('Error', 'An unexpected error occurred: ' + error.message);
@@ -677,9 +718,31 @@
                     if (!this.enteredOtp) return this.showAlert("Missing OTP", "Please enter the 6-digit verification code.");
                     this.isSubmitting = true;
 
-                    window.confirmationResult.confirm(this.enteredOtp).then(async (result) => {
+                    try {
+                        // Verify via Backend
+                        const res = await fetch('/api/verify-otp', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ email: this.applicationForm.email, code: this.enteredOtp })
+                        });
+
+                        if (!res.ok) {
+                            let errorMessage = `HTTP ${res.status}: ${res.statusText}`;
+                            try {
+                                const errorData = await res.json();
+                                errorMessage = errorData.error || errorMessage;
+                            } catch (e) {
+                                // Response body is not JSON or empty
+                            }
+                            throw new Error(errorMessage);
+                        }
+
+                        const data = await res.json();
+                        
+                        if (!data.success) throw new Error(data.error);
+
                         // 1. Check if the user is a Staff Member or Owner
-                        if (this.staffNumbers.includes(this.applicationForm.phone)) {
+                        if (this.staffEmails.includes(this.applicationForm.email)) {
                             // Allow owner to choose portal
                             if (confirm("Staff Access Detected.\n\nPress OK to enter Staff Dashboard.\nPress Cancel to login as a Student.")) {
                                 localStorage.setItem('isStaffLoggedIn', 'true');
@@ -695,19 +758,26 @@
                             // This is a returning user, just log them in.
                         } else {
                             // This is a new user, create a new admission record.
-                            await db.collection("admissions").add({ ...this.applicationForm, status: 'Pending', feePaid: 0, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+                            const regResponse = await fetch('/api/submit-application', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify(this.applicationForm)
+                            });
+                            if (!regResponse.ok) {
+                                throw new Error('Registration failed on server.');
+                            }
                         }
 
                         // Common logic for both new and existing users
                         localStorage.setItem('isStudentLoggedIn', 'true');
-                        localStorage.setItem('student_phone', this.applicationForm.phone);
+                        localStorage.setItem('student_email', this.applicationForm.email);
                         this.applicationStep = 'success';
                         setTimeout(() => { window.location.href = 'student.html'; }, 3000);
-                    }).catch((error) => {
+                    } catch (error) {
                         console.error("Verification failed:", error);
-                        this.showAlert("Verification Failed", "Invalid OTP. Please check the code and try again.");
+                        this.showAlert("Verification Failed", error.message || "Invalid OTP. Please check the code and try again.");
                         this.isSubmitting = false;
-                    });
+                    }
                 },
 
                 sendMessage() {

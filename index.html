@@ -269,9 +269,34 @@
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Full Name</label>
                             <input type="text" x-model="applicationForm.name" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter student name">
                     </div>
-                    <div>
+                    <div :class="isLoginMode ? 'md:col-span-2' : ''">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Email Address</label>
                             <input type="email" x-model="applicationForm.email" required class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="student@example.com">
+                    </div>
+                    <!-- Registration Specific Fields -->
+                    <div x-show="!isLoginMode" class="grid md:grid-cols-2 gap-6 md:col-span-2">
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Father's Name</label>
+                            <input type="text" x-model="applicationForm.fatherName" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Guardian Name">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Date of Birth</label>
+                            <input type="date" x-model="applicationForm.dob" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none text-slate-700">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Class / Grade</label>
+                            <select x-model="applicationForm.studentClass" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none text-slate-700">
+                                <option value="">Select Class</option>
+                                <option value="Class 9">Class 9</option>
+                                <option value="Class 10">Class 10</option>
+                                <option value="Class 11">Class 11</option>
+                                <option value="Class 12">Class 12</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Present School Name</label>
+                            <input type="text" x-model="applicationForm.schoolName" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none text-slate-700" placeholder="Enter your school name">
+                        </div>
                     </div>
                 </div>
                 
@@ -296,7 +321,7 @@
                     <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
                     <span x-text="isSubmitting ? 'Verifying...' : 'Verify & Complete Registration'"></span>
                 </button>
-                <button type="button" @click="applicationStep = 'form'" class="text-sm text-slate-500 hover:text-blue-600">Change phone number</button>
+                <button type="button" @click="applicationStep = 'form'" class="text-sm text-slate-500 hover:text-blue-600">Change email address</button>
             </form>
     
             <div x-show="applicationStep === 'otp'" class="mt-4 text-center">
@@ -458,7 +483,7 @@
 
                 // New properties for application form
                 contactForm: { name: '', email: '', message: '' },
-                applicationForm: { name: '', email: '', course: '', batchId: '' },
+                applicationForm: { name: '', email: '', fatherName: '', studentClass: '', dob: '', schoolName: '', course: '', batchId: '' },
                 staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'], // Add Owner/Staff emails here
                 applicationStep: 'form', // 'form', 'otp', 'success'
                 enteredOtp: '',
@@ -633,10 +658,12 @@
 
                 // New methods for application
                 async handleApplicationSubmit() {
-                    // In login mode, we only need a phone number. For new admission, we need a name too.
-                    if (!this.isLoginMode && !this.applicationForm.name) {
-                        this.showAlert('Missing Information', 'Please fill in your name to register.');
-                        return;
+                    // In login mode, we only need an email. For new admission, we need more details.
+                    if (!this.isLoginMode) {
+                        if (!this.applicationForm.name || !this.applicationForm.fatherName || !this.applicationForm.studentClass || !this.applicationForm.dob || !this.applicationForm.schoolName) {
+                            this.showAlert('Missing Information', 'Please fill in all details to register.');
+                            return;
+                        }
                     }
                     if (!this.applicationForm.email) {
                         this.showAlert('Missing Information', 'Please enter your email address.');
@@ -768,6 +795,10 @@
                             await db.collection("admissions").add({
                                 name: this.applicationForm.name,
                                 email: this.applicationForm.email,
+                                fatherName: this.applicationForm.fatherName,
+                                studentClass: this.applicationForm.studentClass,
+                                dob: this.applicationForm.dob,
+                                schoolName: this.applicationForm.schoolName,
                                 status: 'Pending',
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 lastLogin: firebase.firestore.FieldValue.serverTimestamp()

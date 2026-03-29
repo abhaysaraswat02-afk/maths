@@ -175,6 +175,20 @@
                         <span class="text-[8px] font-bold uppercase">Done</span>
                     </div>
                 </div>
+
+                <!-- Custom Duration Settings -->
+                <div class="mt-10 pt-8 border-t border-slate-50">
+                    <div class="flex flex-col items-center gap-3">
+                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Adjust Work Duration</label>
+                        <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl">
+                            <input type="range" min="5" max="100" step="5" 
+                                :value="pomodoro.settings.work / 60" 
+                                @input="updateWorkDuration($event.target.value)"
+                                class="w-40 md:w-64 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-500">
+                            <span class="text-sm font-black text-slate-700 w-16" x-text="(pomodoro.settings.work / 60) + ' min'"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -514,6 +528,14 @@
                     const mins = Math.floor(seconds / 60);
                     const secs = seconds % 60;
                     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                },
+
+                updateWorkDuration(mins) {
+                    const seconds = mins * 60;
+                    this.pomodoro.settings.work = seconds;
+                    if (this.pomodoro.mode === 'work' && !this.pomodoro.isActive) {
+                        this.pomodoro.timeLeft = seconds;
+                    }
                 },
 
                 saveProfile() {

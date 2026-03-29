@@ -103,10 +103,13 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     <template x-for="rec in recordedVideos" :key="rec.id">
                         <a :href="rec.link" target="_blank" class="block bg-white border rounded-2xl overflow-hidden hover:shadow-lg transition">
-                            <div class="aspect-video bg-slate-900 relative flex items-center justify-center">
+                            <div class="aspect-video bg-slate-900 relative flex items-center justify-center group">
                                 <i class="fas fa-play text-white text-2xl"></i>
-                                <template x-if="rec.type === 'youtube'">
-                                     <img :src="'https://img.youtube.com/vi/' + (rec.link.split('v=')[1] || rec.link.split('/').pop()) + '/mqdefault.jpg'" class="absolute inset-0 w-full h-full object-cover opacity-80 hover:opacity-100 transition">
+                                <template x-if="extractYouTubeID(rec.link)">
+                                     <img :src="'https://img.youtube.com/vi/' + extractYouTubeID(rec.link) + '/mqdefault.jpg'" class="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 transition">
+                                </template>
+                                <template x-if="isNewResource(rec.timestamp)">
+                                    <span class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2 py-1 rounded-lg uppercase tracking-widest shadow-lg animate-pulse z-10">New Upload</span>
                                 </template>
                             </div>
                             <div class="p-4">
@@ -356,6 +359,25 @@
         </div>
     </div>
 
+    <!-- ID Card Welcome Modal -->
+    <div x-show="welcomeModal.open" class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" x-cloak x-transition.opacity>
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center transform transition-all" @click.away="welcomeModal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4 border-white">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 mb-2">Your ID Card is Ready!</h3>
+            <p class="text-slate-500 font-medium mb-8 leading-relaxed">Welcome to the family! Your official student ID card has been generated. You can view or download it now.</p>
+            <div class="space-y-3">
+                <button @click="welcomeModal.open = false; openIdCard()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg hover:-translate-y-0.5">
+                    View ID Card
+                </button>
+                <button @click="downloadIdCardFromWelcome()" class="w-full bg-slate-100 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-200 transition">
+                    Download PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Notification Modal -->
     <div x-show="modal.open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak x-transition.opacity>
         <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 transform transition-all" @click.away="modal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-4">
@@ -388,6 +410,9 @@
                 studentId: '',
                 profilePic: '',
                 studentData: {},
+                youtubeVideos: [],
+                youtubeApiKey: 'YOUR_API_KEY_HERE', // Replace with your Google API Key
+                youtubeChannelId: 'YOUR_CHANNEL_ID_HERE', // Replace with your Channel ID (starts with UC)
                 modal: { open: false, title: '', message: '' },
                 academicYear: '',
                 showIdCard: false,
@@ -396,6 +421,7 @@
                 notifications: [],
                 hasNewNotifications: false,
                 pageLoadTimestamp: null,
+                welcomeModal: { open: false },
                 pomodoro: {
                     timeLeft: 1500,
                     isActive: false,
@@ -411,11 +437,17 @@
                 cloudinaryCloudName: 'dcxn3j3n6',
                 cloudinaryUploadPreset: 'eraofmathantics',
                 get recordedVideos() { 
-                    return this.resources.filter(r => 
-                        (r.type === 'video' || r.type === 'youtube') && 
+                    const firebaseVideos = this.resources.filter(r => r.type === 'video' || r.type === 'youtube');
+                    const combined = [...firebaseVideos, ...this.youtubeVideos];
+                    
+                    return combined.filter(r => 
                         (!this.videoSearchQuery || r.title.toLowerCase().includes(this.videoSearchQuery.toLowerCase())) &&
                         (this.selectedClass === 'All' || r.classGrade === this.selectedClass)
-                    );
+                    ).sort((a, b) => {
+                        const timeA = a.timestamp ? (a.timestamp.toDate ? a.timestamp.toDate() : new Date(a.timestamp)) : 0;
+                        const timeB = b.timestamp ? (b.timestamp.toDate ? b.timestamp.toDate() : new Date(b.timestamp)) : 0;
+                        return timeB - timeA;
+                    });
                 },
                 get pdfResources() { return this.resources.filter(r => r.type === 'pdf') },
                 
@@ -463,6 +495,9 @@
                                 this.studentId = doc.id;
                                 this.profilePic = data.photoURL || '';
 
+                                // Fetch Auto-sync Videos from YouTube
+                                this.fetchYouTubeVideos();
+
                                 // Fetch Global Resources
                                 db.collection('resources').orderBy('timestamp', 'desc').onSnapshot(snap => {
                                     this.resources = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
@@ -476,6 +511,11 @@
                                     this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
 
+                                if (localStorage.getItem('showIdCardWelcome') === 'true') {
+                                    this.welcomeModal.open = true;
+                                    localStorage.removeItem('showIdCardWelcome');
+                                }
+
                                 // NEW: Notification setup
                                 this.requestNotificationPermission();
                                 this.listenForNotifications(db);
@@ -483,6 +523,32 @@
                         } catch (e) {
                             console.error("Error fetching profile", e);
                         }
+                    }
+                },
+
+                async fetchYouTubeVideos() {
+                    if (!this.youtubeApiKey || this.youtubeApiKey.includes('YOUR_API')) return;
+                    
+                    // The "Uploads" playlist ID is usually your Channel ID with 'UU' instead of 'UC'
+                    const uploadsPlaylistId = this.youtubeChannelId.replace(/^UC/, 'UU');
+                    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&key=${this.youtubeApiKey}`;
+
+                    try {
+                        const response = await fetch(url);
+                        const data = await response.json();
+                        
+                        if (data.items) {
+                            this.youtubeVideos = data.items.map(item => ({
+                                id: item.snippet.resourceId.videoId,
+                                title: item.snippet.title,
+                                link: `https://www.youtube.com/watch?v=${item.snippet.resourceId.videoId}`,
+                                type: 'youtube',
+                                timestamp: item.snippet.publishedAt,
+                                classGrade: 'All'
+                            }));
+                        }
+                    } catch (error) {
+                        console.error("YouTube Sync Error:", error);
                     }
                 },
 
@@ -584,6 +650,19 @@
                     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 },
 
+                extractYouTubeID(url) {
+                    if (!url) return null;
+                    const match = url.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/user\/\S+|\/ytscreeningroom\?v=))([\w\-]{10,12})\b/);
+                    return match ? match[1] : null;
+                },
+
+                isNewResource(timestamp) {
+                    if (!timestamp) return true; // Show as new if timestamp is still pending
+                    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                    const hoursDiff = (new Date() - date) / (1000 * 60 * 60);
+                    return hoursDiff < 48; // Mark as "New" for 48 hours
+                },
+
                 showAlert(title, message) {
                     this.modal.title = title;
                     this.modal.message = message;
@@ -677,6 +756,18 @@
                     this.showIdCard = true;
                     // Allow modal to render before generating QR
                     setTimeout(() => this.generateQRCode(), 500);
+                },
+
+                downloadIdCardFromWelcome() {
+                    this.welcomeModal.open = false;
+                    this.showIdCard = true;
+                    // Allow modal to render before generating QR and capturing PDF
+                    setTimeout(() => {
+                        this.generateQRCode();
+                        setTimeout(() => {
+                            this.downloadIdCard();
+                        }, 800);
+                    }, 500);
                 },
 
                 generateQRCode() {

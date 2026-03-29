@@ -108,7 +108,7 @@
                     <a href="#apply" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 flex items-center gap-2">
                         Explore Batches <i class="fas fa-arrow-right"></i>
                     </a>
-                    <a href="#apply" class="bg-white text-slate-900 border-2 border-slate-200 px-8 py-4 rounded-xl font-bold hover:border-blue-600 hover:text-blue-600 transition-all flex items-center gap-2">
+                    <a href="#demos" class="bg-white text-slate-900 border-2 border-slate-200 px-8 py-4 rounded-xl font-bold hover:border-blue-600 hover:text-blue-600 transition-all flex items-center gap-2">
                         <i class="fas fa-play-circle"></i> Watch Demo
                     </a>
                 </div>
@@ -240,6 +240,44 @@
                         <h3 class="text-xl font-bold mb-2">Join Classes</h3>
                         <p class="text-slate-400">Check the dashboard for live class schedules and join sessions directly from your browser.</p>
                     </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo Videos Section -->
+    <section id="demos" class="py-24 bg-white reveal">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Watch & Learn</span>
+                <h2 class="text-3xl md:text-5xl font-black text-slate-900 mt-2">Our Demo <span class="text-gradient">Lectures</span></h2>
+                <p class="text-slate-500 font-bold mt-4 max-w-2xl mx-auto">Experience our teaching methodology first-hand with these sample lectures from our top educators.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/6bgs-EINbJ0?si=pzvmI5kS13ajKIZR" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/wmYJS5SVaIc?si=cV34cxxO2hMtXE0e" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/soVvWgx8pCM?si=1_4OfRts4E9O1O9K" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/6uXk2y6vxRA?si=qu-X6EUK3WTgZdfI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                    <iframe class="w-full h-full" src="https://www.youtube.com/embed/OzDAMBJTZ18?si=ChHwoAgLc5odShkB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                </div>
+
+                <!-- Subscribe CTA Card -->
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative flex flex-col items-center justify-center p-8 text-center bg-gradient-to-br from-slate-900 to-slate-800 group">
+                    <div class="w-16 h-16 bg-red-600/10 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-500">
+                        <i class="fab fa-youtube text-4xl text-[#FF0000]"></i>
+                    </div>
+                    <h4 class="text-white font-black text-xl mb-4 tracking-tight">Want More Lessons?</h4>
+                    <a href="https://youtube.com/@eraofmathantics?sub_confirmation=1" target="_blank" class="bg-[#FF0000] text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition shadow-xl shadow-red-500/40">Subscribe Now</a>
                 </div>
             </div>
         </div>
@@ -804,6 +842,7 @@
                                 lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                             });
                         }
+                        localStorage.setItem('showIdCardWelcome', 'true');
 
                         // Common logic for both new and existing users
                         localStorage.setItem('isStudentLoggedIn', 'true');

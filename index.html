@@ -665,6 +665,9 @@
                         }
                     } catch (dbError) {
                         console.error("User check failed:", dbError);
+                        this.showAlert("Access Denied", "Unable to connect to database. Please check your internet or security rules.");
+                        this.isSubmitting = false;
+                        return;
                     }
 
                     if (this.isLoginMode && !this.isExistingUser) {

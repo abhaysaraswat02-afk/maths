@@ -41,7 +41,7 @@ try {
   }
   if (admin.apps.length) {
     db = admin.firestore(); // Use Firestore for consistency with frontend
-    console.log("Firebase initialized successfully.");
+    console.log(`Firebase initialized for project: ${process.env.FIREBASE_PROJECT_ID}`);
   }
 } catch (error) {
   console.error("Error initializing Firebase:", error.message);
@@ -109,11 +109,16 @@ app.post('/api/send-otp', async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
-    // Store OTP in Firestore (expires in 5 minutes)
-    await db.collection('otp_codes').doc(email).set({
-      code: otp,
-      expiresAt: Date.now() + 5 * 60 * 1000
-    });
+    try {
+      // Store OTP in Firestore (expires in 5 minutes)
+      await db.collection('otp_codes').doc(email).set({
+        code: otp,
+        expiresAt: Date.now() + 5 * 60 * 1000
+      });
+    } catch (dbErr) {
+      console.error("Firestore Write Error:", dbErr);
+      throw new Error(`Database error: ${dbErr.message}`);
+    }
 
     // Send Email
     await transporter.sendMail({

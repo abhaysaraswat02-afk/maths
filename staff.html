@@ -4,13 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staff Hub | Era of MathAntics</title>
-    <script>
-        // Security Check: Redirect to home if not logged in as staff
-        if (localStorage.getItem('isStaffLoggedIn') !== 'true') {
-            window.location.href = 'index.html';
-        }
-    </script>
-    
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -426,10 +419,11 @@
                 toast: { show: false, message: '', type: 'success' },
                 modal: { open: false, title: '', message: '' },
                 newAchiever: { name: '', achievement: '', details: '', image: '' },
-                cloudinaryCloudName: 'demo', // Replace with your cloud name
-                cloudinaryUploadPreset: 'docs_upload_example_preset', // Replace with your upload preset
+                cloudinaryCloudName: 'dcxn3j3n6', // Updated to match student portal
+                cloudinaryUploadPreset: 'eraofmathantics',
                 isEditingAchiever: false,
                 currentAchieverId: null,
+                staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
 
                 get filteredAdmissions() {
                     if (!this.searchQuery) {
@@ -446,6 +440,15 @@
                 },
 
                 init() {
+                    // Production-grade Security Check
+                    const userEmail = localStorage.getItem('student_email');
+                    const isStaff = localStorage.getItem('isStaffLoggedIn') === 'true';
+                    
+                    if (!isStaff || !this.staffEmails.includes(userEmail)) {
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
                     this.fetchData('admissions', 'admissionList');
                     this.fetchData('resources', 'resources');
                     this.fetchData('live_classes', 'liveClasses');

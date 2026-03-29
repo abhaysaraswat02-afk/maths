@@ -33,15 +33,18 @@ try {
     if (serviceAccount.privateKey && serviceAccount.clientEmail) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
-        databaseURL: process.env.FIREBASE_DATABASE_URL || `https://${process.env.FIREBASE_PROJECT_ID}.firebaseio.com`
       });
     } else {
-      console.error("Firebase credentials missing in .env file.");
+      throw new Error("Firebase credentials missing in .env file. Check FIREBASE_PRIVATE_KEY and FIREBASE_CLIENT_EMAIL.");
     }
   }
   if (admin.apps.length) {
     db = admin.firestore(); // Use Firestore for consistency with frontend
-    console.log(`Firebase initialized for project: ${process.env.FIREBASE_PROJECT_ID}`);
+    console.log(`Firebase Admin SDK initialized for: ${process.env.FIREBASE_PROJECT_ID}`);
+    console.log(`Using Service Account: ${process.env.FIREBASE_CLIENT_EMAIL}`);
+    if (!process.env.FIREBASE_PRIVATE_KEY) {
+      console.error("CRITICAL: FIREBASE_PRIVATE_KEY is missing from your .env file!");
+    }
   }
 } catch (error) {
   console.error("Error initializing Firebase:", error.message);
@@ -109,16 +112,16 @@ app.post('/api/send-otp', async (req, res) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   try {
-    try {
-      // Store OTP in Firestore (expires in 5 minutes)
-      await db.collection('otp_codes').doc(email).set({
-        code: otp,
-        expiresAt: Date.now() + 5 * 60 * 1000
-      });
-    } catch (dbErr) {
-      console.error("Firestore Write Error:", dbErr);
-      throw new Error(`Database error: ${dbErr.message}`);
-    }
+    // Store OTP in Firestore (expires in 5 minutes)
+    await db.collection('otp_codes').doc(email).set({
+      code: otp,
+      expiresAt: Date.now() + 5 * 60 * 1000
+    }).catch(err => {
+      if (err.code === 7) {
+        throw new Error("PERMISSION_DENIED: Your Service Account lacks 'Cloud Datastore User' role in IAM console.");
+      }
+      throw err;
+    });
 
     // Send Email
     await transporter.sendMail({

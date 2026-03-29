@@ -299,6 +299,7 @@
                            <tr>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Student ID</th>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Student Name</th>
+                               <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">School</th>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Status</th>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Progress</th>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider text-right">Actions</th>
@@ -317,6 +318,7 @@
                                            </div>
                                        </div>
                                    </td>
+                                   <td class="p-4 align-middle text-sm font-bold text-slate-600" x-text="student.schoolName || '-'"></td>
                                    <td class="p-4 align-middle">
                                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border" 
                                              :class="student.status === 'Confirmed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'">
@@ -343,7 +345,7 @@
                                </tr>
                            </template>
                            <tr x-show="filteredAdmissions.length === 0">
-                               <td colspan="5" class="p-8 text-center text-slate-400">
+                               <td colspan="6" class="p-8 text-center text-slate-400">
                                    <div class="flex flex-col items-center">
                                        <i class="fas fa-users-slash text-3xl mb-2 opacity-50"></i>
                                        <p class="font-medium text-sm">No students found.</p>
@@ -651,18 +653,19 @@
                     }
 
                     // CSV Header
-                    let csvContent = "Name,Email,Status,Date Joined\n";
+                    let csvContent = "Name,Email,School,Status,Date Joined\n";
 
                     // Map data to CSV rows
                     data.forEach(student => {
                         const name = (student.name || '').replace(/,/g, ' '); // Sanitize commas
                         const email = (student.email || '').replace(/,/g, ' ');
+                        const school = (student.schoolName || '').replace(/,/g, ' ');
                         const status = (student.status || 'Pending');
                         let date = '';
                         if (student.createdAt && student.createdAt.toDate) {
                             date = student.createdAt.toDate().toLocaleDateString('en-GB');
                         }
-                        csvContent += `${name},${email},${status},${date}\n`;
+                        csvContent += `${name},${email},${school},${status},${date}\n`;
                     });
 
                     // Create Blob and Download

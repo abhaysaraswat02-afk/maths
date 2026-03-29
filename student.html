@@ -43,6 +43,7 @@
                 <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
                 <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
+            <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
             <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
         </nav>
     </aside>
@@ -114,6 +115,65 @@
                             </div>
                         </a>
                     </template>
+                </div>
+            </div>
+        </div>
+
+        <div x-show="tab === 'pomodoro'" class="max-w-2xl mx-auto space-y-8" x-cloak>
+            <div class="text-center">
+                <h3 class="text-2xl font-black mb-2">Focus Timer</h3>
+                <p class="text-slate-500 text-sm">Boost your productivity using the Pomodoro technique.</p>
+            </div>
+
+            <div class="bg-white p-10 rounded-[3rem] border shadow-xl text-center relative overflow-hidden">
+                <!-- Background Decoration -->
+                <div class="absolute top-0 left-0 w-full h-2" :class="{
+                    'bg-red-500': pomodoro.mode === 'work',
+                    'bg-green-500': pomodoro.mode === 'short',
+                    'bg-blue-500': pomodoro.mode === 'long'
+                }"></div>
+
+                <!-- Mode Switcher -->
+                <div class="inline-flex p-1 bg-slate-100 rounded-2xl mb-10">
+                    <button @click="switchPomodoroMode('work')" :class="pomodoro.mode === 'work' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500'" class="px-6 py-2 rounded-xl font-bold text-sm transition-all">Work</button>
+                    <button @click="switchPomodoroMode('short')" :class="pomodoro.mode === 'short' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500'" class="px-6 py-2 rounded-xl font-bold text-sm transition-all">Short Break</button>
+                    <button @click="switchPomodoroMode('long')" :class="pomodoro.mode === 'long' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'" class="px-6 py-2 rounded-xl font-bold text-sm transition-all">Long Break</button>
+                </div>
+
+                <!-- Timer Display -->
+                <div class="relative flex justify-center items-center mb-10">
+                    <svg class="w-64 h-64 transform -rotate-90">
+                        <circle cx="128" cy="128" r="120" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-100" />
+                        <circle cx="128" cy="128" r="120" stroke="currentColor" stroke-width="8" fill="transparent" 
+                            :stroke-dasharray="754" 
+                            :stroke-dashoffset="754 - (754 * (pomodoro.timeLeft / pomodoro.settings[pomodoro.mode]))"
+                            :class="{
+                                'text-red-500': pomodoro.mode === 'work',
+                                'text-green-500': pomodoro.mode === 'short',
+                                'text-blue-500': pomodoro.mode === 'long'
+                            }"
+                            class="transition-all duration-1000 ease-linear" />
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col justify-center items-center">
+                        <span class="text-6xl font-black text-slate-900 tracking-tighter" x-text="formatPomodoroTime(pomodoro.timeLeft)"></span>
+                        <span class="text-xs font-bold text-slate-400 uppercase mt-2" x-text="pomodoro.mode + ' phase'"></span>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex justify-center items-center gap-6">
+                    <button @click="resetPomodoro()" class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center text-xl shadow-inner">
+                        <i class="fas fa-undo"></i>
+                    </button>
+                    <button @click="pomodoro.isActive ? pausePomodoro() : startPomodoro()" 
+                        :class="pomodoro.mode === 'work' ? 'bg-red-500 shadow-red-200' : (pomodoro.mode === 'short' ? 'bg-green-500 shadow-green-200' : 'bg-blue-500 shadow-blue-200')"
+                        class="w-24 h-24 rounded-[2rem] text-white text-3xl shadow-2xl hover:scale-105 transition-all flex items-center justify-center">
+                        <i class="fas" :class="pomodoro.isActive ? 'fa-pause' : 'fa-play'"></i>
+                    </button>
+                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex flex-col items-center justify-center shadow-inner">
+                        <span class="text-lg font-black" x-text="pomodoro.sessions"></span>
+                        <span class="text-[8px] font-bold uppercase">Done</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -190,18 +250,8 @@
                         <input type="date" x-model="dob" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
                     </div>
                     <div>
-                        <label class="text-xs font-black uppercase text-slate-400">Blood Group</label>
-                        <select x-model="bloodGroup" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
-                            <option value="">Select</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                        </select>
+                        <label class="text-xs font-black uppercase text-slate-400">Present School Name</label>
+                        <input type="text" x-model="schoolName" placeholder="Enter School Name" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
                     </div>
                 </div>
                 <button @click="saveProfile()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Save Changes</button>
@@ -258,8 +308,8 @@
                                 <span class="font-bold text-slate-800" x-text="fatherName || '-'"></span>
                             </div>
                             <div class="text-right">
-                                 <span class="block text-[10px] font-bold text-slate-400 uppercase">Blood Grp</span>
-                                <span class="font-bold text-slate-800" x-text="bloodGroup || '-'"></span>
+                                 <span class="block text-[10px] font-bold text-slate-400 uppercase">School Name</span>
+                                <span class="font-bold text-slate-800" x-text="schoolName || '-'"></span>
                             </div>
                         </div>
 
@@ -320,7 +370,7 @@
                 fatherName: '',
                 studentClass: '',
                 dob: '',
-                bloodGroup: '',
+                schoolName: '',
                 studentId: '',
                 profilePic: '',
                 studentData: {},
@@ -332,6 +382,18 @@
                 notifications: [],
                 hasNewNotifications: false,
                 pageLoadTimestamp: null,
+                pomodoro: {
+                    timeLeft: 1500,
+                    isActive: false,
+                    mode: 'work',
+                    sessions: 0,
+                    interval: null,
+                    settings: {
+                        work: 25 * 60,
+                        short: 5 * 60,
+                        long: 15 * 60
+                    }
+                },
                 cloudinaryCloudName: 'dcxn3j3n6',
                 cloudinaryUploadPreset: 'eraofmathantics',
                 get recordedVideos() { 
@@ -347,7 +409,6 @@
                     // 1. Initialize Firebase (Replace with your own config)
                     const firebaseConfig = {
                         apiKey: "AIzaSyCGWDBlk10C4g43PDj5WRXqhYxn4_649VQ",
-                        pageLoadTimestamp: null,
   authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
   projectId: "era-of-mathantics-8b6d1",
   storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
@@ -383,7 +444,7 @@
                                 this.fatherName = data.fatherName || '';
                                 this.studentClass = data.studentClass || '';
                                 this.dob = data.dob || '';
-                                this.bloodGroup = data.bloodGroup || '';
+                                this.schoolName = data.schoolName || '';
                                 this.studentData = data;
                                 this.studentId = doc.id;
                                 this.profilePic = data.photoURL || '';
@@ -411,6 +472,50 @@
                     }
                 },
 
+                startPomodoro() {
+                    if (this.pomodoro.isActive) return;
+                    this.pomodoro.isActive = true;
+                    this.pomodoro.interval = setInterval(() => {
+                        if (this.pomodoro.timeLeft > 0) {
+                            this.pomodoro.timeLeft--;
+                        } else {
+                            this.handlePomodoroEnd();
+                        }
+                    }, 1000);
+                },
+                pausePomodoro() {
+                    this.pomodoro.isActive = false;
+                    clearInterval(this.pomodoro.interval);
+                },
+                resetPomodoro() {
+                    this.pausePomodoro();
+                    this.pomodoro.timeLeft = this.pomodoro.settings[this.pomodoro.mode];
+                },
+                switchPomodoroMode(mode) {
+                    this.pausePomodoro();
+                    this.pomodoro.mode = mode;
+                    this.pomodoro.timeLeft = this.pomodoro.settings[mode];
+                },
+                handlePomodoroEnd() {
+                    this.pausePomodoro();
+                    const audio = new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg');
+                    audio.play().catch(() => {});
+                    
+                    if (this.pomodoro.mode === 'work') {
+                        this.pomodoro.sessions++;
+                        this.showAlert('Time for a Break!', 'Excellent work! You have completed a focus session. Take a break.');
+                        this.switchPomodoroMode('short');
+                    } else {
+                        this.showAlert('Break Over!', 'Ready to get back to study?');
+                        this.switchPomodoroMode('work');
+                    }
+                },
+                formatPomodoroTime(seconds) {
+                    const mins = Math.floor(seconds / 60);
+                    const secs = seconds % 60;
+                    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                },
+
                 saveProfile() {
                     if (!this.studentId) {
                         // If no DB record exists for the user, create one now.
@@ -422,7 +527,7 @@
                             fatherName: this.fatherName,
                             studentClass: this.studentClass,
                             dob: this.dob,
-                            bloodGroup: this.bloodGroup,
+                            schoolName: this.schoolName,
                             photoURL: this.profilePic,
                             status: 'Pending',
                             timestamp: firebase.firestore.FieldValue.serverTimestamp()
@@ -441,7 +546,7 @@
                         fatherName: this.fatherName,
                         studentClass: this.studentClass,
                         dob: this.dob,
-                        bloodGroup: this.bloodGroup
+                        schoolName: this.schoolName
                     }).then(() => {
                         this.showAlert('Success', 'Profile updated successfully!');
                         this.generateQRCode(); // Refresh QR code with new info
@@ -482,6 +587,122 @@
                 listenForNotifications(db) {
                     db.collection('notifications')
                         .where('timestamp', '>', this.pageLoadTimestamp)
+                        .onSnapshot(snapshot => {
+                            snapshot.docChanges().forEach(change => {
+                                if (change.type === 'added') {
+                                    const notificationData = change.doc.data();
+                                    this.hasNewNotifications = true;
+                                    if (Notification.permission === "granted") {
+                                        this.showBrowserNotification(notificationData.title, notificationData.body);
+                                    }
+                                }
+                            });
+                        });
+                },
+
+                showBrowserNotification(title, body) {
+                    // Show custom in-app modal instead of standard notification
+                    this.showAlert(title, body);
+                },
+
+                async uploadDP(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('upload_preset', this.cloudinaryUploadPreset);
+                    
+                    try {
+                        const response = await fetch(`https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`, {
+                            method: 'POST',
+                            body: formData
+                        });
+                        
+                        if (!response.ok) {
+                            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                            try {
+                                const errorData = await response.json();
+                                errorMessage = errorData.error?.message || errorMessage;
+                            } catch (e) {
+                                // Response body is not JSON or empty
+                            }
+                            throw new Error(errorMessage);
+                        }
+
+                        const data = await response.json();
+
+                        if (data.secure_url) {
+                            this.profilePic = data.secure_url;
+                            
+                            // Save DP to Firestore (Persistence)
+                            if (this.studentId) {
+                                await firebase.firestore().collection('admissions').doc(this.studentId).update({
+                                    photoURL: data.secure_url
+                                });
+                            }
+                            this.showAlert('Success', 'Profile picture updated successfully!');
+                        } else {
+                            throw new Error('No secure_url found in response');
+                        }
+                    } catch (error) {
+                        console.error("Upload failed", error);
+                        this.showAlert('Upload Failed', error.message);
+                    }
+                },
+
+                openIdCard() {
+                    this.showIdCard = true;
+                    // Allow modal to render before generating QR
+                    setTimeout(() => this.generateQRCode(), 500);
+                },
+
+                generateQRCode() {
+                    const container = document.getElementById('qrcode');
+                    if(container && window.QRCode) {
+                        container.innerHTML = '';
+                        
+                        const name = this.studentName || 'Unknown';
+                        const email = this.studentEmail || 'no-email';
+                        const displayId = this.studentId ? 'EMA-' + this.studentId.substring(0, 6).toUpperCase() : 'EMA-PENDING';
+                        const info = `Name: ${name}\nID: ${displayId}\nClass: ${this.studentClass}\nFather: ${this.fatherName}\nEmail: ${email}\nVerified: Yes`;
+                        
+                        new QRCode(container, {
+                            text: info,
+                            width: 128,
+                            height: 128,
+                            colorDark : "#000000",
+                            colorLight : "#ffffff",
+                            correctLevel : QRCode.CorrectLevel.H
+                        });
+                    }
+                },
+
+                downloadIdCard() {
+                    const element = document.getElementById('id-card-content');
+                    const opt = {
+                        margin:       0,
+                        filename:     `ID_Card_${this.studentName.replace(/\s+/g, '_')}.pdf`,
+                        image:        { type: 'jpeg', quality: 0.98 },
+                        html2canvas:  { scale: 2, useCORS: true, scrollY: 0 },
+                        jsPDF:        { unit: 'in', format: [3.6, 8], orientation: 'portrait' },
+                        pagebreak:    { mode: 'avoid-all' }
+                    };
+                    
+                    html2pdf().set(opt).from(element).save().then(() => {
+                        console.log('PDF downloaded');
+                    }).catch(err => console.error(err));
+                },
+
+                logout() {
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+    </script>
+</body>
+</html>                 .where('timestamp', '>', this.pageLoadTimestamp)
                         .onSnapshot(snapshot => {
                             snapshot.docChanges().forEach(change => {
                                 if (change.type === 'added') {

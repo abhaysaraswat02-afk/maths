@@ -40,7 +40,7 @@ try {
     }
   }
   if (admin.apps.length) {
-    db = admin.database();
+    db = admin.firestore(); // Use Firestore for consistency with frontend
     console.log("Firebase initialized successfully.");
   }
 } catch (error) {
@@ -57,8 +57,8 @@ app.use(express.static(__dirname));
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.GMAIL_USER || 'crackamubyabhay@gmail.com', // Your Gmail address
-    pass: process.env.GMAIL_PASS || 'dqof kmnk tojl gknn', // App Password
+    user: process.env.GMAIL_USER, // Remove hardcoded credentials
+    pass: process.env.GMAIL_PASS, 
   },
   tls: {
     rejectUnauthorized: false,
@@ -108,24 +108,16 @@ app.post('/api/send-otp', async (req, res) => {
   // Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-  // Realtime DB keys cannot contain '.', replace with ','
-  const emailKey = email.replace(/\./g, ',');
-
   try {
-    // Store OTP in Realtime Database (expires in 5 minutes)
-    try {
-      await db.ref('otp_codes/' + emailKey).set({
-        code: otp,
-        expiresAt: Date.now() + 5 * 60 * 1000 // 5 minutes
-      });
-    } catch (dbError) {
-      console.error("Firestore Error Detail:", dbError);
-      throw dbError;
-    }
+    // Store OTP in Firestore (expires in 5 minutes)
+    await db.collection('otp_codes').doc(email).set({
+      code: otp,
+      expiresAt: Date.now() + 5 * 60 * 1000
+    });
 
     // Send Email
     await transporter.sendMail({
-      from: `"Era of MathAntics" <${process.env.GMAIL_USER || 'crackamubyabhay@gmail.com'}>`,
+      from: `"Era of MathAntics" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: 'Your Login Verification Code',
       text: `Your verification code is: ${otp}. It is valid for 5 minutes.`,
@@ -150,16 +142,14 @@ app.post('/api/verify-otp', async (req, res) => {
     return res.status(500).json({ error: 'Server database error.' });
   }
   const { email, code } = req.body;
-  const emailKey = email.replace(/\./g, ',');
-  const snapshot = await db.ref('otp_codes/' + emailKey).once('value');
-  const data = snapshot.val();
+  const doc = await db.collection('otp_codes').doc(email).get();
+  const data = doc.data();
 
   if (!data || data.code !== code || data.expiresAt < Date.now()) {
     return res.status(400).json({ success: false, error: 'Invalid or expired OTP.' });
   }
 
-  // Optional: Delete OTP after use to prevent replay
-  await db.ref('otp_codes/' + emailKey).remove();
+  await db.collection('otp_codes').doc(email).delete();
   res.status(200).json({ success: true, message: 'OTP Verified' });
 });
 
@@ -188,12 +178,12 @@ app.post('/api/submit-application', async (req, res) => {
       course: course ? course.trim() : 'General',
       message: message ? message.trim() : '', // Message is optional
       status: 'Pending', // Default status for new applications
-      timestamp: admin.database.ServerValue.TIMESTAMP,
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
       ipAddress: req.headers['x-forwarded-for'] || req.socket.remoteAddress,
     };
 
-    // 3. --- Save to Realtime Database ---
-    await db.ref('admissions').push(applicationData);
+    // 3. --- Save to Firestore ---
+    await db.collection('admissions').add(applicationData);
     res.status(200).json({ success: true, message: 'Application submitted successfully!' });
   } catch (error) {
     console.error('Error submitting application:', error);

@@ -658,25 +658,19 @@
 
                         if (!snap.empty) {
                             this.isExistingUser = true;
+                            if (!this.isLoginMode) {
+                                this.showAlert("Account Found", "You already have an account with this email. Switching to Login mode.");
+                                this.isLoginMode = true;
+                            }
                         }
                     } catch (dbError) {
-                        // We proceed even if this check fails
+                        console.error("User check failed:", dbError);
                     }
 
-                    // Check if Login Mode but user not found
                     if (this.isLoginMode && !this.isExistingUser) {
                         this.showAlert("Account Not Found", "No account found with this email. Please switch to 'New Admission' to register.");
                         this.isSubmitting = false;
                         return;
-                    }
-
-                    // 2. If it's a NEW user, validate the remaining fields
-                    if (!this.isLoginMode && !this.isExistingUser) {
-                        if (!this.applicationForm.name) {
-                            this.showAlert('Name Required', 'To register as a new student, please provide your name.');
-                            this.isSubmitting = false;
-                            return;
-                        }
                     }
 
                     // 2. Send OTP
@@ -753,17 +747,22 @@
                         // User signed in successfully.
 
                         if (this.isExistingUser) {
-                            // This is a returning user, just log them in.
-                        } else {
-                            // This is a new user, create a new admission record.
-                            const regResponse = await fetch('/api/submit-application', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify(this.applicationForm)
-                            });
-                            if (!regResponse.ok) {
-                                throw new Error('Registration failed on server.');
+                            // Update last login for existing user
+                            const userSnap = await db.collection("admissions").where("email", "==", this.applicationForm.email).get();
+                            if (!userSnap.empty) {
+                                await userSnap.docs[0].ref.update({
+                                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                                });
                             }
+                        } else {
+                            // Save new student data to Firestore
+                            await db.collection("admissions").add({
+                                name: this.applicationForm.name,
+                                email: this.applicationForm.email,
+                                status: 'Pending',
+                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+                            });
                         }
 
                         // Common logic for both new and existing users

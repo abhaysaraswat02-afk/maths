@@ -411,8 +411,8 @@
                 profilePic: '',
                 studentData: {},
                 youtubeVideos: [],
-                youtubeApiKey: 'YOUR_API_KEY_HERE', // Replace with your Google API Key
-                youtubeChannelId: 'YOUR_CHANNEL_ID_HERE', // Replace with your Channel ID (starts with UC)
+                youtubeApiKey: 'AIzaSyBeyMNlqSpcch7D_Mzen4qM35w0McJGlek', // Replace with your Google API Key
+                youtubeChannelId: 'UCo0fI2O0ITf8sAJlckVROiA', // Replace with your Channel ID (starts with UC)
                 modal: { open: false, title: '', message: '' },
                 academicYear: '',
                 showIdCard: false,
@@ -444,9 +444,12 @@
                         (!this.videoSearchQuery || r.title.toLowerCase().includes(this.videoSearchQuery.toLowerCase())) &&
                         (this.selectedClass === 'All' || r.classGrade === this.selectedClass)
                     ).sort((a, b) => {
-                        const timeA = a.timestamp ? (a.timestamp.toDate ? a.timestamp.toDate() : new Date(a.timestamp)) : 0;
-                        const timeB = b.timestamp ? (b.timestamp.toDate ? b.timestamp.toDate() : new Date(b.timestamp)) : 0;
-                        return timeB - timeA;
+                        const getMs = (ts) => {
+                            if (!ts) return 0;
+                            if (ts.toDate) return ts.toDate().getTime();
+                            return new Date(ts).getTime();
+                        };
+                        return getMs(b.timestamp) - getMs(a.timestamp);
                     });
                 },
                 get pdfResources() { return this.resources.filter(r => r.type === 'pdf') },
@@ -527,14 +530,31 @@
                 },
 
                 async fetchYouTubeVideos() {
-                    if (!this.youtubeApiKey || this.youtubeApiKey.includes('YOUR_API')) return;
+                    if (!this.youtubeApiKey || this.youtubeApiKey.includes('YOUR_API')) {
+                        console.warn("YouTube Sync: API Key is missing or placeholder.");
+                        return;
+                    }
                     
-                    // The "Uploads" playlist ID is usually your Channel ID with 'UU' instead of 'UC'
-                    const uploadsPlaylistId = this.youtubeChannelId.replace(/^UC/, 'UU');
-                    const url = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&key=${this.youtubeApiKey}`;
-
                     try {
-                        const response = await fetch(url);
+                        // 1. Get the official "Uploads" playlist ID for your channel
+                        const channelUrl = `https://www.googleapis.com/youtube/v3/channels?part=contentDetails&id=${this.youtubeChannelId}&key=${this.youtubeApiKey}`;
+                        const channelRes = await fetch(channelUrl);
+                        const channelData = await channelRes.json();
+
+                        if (channelData.error) {
+                            console.error("YouTube API Error:", channelData.error.message);
+                            return;
+                        }
+                        if (!channelData.items || channelData.items.length === 0) {
+                            console.error("YouTube Sync: Channel not found. Verify your youtubeChannelId.");
+                            return;
+                        }
+
+                        const uploadsPlaylistId = channelData.items[0].contentDetails.relatedPlaylists.uploads;
+
+                        // 2. Fetch the videos from that specific playlist
+                        const playlistUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId=${uploadsPlaylistId}&maxResults=50&key=${this.youtubeApiKey}`;
+                        const response = await fetch(playlistUrl);
                         const data = await response.json();
                         
                         if (data.items) {

@@ -462,6 +462,7 @@
                 staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'], // Add Owner/Staff emails here
                 applicationStep: 'form', // 'form', 'otp', 'success'
                 enteredOtp: '',
+                verificationToken: '', // Token for stateless verification
                 isSubmitting: false,
                 isLoginMode: false,
                 isExistingUser: false, // For returning users
@@ -699,6 +700,7 @@
                         
                         if (data.success) {
                              this.applicationStep = 'otp';
+                             this.verificationToken = data.verificationToken; // Store the signature
                              this.isSubmitting = false;
                              this.startResendTimer();
                         } else {
@@ -720,7 +722,11 @@
                         const res = await fetch('/api/verify-otp', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: this.applicationForm.email, code: this.enteredOtp })
+                            body: JSON.stringify({ 
+                                email: this.applicationForm.email, 
+                                code: this.enteredOtp,
+                                verificationToken: this.verificationToken // Send signature back
+                            })
                         });
 
                         if (!res.ok) {

@@ -17,6 +17,7 @@ const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const path = require('path');
+const crypto = require('crypto');
 
 // --- Firebase Admin SDK Initialization ---
 // IMPORTANT: In production, use Vercel Environment Variables for this!
@@ -95,6 +96,14 @@ app.use(limiter);
 // Middleware to parse JSON request bodies
 app.use(express.json());
 
+// --- Stateless OTP Logic ---
+const OTP_SECRET = process.env.OTP_SECRET || 'era-of-mathantics-secret-key-2025';
+
+function createVerificationToken(email, otp, expiry) {
+  const data = `${email}|${otp}|${expiry}`;
+  return crypto.createHmac('sha256', OTP_SECRET).update(data).digest('hex');
+}
+
 // --- API Route Handler ---
 
 // 1. Send OTP Endpoint
@@ -110,19 +119,10 @@ app.post('/api/send-otp', async (req, res) => {
 
   // Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+  const token = createVerificationToken(email, otp, expiry);
 
   try {
-    // Store OTP in Firestore (expires in 5 minutes)
-    await db.collection('otp_codes').doc(email).set({
-      code: otp,
-      expiresAt: Date.now() + 5 * 60 * 1000
-    }).catch(err => {
-      if (err.code === 7) {
-        throw new Error("PERMISSION_DENIED: Your Service Account lacks 'Cloud Datastore User' role in IAM console.");
-      }
-      throw err;
-    });
-
     // Send Email
     await transporter.sendMail({
       from: `"Era of MathAntics" <${process.env.GMAIL_USER}>`,
@@ -137,7 +137,11 @@ app.post('/api/send-otp', async (req, res) => {
              </div>`
     });
 
-    res.status(200).json({ success: true, message: 'OTP sent to email.' });
+    res.status(200).json({ 
+      success: true, 
+      message: 'OTP sent to email.',
+      verificationToken: `${token}.${expiry}` // Send token and expiry to client
+    });
   } catch (error) {
     console.error('Email error:', error);
     res.status(500).json({ error: `Failed to send OTP: ${error.message}` });
@@ -149,15 +153,23 @@ app.post('/api/verify-otp', async (req, res) => {
   if (!db) {
     return res.status(500).json({ error: 'Server database error.' });
   }
-  const { email, code } = req.body;
-  const doc = await db.collection('otp_codes').doc(email).get();
-  const data = doc.data();
+  const { email, code, verificationToken } = req.body;
+  
+  if (!verificationToken) return res.status(400).json({ error: 'Missing verification session.' });
 
-  if (!data || data.code !== code || data.expiresAt < Date.now()) {
+  const [hash, expiry] = verificationToken.split('.');
+
+  // Check Expiry
+  if (Date.now() > parseInt(expiry)) {
+    return res.status(400).json({ success: false, error: 'OTP has expired.' });
+  }
+
+  // Verify Signature
+  const expectedHash = createVerificationToken(email, code, expiry);
+  if (hash !== expectedHash) {
     return res.status(400).json({ success: false, error: 'Invalid or expired OTP.' });
   }
 
-  await db.collection('otp_codes').doc(email).delete();
   res.status(200).json({ success: true, message: 'OTP Verified' });
 });
 

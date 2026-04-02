@@ -265,7 +265,7 @@
             <div class="flex flex-col items-center gap-4">
                 <img :src="profilePic || 'https://via.placeholder.com/150'" class="w-32 h-32 rounded-full border-4 border-blue-100 object-cover shadow-inner">
                 <input type="file" @change="uploadDP($event)" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                <p class="text-[10px] text-slate-400">Allowed: JPG, PNG (Max 2MB) • Powered by Cloudinary</p>
+                <p class="text-[10px] text-slate-400">Allowed: JPG, PNG (Max 2MB)</p>
             </div>
             <div class="mt-8 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -668,7 +668,7 @@
                 },
                 handlePomodoroEnd() {
                     this.pausePomodoro();
-                    const audio = new Audio('https://actions.google.com/sounds/v1/emergency/beeping_siren.ogg');
+                    const audio = new Audio('C:/Users/crack/Downloads/soundreality-civil-defense-siren-128262.mp3');
                     audio.play().catch(() => {});
                     
                     if (this.pomodoro.mode === 'work') {

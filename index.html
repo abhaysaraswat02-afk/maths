@@ -71,9 +71,9 @@
                 <a href="#home" class="hover:text-blue-600 transition">Home</a>
                 <a href="#results" class="hover:text-blue-600 transition">Selections</a>
                 <a href="#apply" class="hover:text-blue-600 transition">Admissions</a>
-                <a :href="isLoggedIn ? 'student.html' : '#apply'" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
-                    <i class="fas" :class="isLoggedIn ? 'fa-th-large' : 'fa-user-circle'"></i> 
-                    <span x-text="isLoggedIn ? 'Dashboard' : 'Login'"></span>
+                <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
+                    <i class="fas" :class="isLoggedIn || isStaffLoggedIn ? 'fa-th-large' : 'fa-user-circle'"></i> 
+                    <span x-text="isLoggedIn || isStaffLoggedIn ? 'Dashboard' : 'Login'"></span>
                 </a>
             </div>
 
@@ -85,7 +85,7 @@
         <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t p-6 space-y-4 absolute w-full shadow-xl">
             <a @click="mobileMenu = false" href="#home" class="block font-medium">Home</a>
             <a @click="mobileMenu = false" href="#about" class="block font-medium">About</a>
-            <a @click="mobileMenu = false" href="#apply" class="block text-blue-600 font-bold">Student Portal</a>
+            <a @click="mobileMenu = false" :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="block text-blue-600 font-bold" x-text="isLoggedIn || isStaffLoggedIn ? 'Dashboard' : 'Student Portal'"></a>
         </div>
     </nav>
 
@@ -532,6 +532,7 @@
                 resendDisabled: false, // For OTP resend button
                 resendTimer: 30,       // Timer for resend
                 isLoggedIn: false,
+                isStaffLoggedIn: false,
                 modal: { open: false, title: '', message: '' },
                 youtubeVideos: [],
 
@@ -547,6 +548,7 @@
                     this.fetchStaffVideos();
                     this.fetchAchievers();
                     this.isLoggedIn = localStorage.getItem('isStudentLoggedIn') === 'true';
+                    this.isStaffLoggedIn = localStorage.getItem('isStaffLoggedIn') === 'true';
                 },
 
                 fetchBatches() {
@@ -811,6 +813,7 @@
                             if (confirm("Staff Access Detected.\n\nPress OK to enter Staff Dashboard.\nPress Cancel to login as a Student.")) {
                                 localStorage.setItem('isStaffLoggedIn', 'true');
                                 localStorage.removeItem('isStudentLoggedIn'); // Clear student session if exists
+                                localStorage.setItem('student_email', this.applicationForm.email); // Ensure email is set for staff access
                                 window.location.href = 'staff.html';
                                 return;
                             }

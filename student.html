@@ -398,7 +398,10 @@
 
     <!-- ID Card Welcome Modal -->
     <div x-show="welcomeModal.open" class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" x-cloak x-transition.opacity>
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center transform transition-all" @click.away="welcomeModal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center transform transition-all relative" @click.away="welcomeModal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
+            <button @click="welcomeModal.open = false" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+                <i class="fas fa-times text-xl"></i>
+            </button>
             <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4 border-white">
                 <i class="fas fa-id-card"></i>
             </div>
@@ -466,6 +469,7 @@
                     isActive: false,
                     mode: 'work',
                     sessions: 0,
+                    shortBreakCount: 0,
                     interval: null,
                     settings: {
                         work: 25 * 60,
@@ -664,17 +668,22 @@
                 },
                 handlePomodoroEnd() {
                     this.pausePomodoro();
-                    const audio = new Audio('https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg');
+                    const audio = new Audio('https://actions.google.com/sounds/v1/emergency/beeping_siren.ogg');
                     audio.play().catch(() => {});
                     
                     if (this.pomodoro.mode === 'work') {
                         this.pomodoro.sessions++;
-                        this.showAlert('Time for a Break!', 'Excellent work! You have completed a focus session. Take a break.');
-                        this.switchPomodoroMode('short');
+                        if (this.pomodoro.shortBreakCount < 3) {
+                            this.pomodoro.shortBreakCount++;
+                            this.switchPomodoroMode('short');
+                        } else {
+                            this.pomodoro.shortBreakCount = 0;
+                            this.switchPomodoroMode('long');
+                        }
                     } else {
-                        this.showAlert('Break Over!', 'Ready to get back to study?');
                         this.switchPomodoroMode('work');
                     }
+                    this.startPomodoro();
                 },
                 formatPomodoroTime(seconds) {
                     const mins = Math.floor(seconds / 60);
@@ -872,7 +881,7 @@
                         const name = this.studentName || 'Unknown';
                         const email = this.studentEmail || 'no-email';
                         const displayId = this.studentId ? 'EMA-' + this.studentId.substring(0, 6).toUpperCase() : 'EMA-PENDING';
-                        const info = `Name: ${name}\nID: ${displayId}\nClass: ${this.studentClass}\nFather: ${this.fatherName}\nEmail: ${email}\nVerified: Yes`;
+                        const info = `Name: ${name}\nID: ${displayId}\nClass: ${this.studentClass || '-'}\nFather: ${this.fatherName || '-'}\nDOB: ${this.dob || '-'}\nSchool: ${this.schoolName || '-'}\nEmail: ${email}\nStatus: Active Student\nVerified: Yes`;
                         
                         new QRCode(container, {
                             text: info,

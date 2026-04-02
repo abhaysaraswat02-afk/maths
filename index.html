@@ -41,8 +41,8 @@
         }
         .reveal { opacity: 0; transform: translateY(20px); transition: all 0.6s ease-out; }
         .reveal.revealed { opacity: 1; transform: translateY(0); }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-15px); } }
-        .animate-float { animation: float 5s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 3s ease-in-out infinite; }
         .marquee-scroll { animation: marquee 25s linear infinite; display: flex; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         [x-cloak] { display: none !important; }
@@ -60,7 +60,7 @@
          :class="scrolled ? 'bg-white/95 backdrop-blur-md shadow-md top-0' : 'bg-white top-0 md:top-8'">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg shadow-lg">
+                <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg shadow-lg floating-logo">
                 <div class="leading-none">
                     <span class="font-extrabold text-slate-900 text-xl tracking-tight">Era of <span class="text-blue-600">MathAntics</span></span><br>
                     <span class="font-bold text-slate-400 text-[10px] tracking-widest uppercase">Master Mathematics</span>
@@ -755,9 +755,7 @@
                             try {
                                 const errorData = await response.json();
                                 errorMessage = errorData.error || errorMessage;
-                            } catch (e) {
-                                // Response body is not JSON or empty
-                            }
+                            } catch (e) {}
                             throw new Error(errorMessage);
                         }
 

@@ -798,14 +798,17 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
-                    firebase.firestore().collection('notifications').add(payload).then(() => { 
-                        const waMsg = `*${payload.title}*\n\n${payload.body}`;
-                        this.notification = { title: '', body: '' };
-                        this.showToast("Notification saved and WhatsApp broadcast started!");
-                        this.broadcastWhatsApp(waMsg);
+                    const waMsg = `*${payload.title}*\n\n${payload.body}`;
+                    this.notification = { title: '', body: '' };
+                    this.showToast("WhatsApp broadcast started (saving notification in DB)...");
+                    this.broadcastWhatsApp(waMsg);
+
+                    // Try to save notification to Firestore; if it fails, still continue.
+                    firebase.firestore().collection('notifications').add(payload).then(() => {
+                        this.showToast("Notification saved in database!");
                     }).catch(err => {
-                        console.error("Error sending notification:", err);
-                        this.showToast("Could not send notification.", "error");
+                        console.error("Error saving notification to Firestore:", err);
+                        this.showToast("Broadcast sent but could not save notification in DB.", "error");
                     });
                 },
 

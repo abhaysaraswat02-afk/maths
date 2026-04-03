@@ -59,6 +59,12 @@
                 <button @click="activeTab = 'notifications'" :class="{'active': activeTab === 'notifications'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-bell w-5"></i> <span class="font-medium">Notifications</span>
                 </button>
+                <button @click="activeTab = 'fees'" :class="{'active': activeTab === 'fees'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
+                    <i class="fas fa-wallet w-5"></i> <span class="font-medium">Fee Management</span>
+                </button>
+                <button @click="activeTab = 'attendance'" :class="{'active': activeTab === 'attendance'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
+                    <i class="fas fa-clipboard-user w-5"></i> <span class="font-medium">Attendance Logs</span>
+                </button>
                 <button @click="activeTab = 'achievers'" :class="{'active': activeTab === 'achievers'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-star w-5"></i> <span class="font-medium">Star Achievers</span>
                 </button>
@@ -89,6 +95,14 @@
                     <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
                         <p class="text-slate-400 text-xs font-bold uppercase">Resources Shared</p>
                         <h2 class="text-3xl font-black mt-2" x-text="resources.length">0</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                        <p class="text-slate-400 text-xs font-bold uppercase">Attendance Logs</p>
+                        <h2 class="text-3xl font-black mt-2" x-text="attendanceLogs.length">0</h2>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
+                        <p class="text-slate-400 text-xs font-bold uppercase">Live Classes</p>
+                        <h2 class="text-3xl font-black mt-2" x-text="liveClasses.length">0</h2>
                     </div>
                 </div>
             </div>
@@ -143,6 +157,7 @@
                             <select x-model="newResource.type" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
                                 <option value="pdf_upload">Upload PDF File</option>
                                 <option value="pdf_link">PDF Link (from Drive)</option>
+                                <option value="online_test">Online Test Link</option>
                                 <option value="video">Recorded Video Link</option>
                                 <option value="youtube">YouTube Video</option>
                             </select>
@@ -157,7 +172,7 @@
                                 <option value="Class 12">Class 12</option>
                             </select>
                         </div>
-                        <div x-show="newResource.type === 'video' || newResource.type === 'pdf_link' || newResource.type === 'youtube'">
+                        <div x-show="newResource.type !== 'pdf_upload'">
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource URL</label>
                             <input type="url" x-model="newResource.link" placeholder="https://..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
                         </div>
@@ -280,6 +295,83 @@
                 </div>
             </div>
 
+            <!-- FEE MANAGEMENT -->
+            <div x-show="activeTab === 'fees'" x-cloak>
+                <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
+                    <div class="p-6 border-b bg-slate-50">
+                        <h3 class="font-bold text-lg">Student Fee Records</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b">
+                                <tr>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Student</th>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Total Fee</th>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Paid</th>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Balance</th>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-for="student in admissionList" :key="student.id">
+                                    <tr class="hover:bg-slate-50">
+                                        <td class="p-4">
+                                            <p class="font-bold" x-text="student.name"></p>
+                                            <p class="text-xs text-slate-400" x-text="student.email"></p>
+                                        </td>
+                                        <td class="p-4 font-bold text-slate-600">₹<span x-text="student.feeTotal || 0"></span></td>
+                                        <td class="p-4 font-bold text-green-600">₹<span x-text="student.feePaid || 0"></span></td>
+                                        <td class="p-4 font-bold text-red-600">₹<span x-text="student.feeBalance || 0"></span></td>
+                                        <td class="p-4 text-right">
+                                            <button @click="updateFeeRecord(student)" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition">Update Payment</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ATTENDANCE LOGS -->
+            <div x-show="activeTab === 'attendance'" x-cloak>
+                <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
+                    <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                        <h3 class="font-bold text-lg">Activity Logs</h3>
+                        <button @click="attendanceLogs = []" class="text-xs font-bold text-red-500">Clear Local View</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b">
+                                <tr>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Student Name</th>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Activity</th>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Type</th>
+                                    <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100">
+                                <template x-for="log in attendanceLogs" :key="log.id">
+                                    <tr class="hover:bg-slate-50 transition">
+                                        <td class="p-4 font-bold text-slate-700" x-text="log.studentName"></td>
+                                        <td class="p-4 text-sm text-slate-600 truncate max-w-xs" x-text="log.resourceTitle"></td>
+                                        <td class="p-4">
+                                            <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest"
+                                                  :class="log.type === 'live' ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'" 
+                                                  x-text="log.type"></span>
+                                        </td>
+                                        <td class="p-4 text-right text-xs font-bold text-slate-400" x-text="formatDate(log.timestamp)"></td>
+                                    </tr>
+                                </template>
+                                <tr x-show="attendanceLogs.length === 0">
+                                    <td colspan="4" class="p-12 text-center text-slate-400 italic">No attendance records found.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <!-- ANALYTICS (Refined Admissions Tab) -->
             <div x-show="activeTab === 'admissions'" x-cloak>
                <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
@@ -331,6 +423,10 @@
                                    <td class="p-4 align-middle min-w-[150px]">
                                        <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
                                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: 0%"></div>
+                                       </div>
+                                       <div class="flex justify-between items-center mt-1">
+                                           <p class="text-[8px] font-black text-slate-400" x-text="student.phone || 'No Phone'"></p>
+                                           <button @click="triggerWhatsApp(student)" class="text-green-500 hover:text-green-600" title="Send WhatsApp Reminder"><i class="fab fa-whatsapp"></i></button>
                                        </div>
                                        <p class="text-[10px] text-right mt-1 font-bold text-slate-400">0%</p>
                                    </td>
@@ -421,6 +517,7 @@
                 resources: [],
                 liveClasses: [],
                 achievers: [],
+                attendanceLogs: [],
                 newResource: { title: '', link: '', type: 'pdf_upload', classGrade: 'All' },
                 notification: { title: '', body: '' },
                 newLiveClass: { url: '', time: '' },
@@ -462,6 +559,7 @@
                     this.fetchData('resources', 'resources');
                     this.fetchData('live_classes', 'liveClasses');
                     this.fetchData('achievers', 'achievers');
+                    this.fetchData('attendance', 'attendanceLogs');
                     this.cleanupOldNotifications();
                 },
 
@@ -525,9 +623,12 @@
                     let resourceType = 'video'; // Default for recorded videos
                     let notifTitle = 'New Video Uploaded! 🎥';
 
-                    if (this.newResource.type.includes('pdf')) {
+                    if (this.newResource.type.includes('pdf') || this.newResource.type === 'pdf_upload') {
                         resourceType = 'pdf';
                         notifTitle = 'New Study Material 📚';
+                    } else if (this.newResource.type === 'online_test') {
+                        resourceType = 'test';
+                        notifTitle = 'New Practice Test Uploaded! 📝';
                     } else if (this.newResource.type === 'youtube') {
                         resourceType = 'youtube';
                     }
@@ -559,6 +660,34 @@
                     db.collection('live_classes').add(this.newLiveClass).then(() => {
                         this.showAlert('Success', 'Live class scheduled successfully!');
                         this.newLiveClass = { url: '', time: '' };
+                    });
+                },
+
+                triggerWhatsApp(student) {
+                    if (!student.phone) return this.showToast("No phone number found for this student.", "error");
+                    const msg = encodeURIComponent(`Hello ${student.name}, this is a reminder from Era of MathAntics regarding your academic updates. Please log in to your dashboard to view new resources or join upcoming classes.`);
+                    window.open(`https://wa.me/${student.phone}?text=${msg}`, '_blank');
+                },
+
+                updateFeeRecord(student) {
+                    const amount = prompt(`Enter payment amount received from ${student.name}:`, "0");
+                    if (!amount || isNaN(amount)) return;
+                    
+                    const paid = (student.feePaid || 0) + parseFloat(amount);
+                    const total = student.feeTotal || 5000;
+                    const balance = total - paid;
+
+                    db.collection('admissions').doc(student.id).update({
+                        feePaid: paid,
+                        feeBalance: balance
+                    }).then(() => {
+                        db.collection('payments').add({
+                            studentId: student.id,
+                            email: student.email,
+                            amount: parseFloat(amount),
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        this.showToast("Fee record updated successfully!");
                     });
                 },
 
@@ -689,6 +818,12 @@
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
+                },
+
+                formatDate(timestamp) {
+                    if (!timestamp) return 'Just now';
+                    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                    return date.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 },
 
                 sendNotification() {

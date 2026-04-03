@@ -118,7 +118,7 @@
                         <img src="channels4_profile (1).jpg" class="w-8 h-8 rounded-full border-2 border-white object-cover animate-float" style="animation-delay: 1s">
                         <img src="channels4_profile (1).jpg" class="w-8 h-8 rounded-full border-2 border-white object-cover animate-float" style="animation-delay: 2s">
                     </div>
-                    <p>Trusted by 10,000+ Students</p>
+                    <p>Trusted by 5,000+ Students</p>
                 </div>
             </div>
             <div class="hidden md:block relative">
@@ -310,6 +310,10 @@
                     <div :class="isLoginMode ? 'md:col-span-2' : ''">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Email Address</label>
                             <input type="email" x-model="applicationForm.email" required class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="student@example.com">
+                    </div>
+                    <div x-show="!isLoginMode">
+                            <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Phone Number (WhatsApp)</label>
+                            <input type="tel" x-model="applicationForm.phone" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter mobile number">
                     </div>
                     <!-- Registration Specific Fields -->
                     <div x-show="!isLoginMode" class="grid md:grid-cols-2 gap-6 md:col-span-2">
@@ -521,7 +525,7 @@
 
                 // New properties for application form
                 contactForm: { name: '', email: '', message: '' },
-                applicationForm: { name: '', email: '', fatherName: '', studentClass: '', dob: '', schoolName: '', course: '', batchId: '' },
+                applicationForm: { name: '', email: '', phone: '', fatherName: '', studentClass: '', dob: '', schoolName: '', course: '', batchId: '' },
                 staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'], // Add Owner/Staff emails here
                 applicationStep: 'form', // 'form', 'otp', 'success'
                 enteredOtp: '',
@@ -834,11 +838,15 @@
                             await db.collection("admissions").add({
                                 name: this.applicationForm.name,
                                 email: this.applicationForm.email,
+                                phone: this.applicationForm.phone,
                                 fatherName: this.applicationForm.fatherName,
                                 studentClass: this.applicationForm.studentClass,
                                 dob: this.applicationForm.dob,
                                 schoolName: this.applicationForm.schoolName,
                                 status: 'Pending',
+                                feeTotal: 5000, // Default fee
+                                feePaid: 0,
+                                feeBalance: 5000,
                                 createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                                 lastLogin: firebase.firestore.FieldValue.serverTimestamp()
                             });

@@ -44,6 +44,7 @@
                 <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
+            <button @click="tab = 'fees'; mobileMenu = false" :class="tab === 'fees' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">💳 Fees & Payments</button>
             <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
         </nav>
     </aside>
@@ -95,7 +96,7 @@
             <div x-show="liveClasses.length > 0" class="mb-6">
                 <h4 class="font-bold text-md mb-2 text-red-600">Upcoming Live Classes</h4>
                 <template x-for="live in liveClasses" :key="live.id">
-                    <a :href="live.url" target="_blank" class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-xl flex justify-between items-center hover:bg-red-100 transition mb-2">
+                    <a :href="live.url" target="_blank" @click="logAttendance('Joined Live Class: ' + live.url, 'live')" class="p-4 bg-white border border-slate-200 border-l-4 border-l-red-500 rounded-xl flex justify-between items-center hover:bg-red-50 transition mb-2 group">
                         <div>
                             <p class="font-bold text-sm text-red-800">Live session scheduled</p>
                             <p class="text-xs text-slate-500" x-text="new Date(live.time).toLocaleString()"></p>
@@ -117,7 +118,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="rec in recordedVideos" :key="rec.id">
-                        <div @click="openVideo(rec.link)" class="group bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
+                        <div @click="openVideo(rec.link, rec.title)" class="group bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
                             <div class="aspect-video bg-slate-900 relative overflow-hidden">
                                 <template x-if="extractYouTubeID(rec.link)">
                                      <img :src="'https://img.youtube.com/vi/' + extractYouTubeID(rec.link) + '/mqdefault.jpg'" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500">
@@ -221,26 +222,73 @@
             <h3 class="text-xl font-black">Study Resources & Notes</h3>
             <p class="text-slate-500 text-sm">Download PDFs and assignments shared by your teachers. No payment required.</p>
             
-            <div x-show="pdfResources.length === 0" class="text-slate-500 text-sm italic py-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200" x-cloak>
+            <div x-show="studyResources.length === 0" class="text-slate-500 text-sm italic py-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200" x-cloak>
                 <i class="fas fa-file-alt text-3xl mb-3 opacity-20"></i>
                 <p>No resources available for the selected class.</p>
             </div>
             
             <div class="grid grid-cols-1 gap-3">
-                <template x-for="res in pdfResources" :key="res.id">
+                <template x-for="res in studyResources" :key="res.id">
                     <a :href="res.link" target="_blank" class="p-4 bg-white border border-slate-200 rounded-2xl flex justify-between items-center hover:bg-blue-50 hover:border-blue-200 transition">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-blue-100 text-blue-600">
-                                    <i class="fas" :class="res.type === 'pdf' ? 'fa-file-pdf' : 'fa-link'"></i>
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center" :class="res.type === 'test' ? 'bg-purple-100 text-purple-600' : 'bg-blue-100 text-blue-600'">
+                                    <i class="fas" :class="res.type === 'pdf' ? 'fa-file-pdf' : (res.type === 'test' ? 'fa-vial' : 'fa-link')"></i>
                             </div>
                             <div>
                                 <p class="font-bold text-sm text-slate-800" x-text="res.title"></p>
-                                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Free Resource</p>
+                                <p class="text-[10px] text-slate-400 uppercase font-bold tracking-wider" x-text="res.type === 'test' ? 'Online Practice Test' : 'Free Resource'"></p>
                             </div>
                         </div>
-                        <button class="text-xs font-bold px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Download</button>
+                        <button class="text-xs font-bold px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" x-text="res.type === 'test' ? 'Start Test' : 'Download'"></button>
                     </a>
                 </template>
+            </div>
+        </div>
+
+        <div x-show="tab === 'fees'" class="space-y-6" x-cloak>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-3xl border shadow-sm">
+                    <p class="text-xs font-bold text-slate-400 uppercase">Total Package</p>
+                    <h4 class="text-2xl font-black mt-1">₹<span x-text="studentData.feeTotal || 0"></span></h4>
+                </div>
+                <div class="bg-green-50 p-6 rounded-3xl border border-green-100 shadow-sm">
+                    <p class="text-xs font-bold text-green-600 uppercase">Amount Paid</p>
+                    <h4 class="text-2xl font-black text-green-700 mt-1">₹<span x-text="studentData.feePaid || 0"></span></h4>
+                </div>
+                <div class="bg-red-50 p-6 rounded-3xl border border-red-100 shadow-sm">
+                    <p class="text-xs font-bold text-red-600 uppercase">Pending Balance</p>
+                    <h4 class="text-2xl font-black text-red-700 mt-1">₹<span x-text="studentData.feeBalance || 0"></span></h4>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl border shadow-sm">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold">Payment History</h3>
+                    <button @click="payFees()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">Pay Installment</button>
+                </div>
+                <div class="space-y-3">
+                    <template x-for="payment in feeHistory" :key="payment.id">
+                        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-sm">₹<span x-text="payment.amount"></span> Received</p>
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase" x-text="formatDate(payment.timestamp)"></p>
+                                </div>
+                            </div>
+                            <button @click="downloadReceipt(payment)" class="text-blue-600 hover:underline text-xs font-bold">
+                                <i class="fas fa-file-invoice mr-1"></i> Receipt
+                            </button>
+                        </div>
+                    </template>
+                    <div x-show="feeHistory.length === 0" class="text-center py-8 text-slate-400 italic">No payment records found.</div>
+                </div>
+            </div>
+
+            <div id="receipt-template" class="hidden">
+                <!-- Hidden element for PDF generation -->
             </div>
         </div>
 
@@ -460,6 +508,7 @@
                 resources: [],
                 liveClasses: [],
                 notifications: [],
+                feeHistory: [],
                 hasNewNotifications: false,
                 pageLoadTimestamp: null,
                 videoModal: { open: false, videoId: '' },
@@ -498,9 +547,9 @@
                         return getMs(b.timestamp) - getMs(a.timestamp);
                     });
                 },
-                get pdfResources() { 
+                get studyResources() { 
                     return this.resources.filter(r => 
-                        r.type === 'pdf' && 
+                        (r.type === 'pdf' || r.type === 'test') && 
                         (this.selectedClass === 'All' || r.classGrade === this.selectedClass || r.classGrade === 'All')
                     );
                 },
@@ -531,23 +580,24 @@
                     this.studentEmail = localStorage.getItem('student_email');
                     
                     if (this.studentEmail) {
-                        // Fetch real data from Firestore
+                        // Real-time listener for student profile and fee updates
                         try {
-                            const snapshot = await db.collection('admissions')
+                            db.collection('admissions')
                                 .where('email', '==', this.studentEmail)
-                                .get();
-                                
-                            if (!snapshot.empty) {
-                                const doc = snapshot.docs[0];
-                                const data = doc.data();
-                                this.studentName = data.name;
-                                this.fatherName = data.fatherName || '';
-                                this.studentClass = data.studentClass || '';
-                                this.dob = data.dob || '';
-                                this.schoolName = data.schoolName || '';
-                                this.studentData = data;
-                                this.studentId = doc.id;
-                                this.profilePic = data.photoURL || '';
+                                .onSnapshot(snapshot => {
+                                    if (!snapshot.empty) {
+                                        const doc = snapshot.docs[0];
+                                        const data = doc.data();
+                                        this.studentName = data.name;
+                                        this.fatherName = data.fatherName || '';
+                                        this.studentClass = data.studentClass || '';
+                                        this.dob = data.dob || '';
+                                        this.schoolName = data.schoolName || '';
+                                        this.studentData = data;
+                                        this.studentId = doc.id;
+                                        this.profilePic = data.photoURL || '';
+                                    }
+                                });
 
                                 // Fetch Auto-sync Videos from YouTube
                                 this.fetchYouTubeVideos();
@@ -564,6 +614,10 @@
                                 db.collection('notifications').where('timestamp', '>=', cutoffDate).orderBy('timestamp', 'desc').onSnapshot(snap => {
                                     this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
+                                // Fetch Payment History
+                                db.collection('payments').where('email', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
+                                    this.feeHistory = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                                });
 
                                 if (localStorage.getItem('showIdCardWelcome') === 'true') {
                                     this.welcomeModal.open = true;
@@ -573,7 +627,6 @@
                                 // NEW: Notification setup
                                 this.requestNotificationPermission();
                                 this.listenForNotifications(db);
-                            }
                         } catch (e) {
                             console.error("Error fetching profile", e);
                         }
@@ -745,12 +798,63 @@
                     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 },
 
-                openVideo(link) {
+                openVideo(link, title) {
                     const id = this.extractYouTubeID(link);
                     if (id) {
                         this.videoModal.videoId = id;
                         this.videoModal.open = true;
+                        this.logAttendance(title, 'video');
                     }
+                },
+
+                async logAttendance(title, type) {
+                    try {
+                        await firebase.firestore().collection('attendance').add({
+                            studentEmail: this.studentEmail,
+                            studentName: this.studentName,
+                            resourceTitle: title,
+                            type: type,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                    } catch (e) {
+                        console.error("Attendance log failed", e);
+                    }
+                },
+
+                payFees() {
+                    // Note: Razorpay integration requires a live Key ID
+                    const amount = prompt("Enter amount to pay:", "1000");
+                    if(!amount || isNaN(amount)) return;
+                    
+                    this.showAlert("Redirecting to Gateway", "In a production environment, this would open the secure Razorpay payment window for ₹" + amount);
+                    // Placeholder for actual Razorpay .open() logic
+                },
+
+                downloadReceipt(payment) {
+                    const dateStr = this.formatDate(payment.timestamp);
+                    const htmlContent = `
+                        <div style="padding: 40px; font-family: sans-serif; border: 1px solid #eee;">
+                            <h1 style="color: #1e40af;">Era of MathAntics</h1>
+                            <h3>FEES RECEIPT</h3>
+                            <hr>
+                            <p><strong>Student Name:</strong> ${this.studentName}</p>
+                            <p><strong>Email:</strong> ${this.studentEmail}</p>
+                            <p><strong>Transaction ID:</strong> ${payment.id}</p>
+                            <p><strong>Date:</strong> ${dateStr}</p>
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-top: 20px;">
+                                <h2 style="margin: 0;">Amount Paid: ₹${payment.amount}</h2>
+                            </div>
+                            <p style="margin-top: 40px; font-size: 12px; color: #64748b;">This is a computer-generated receipt.</p>
+                        </div>
+                    `;
+                    const opt = {
+                        margin: 1,
+                        filename: `Receipt_${payment.id}.pdf`,
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2 },
+                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                    };
+                    html2pdf().from(htmlContent).set(opt).save();
                 },
 
                 extractYouTubeID(url) {

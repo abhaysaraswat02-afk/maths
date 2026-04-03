@@ -580,6 +580,7 @@
                 saveResourceToDb() {
                     let resourceType = 'video'; // Default for recorded videos
                     let notifTitle = 'New Video Uploaded! 🎥';
+                    let notifBody = `We've just added "${this.newResource.title}". Check it out in your dashboard!`;
 
                     if (this.newResource.type.includes('pdf') || this.newResource.type === 'pdf_upload') {
                         resourceType = 'pdf';
@@ -592,21 +593,24 @@
                     }
 
                     const resourceToSave = {
-                        title: this.newResource.title,
-                        link: this.newResource.link,
+                        title: String(this.newResource.title),
+                        link: String(this.newResource.link),
                         type: resourceType,
                         classGrade: this.newResource.classGrade || 'All',
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
-                    db.collection('resources').add(resourceToSave).then(() => {
+                    firebase.firestore().collection('resources').add(resourceToSave).then(() => {
                         // Automatically send notification to students
-                        db.collection('notifications').add({
-                            title: notifTitle,
-                            body: `We've just added "${resourceToSave.title}". Check it out in your dashboard!`,
+                        firebase.firestore().collection('notifications').add({
+                            title: String(notifTitle),
+                            body: String(notifBody),
                             timestamp: firebase.firestore.FieldValue.serverTimestamp()
                         });
 
                         this.showToast('Resource saved & Students notified!');
+                        if (confirm("Resource uploaded! Send WhatsApp alert to all confirmed students?")) {
+                            this.broadcastWhatsApp(`*${notifTitle}*\n\n${notifBody}`);
+                        }
                         this.newResource = { title: '', link: '', type: 'pdf_upload', classGrade: 'All' };
                     });
                 },
@@ -788,19 +792,38 @@
                         this.showToast("Title and body are required.", "error");
                         return;
                     }
-                    // Explicitly define payload to avoid proxy errors
                     const payload = {
-                        title: this.notification.title,
-                        body: this.notification.body,
+                        title: String(this.notification.title),
+                        body: String(this.notification.body),
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
-                    db.collection('notifications').add(payload).then(() => { 
+                    firebase.firestore().collection('notifications').add(payload).then(() => { 
+                        const waMsg = `*${payload.title}*\n\n${payload.body}`;
                         this.notification = { title: '', body: '' };
                         this.showToast("Notification sent to all students!");
+
+                        if (confirm("Notification posted to dashboard! Broadcast to all students via WhatsApp?")) {
+                            this.broadcastWhatsApp(waMsg);
+                        }
                     }).catch(err => {
                         console.error("Error sending notification:", err);
                         this.showToast("Could not send notification.", "error");
+                    });
+                },
+
+                broadcastWhatsApp(msg) {
+                    const list = this.admissionList.filter(s => s.status === 'Confirmed' && s.phone);
+                    if (list.length === 0) {
+                        return this.showToast("No confirmed students with phone numbers found.", "error");
+                    }
+
+                    this.showToast(`Broadcasting to ${list.length} students...`);
+                    list.forEach((student, index) => {
+                        setTimeout(() => {
+                            const url = `https://wa.me/${student.phone}?text=${encodeURIComponent(msg)}`;
+                            window.open(url, '_blank');
+                        }, index * 2500); // 2.5s delay to mitigate browser popup blocks
                     });
                 },
 

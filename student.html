@@ -750,22 +750,12 @@
                     if (id) {
                         this.videoModal.videoId = id;
                         this.videoModal.open = true;
-                        this.logAttendance(title, 'Auto');
                     }
                 },
 
                 async logAttendance(title, type) {
-                    try {
-                        await window.db.collection('attendance').add({
-                            studentEmail: String(this.studentEmail || ''),
-                            studentName: String(this.studentName || ''),
-                            resourceTitle: String(title),
-                            type: type === 'live' ? 'Auto-Live' : 'Auto-Video',
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    } catch (e) {
-                        console.error("Attendance log failed", e);
-                    }
+                    // Auto-logging disabled as requested (attendance is now managed manually by staff)
+                    console.log("Activity logged locally:", title);
                 },
 
                 extractYouTubeID(url) {

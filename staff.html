@@ -208,7 +208,7 @@
             <!-- NOTIFICATIONS (New) -->
             <div x-show="activeTab === 'notifications'" x-cloak>
                 <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-sm">
-                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> WhatsApp & Dashboard Notification</h2>
+                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> Dashboard Notification</h2>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Notification Title</label>
@@ -219,7 +219,7 @@
                             <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
                         </div>
                         <button @click="sendNotification()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition">
-                            Send to Dashboard & WhatsApp
+                            Send to Student Portal
                         </button>
                     </div>
                 </div>
@@ -990,7 +990,8 @@
 
                     const score = parseFloat(this.newTestScore.score);
                     const total = parseFloat(this.newTestScore.total);
-                    if (isNaN(score) || isNaN(total) || score < 0 || total <= 0) {
+                  
+                    if (isNaN(score) || isNaN(total) || score < 0 || total <= 0 || score > total) {
                         this.showToast('Invalid scores. Score must be between 0 and total marks.', 'error');
                         return;
                     }
@@ -1041,32 +1042,11 @@
 
                     db.collection('notifications').add(payload).then(() => {
                         console.log('Notification saved successfully:', payload);
-                        const waMsg = `*${payload.title}*\n\n${payload.body}`;
-                        this.broadcastWhatsApp(waMsg);
-                        this.showToast("Notification saved and broadcast started!");
+                        this.showToast("Notification sent to student portal!");
                         this.notification = { title: '', body: '' };
                     }).catch(err => {
                         console.error("Error sending notification:", err);
                         this.showToast("Failed to send notification.", "error");
-                    });
-                },
-
-                broadcastWhatsApp(message) {
-                    const text = encodeURIComponent(message);
-                    const confirmedStudents = this.admissionList.filter(s => s.status === 'Confirmed' && s.phone);
-                    
-                    if (confirmedStudents.length === 0) {
-                        this.showToast("No confirmed students with phone numbers found.", "error");
-                        return;
-                    }
-
-                    confirmedStudents.forEach((student, index) => {
-                        setTimeout(() => {
-                            const phone = student.phone.replace(/\D/g, '');
-                            const finalPhone = phone.startsWith('91') ? phone : '91' + phone;
-                            const waUrl = `https://wa.me/${finalPhone}?text=${text}`;
-                            window.open(waUrl, '_blank');
-                        }, index * 1500); 
                     });
                 },
 

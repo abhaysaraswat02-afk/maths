@@ -447,27 +447,6 @@
         </div>
     </div>
 
-    <!-- Toast Notification for New Messages -->
-    <div x-show="notificationToast.show" x-transition:enter="transform ease-out duration-300" x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2" x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed top-10 right-10 w-full max-w-sm bg-white shadow-lg rounded-xl pointer-events-auto ring-1 ring-black ring-opacity-5 z-50" x-cloak>
-        <div class="p-4">
-            <div class="flex items-start">
-                <div class="flex-shrink-0 pt-0.5">
-                    <i class="fas fa-bell text-xl text-blue-500"></i>
-                </div>
-                <div class="ml-3 w-0 flex-1">
-                    <p class="text-sm font-bold text-gray-900" x-text="notificationToast.title"></p>
-                    <p class="text-sm text-gray-600 mt-1" x-text="notificationToast.body"></p>
-                </div>
-                <div class="ml-4 flex-shrink-0 flex">
-                    <button @click="notificationToast.show = false" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
-                        <span class="sr-only">Close</span>
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <script>
         function studentPortal() {
             return {
@@ -492,14 +471,11 @@
                 academicYear: '',
                 showIdCard: false,
                 resources: [],
-                notifications: [],
                 testScores: [],
                 liveClasses: [],
                 pageLoadTimestamp: null,
                 videoModal: { open: false, videoId: '' },
                 welcomeModal: { open: false },
-                notificationToast: { show: false, title: '', body: '' },
-                lastNotificationSeenAt: null,
                 pomodoro: {
                     timeLeft: 1500,
                     isActive: false,
@@ -596,40 +572,26 @@
                                 window.db.collection('live_classes').where('time', '>', new Date().toISOString()).onSnapshot(snap => {
                                     this.liveClasses = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
-                                window.db.collection('notifications').orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                    this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
                                 window.db.collection('test_scores').where('studentEmail', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
                                     this.testScores = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
+
+                                // Real-time Notification Listener (Popup Alert)
+                                window.db.collection('notifications')
+                                    .where('timestamp', '>', this.pageLoadTimestamp)
+                                    .onSnapshot(snapshot => {
+                                        snapshot.docChanges().forEach(change => {
+                                            if (change.type === 'added') {
+                                                const data = change.doc.data();
+                                                this.showAlert(data.title || 'New Announcement', data.body || '');
+                                            }
+                                        });
+                                    });
 
                                 if (localStorage.getItem('showIdCardWelcome') === 'true') {
                                     this.welcomeModal.open = true;
                                     localStorage.removeItem('showIdCardWelcome');
                                 }
-
-                                // Listen for teacher notifications and show in-app toast (closest substitute for WhatsApp push).
-                                window.db.collection('notifications').orderBy('timestamp', 'desc').limit(1).onSnapshot(snap => {
-                                    console.log('Notification listener fired, docs:', snap.docs.length);
-                                    if (!snap.empty) {
-                                        const doc = snap.docs[0];
-                                        const data = doc.data();
-                                        console.log('Latest notification:', data);
-                                        const createdAt = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate().getTime() : new Date(data.timestamp).getTime()) : Date.now();
-
-                                        if (!this.lastNotificationSeenAt || createdAt > this.lastNotificationSeenAt) {
-                                            console.log('Showing new notification toast');
-                                            this.lastNotificationSeenAt = createdAt;
-                                            this.notificationToast.title = data.title || 'New Message';
-                                            this.notificationToast.body = data.body || '';
-                                            this.notificationToast.show = true;
-
-                                            setTimeout(() => { this.notificationToast.show = false; }, 5000);
-                                        } else {
-                                            console.log('Notification already seen');
-                                        }
-                                    }
-                                });
                         } catch (e) {
                             console.error("Error fetching profile", e);
                         }

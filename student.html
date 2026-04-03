@@ -38,11 +38,6 @@
         <nav class="mt-6 px-4 space-y-2">
             <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
             <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
-            <button @click="tab = 'notifications'; mobileMenu = false; hasNewNotifications = false" :class="tab === 'notifications' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all relative">
-                <span :class="{'animate-bounce': hasNewNotifications}">🔔</span> <span class="ml-2">Notifications</span>
-                <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
-                <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
             <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
             <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
         </nav>
@@ -240,22 +235,6 @@
                         </div>
                         <button class="text-xs font-bold px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" x-text="res.type === 'test' ? 'Start Test' : 'Download'"></button>
                     </a>
-                </template>
-            </div>
-        </div>
-
-        <div x-show="tab === 'notifications'" class="space-y-6" x-cloak>
-            <h3 class="text-xl font-black">Announcements & Updates</h3>
-            <div x-show="notifications.length === 0" class="text-slate-500 italic py-8">No notifications yet.</div>
-            <div class="space-y-4">
-                <template x-for="note in notifications" :key="note.id">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-lg text-slate-800" x-text="note.title"></h4>
-                            <span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-full" x-text="formatDate(note.timestamp)"></span>
-                        </div>
-                        <p class="text-slate-600 text-sm leading-relaxed" x-text="note.body"></p>
-                    </div>
                 </template>
             </div>
         </div>
@@ -459,8 +438,6 @@
                 showIdCard: false,
                 resources: [],
                 liveClasses: [],
-                notifications: [],
-                hasNewNotifications: false,
                 pageLoadTimestamp: null,
                 videoModal: { open: false, videoId: '' },
                 welcomeModal: { open: false },
@@ -560,20 +537,11 @@
                                 window.db.collection('live_classes').where('time', '>', new Date().toISOString()).onSnapshot(snap => {
                                     this.liveClasses = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
-                                // Fetch Notifications History
-                                const cutoffDate = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 hours ago
-                                window.db.collection('notifications').where('timestamp', '>=', cutoffDate).orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                    this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
 
                                 if (localStorage.getItem('showIdCardWelcome') === 'true') {
                                     this.welcomeModal.open = true;
                                     localStorage.removeItem('showIdCardWelcome');
                                 }
-
-                                // NEW: Notification setup
-                                this.requestNotificationPermission();
-                                this.listenForNotifications(window.db);
                         } catch (e) {
                             console.error("Error fetching profile", e);
                         }
@@ -775,43 +743,6 @@
                     this.modal.title = title;
                     this.modal.message = message;
                     this.modal.open = true;
-                },
-
-                requestNotificationPermission() {
-                    if (!("Notification" in window)) {
-                        console.log("This browser does not support desktop notification");
-                        return;
-                    }
-                    
-                    if (Notification.permission === "default") {
-                        // A better UX is to ask after a user action, but for now, we ask directly.
-                        Notification.requestPermission().then(permission => {
-                            if (permission === "granted") {
-                                this.showBrowserNotification("Notifications Enabled!", "You will now receive updates from Era of MathAntics.");
-                            }
-                        });
-                    }
-                },
-
-                listenForNotifications(db) {
-                    db.collection('notifications')
-                        .where('timestamp', '>', this.pageLoadTimestamp)
-                        .onSnapshot(snapshot => {
-                            snapshot.docChanges().forEach(change => {
-                                if (change.type === 'added') {
-                                    const notificationData = change.doc.data();
-                                    this.hasNewNotifications = true;
-                                    if (Notification.permission === "granted") {
-                                        this.showBrowserNotification(notificationData.title, notificationData.body);
-                                    }
-                                }
-                            });
-                        });
-                },
-
-                showBrowserNotification(title, body) {
-                    // Show custom in-app modal instead of standard notification
-                    this.showAlert(title, body);
                 },
 
                 async uploadDP(event) {

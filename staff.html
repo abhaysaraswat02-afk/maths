@@ -208,7 +208,7 @@
             <!-- NOTIFICATIONS (New) -->
             <div x-show="activeTab === 'notifications'" x-cloak>
                 <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-sm">
-                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> Push Notification</h2>
+                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> WhatsApp & Dashboard Notification</h2>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Notification Title</label>
@@ -219,7 +219,7 @@
                             <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
                         </div>
                         <button @click="sendNotification()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition">
-                            Send Notification
+                            Send & Broadcast via WhatsApp
                         </button>
                     </div>
                 </div>
@@ -801,11 +801,8 @@
                     firebase.firestore().collection('notifications').add(payload).then(() => { 
                         const waMsg = `*${payload.title}*\n\n${payload.body}`;
                         this.notification = { title: '', body: '' };
-                        this.showToast("Notification sent to all students!");
-
-                        if (confirm("Notification posted to dashboard! Broadcast to all students via WhatsApp?")) {
-                            this.broadcastWhatsApp(waMsg);
-                        }
+                        this.showToast("Notification saved and WhatsApp broadcast started!");
+                        this.broadcastWhatsApp(waMsg);
                     }).catch(err => {
                         console.error("Error sending notification:", err);
                         this.showToast("Could not send notification.", "error");

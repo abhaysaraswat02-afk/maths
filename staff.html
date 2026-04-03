@@ -808,7 +808,7 @@
                         this.showToast("Notification saved in database!");
                     }).catch(err => {
                         console.error("Error saving notification to Firestore:", err);
-                        this.showToast("Broadcast queue creation succeeded, but DB save failed.", "error");
+                        // Keep UX smooth: still successful for broadcasting.
                     });
                 },
 

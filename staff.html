@@ -208,7 +208,7 @@
             <!-- NOTIFICATIONS (New) -->
             <div x-show="activeTab === 'notifications'" x-cloak>
                 <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-sm">
-                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> Dashboard Notification</h2>
+                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> WhatsApp & Dashboard Notification</h2>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Notification Title</label>
@@ -219,7 +219,7 @@
                             <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
                         </div>
                         <button @click="sendNotification()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition">
-                            Send & Broadcast
+                            Send to Dashboard & WhatsApp
                         </button>
                     </div>
                 </div>
@@ -533,6 +533,16 @@
                         <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Total Marks</label>
                         <input type="number" x-model="newTestScore.total" placeholder="50" class="w-full bg-slate-50 border rounded-xl p-3 font-bold">
                     </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Class / Grade</label>
+                    <select x-model="newTestScore.classGrade" class="w-full bg-slate-50 border rounded-xl p-3 font-bold">
+                        <option value="">Select Class</option>
+                        <option value="9">Class 9</option>
+                        <option value="10">Class 10</option>
+                        <option value="11">Class 11</option>
+                        <option value="12">Class 12</option>
+                    </select>
                 </div>
                 <div>
                     <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Result Image (Optional)</label>
@@ -938,8 +948,8 @@
                 },
 
                 addTestScore() {
-                    if (!this.newTestScore.studentEmail || !this.newTestScore.testName || !this.newTestScore.score || !this.newTestScore.total) {
-                        this.showToast('Please fill all fields.', 'error');
+                    if (!this.newTestScore.studentEmail || !this.newTestScore.testName || !this.newTestScore.score || !this.newTestScore.total || !this.newTestScore.classGrade) {
+                        this.showToast('Please fill all required fields.', 'error');
                         return;
                     }
 
@@ -994,11 +1004,32 @@
                     };
 
                     firebase.firestore().collection('notifications').add(payload).then(() => {
-                        this.showToast("Notification sent to all students!");
+                        const waMsg = `*${payload.title}*\n\n${payload.body}`;
+                        this.broadcastWhatsApp(waMsg);
+                        this.showToast("Notification saved and broadcast started!");
                         this.notification = { title: '', body: '' };
                     }).catch(err => {
                         console.error("Error sending notification:", err);
                         this.showToast("Failed to send notification.", "error");
+                    });
+                },
+
+                broadcastWhatsApp(message) {
+                    const text = encodeURIComponent(message);
+                    const confirmedStudents = this.admissionList.filter(s => s.status === 'Confirmed' && s.phone);
+                    
+                    if (confirmedStudents.length === 0) {
+                        this.showToast("No confirmed students with phone numbers found.", "error");
+                        return;
+                    }
+
+                    confirmedStudents.forEach((student, index) => {
+                        setTimeout(() => {
+                            const phone = student.phone.replace(/\D/g, '');
+                            const finalPhone = phone.startsWith('91') ? phone : '91' + phone;
+                            const waUrl = `https://wa.me/${finalPhone}?text=${text}`;
+                            window.open(waUrl, '_blank');
+                        }, index * 1500); 
                     });
                 },
 

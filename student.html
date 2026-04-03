@@ -38,7 +38,6 @@
         <nav class="mt-6 px-4 space-y-2">
             <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
             <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
-            <button @click="tab = 'notifications'; mobileMenu = false" :class="tab === 'notifications' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🔔 Notifications</button>
             <button @click="tab = 'test-scores'; mobileMenu = false" :class="tab === 'test-scores' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📊 Test Scores</button>
             <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
             <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
@@ -138,31 +137,6 @@
                         </div>
                     </template>
                 </div>
-            </div>
-        </div>
-
-        <div x-show="tab === 'notifications'" class="space-y-6" x-cloak>
-            <h3 class="text-2xl font-black">Notifications</h3>
-            <p class="text-slate-500 text-sm">Stay updated with the latest news and announcements from Era of MathAntics.</p>
-            
-            <div x-show="notifications.length === 0" class="text-slate-500 italic py-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200" x-cloak>
-                <i class="fas fa-bell text-3xl mb-3 opacity-20"></i>
-                <p>No notifications yet.</p>
-            </div>
-            
-            <div class="grid gap-4">
-                <template x-for="notification in notifications" :key="notification.id">
-                    <div class="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <h4 class="font-bold text-lg text-slate-800" x-text="notification.title"></h4>
-                                <p class="text-slate-600 mt-2" x-text="notification.body"></p>
-                                <p class="text-xs text-slate-400 mt-3" x-text="formatDate(notification.timestamp)"></p>
-                            </div>
-                            <i class="fas fa-bell text-blue-500 text-xl"></i>
-                        </div>
-                    </div>
-                </template>
             </div>
         </div>
 

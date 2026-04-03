@@ -379,7 +379,10 @@
                                        </span>
                                    </td>
                                    <td class="p-4 align-middle text-right space-x-2">
-                                       <button @click="triggerWhatsApp(student)" class="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="Send WhatsApp Reminder">
+                                       <button @click="markManualAttendance(student)" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition" title="Mark Manual Attendance">
+                                           <i class="fas fa-calendar-check"></i>
+                                       </button>
+                                       <button @click="triggerWhatsApp(student)" class="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="WhatsApp Reminder">
                                            <i class="fab fa-whatsapp"></i>
                                        </button>
                                        <button @click="toggleStatus(student)" class="w-8 h-8 rounded-lg flex items-center justify-center transition" 
@@ -620,6 +623,21 @@
                     window.open(`https://wa.me/${student.phone}?text=${msg}`, '_blank');
                 },
 
+                markManualAttendance(student) {
+                    const session = prompt(`Enter session/topic to mark ${student.name} present for:`, "Regular Class");
+                    if (!session) return;
+
+                    db.collection('attendance').add({
+                        studentEmail: student.email,
+                        studentName: student.name,
+                        resourceTitle: session,
+                        type: 'Manual',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        this.showToast(`Attendance marked for ${student.name}`);
+                    }).catch(err => this.showToast("Failed to mark attendance", "error"));
+                },
+
                 async uploadAchieverImage(event) {
                     const file = event.target.files[0];
                     if (!file) return;
@@ -760,10 +778,14 @@
                         this.showToast("Title and body are required.", "error");
                         return;
                     }
-                    db.collection('notifications').add({
-                        ...this.notification,
+                    // Explicitly define payload to avoid proxy errors
+                    const payload = {
+                        title: this.notification.title,
+                        body: this.notification.body,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    }).then(() => { 
+                    };
+
+                    db.collection('notifications').add(payload).then(() => { 
                         this.notification = { title: '', body: '' };
                         this.showToast("Notification sent to all students!");
                     }).catch(err => {

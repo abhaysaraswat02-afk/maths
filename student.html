@@ -750,7 +750,7 @@
                     if (id) {
                         this.videoModal.videoId = id;
                         this.videoModal.open = true;
-                        this.logAttendance(title, 'video');
+                        this.logAttendance(title, 'Auto');
                     }
                 },
 
@@ -760,7 +760,7 @@
                             studentEmail: this.studentEmail,
                             studentName: this.studentName,
                             resourceTitle: title,
-                            type: type,
+                            type: type === 'live' ? 'Auto-Live' : 'Auto-Video',
                             timestamp: firebase.firestore.FieldValue.serverTimestamp()
                         });
                     } catch (e) {

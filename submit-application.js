@@ -18,6 +18,7 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const path = require('path');
 const crypto = require('crypto');
+const twilio = require('twilio');
 
 // --- Firebase Admin SDK Initialization ---
 // IMPORTANT: In production, use Vercel Environment Variables for this!
@@ -50,6 +51,9 @@ try {
 } catch (error) {
   console.error("Error initializing Firebase:", error.message);
 }
+
+// --- Twilio Client Initialization ---
+const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const app = express();
 
@@ -208,6 +212,98 @@ app.post('/api/submit-application', async (req, res) => {
   } catch (error) {
     console.error('Error submitting application:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
+// --- WhatsApp Message Sending Endpoint ---
+app.post('/api/send-whatsapp', async (req, res) => {
+  try {
+    const { phone, message } = req.body;
+
+    // Validate required fields
+    if (!phone || !message) {
+      return res.status(400).json({ error: 'Phone number and message are required.' });
+    }
+
+    // Validate phone number format (should start with + and country code)
+    if (!phone.startsWith('+')) {
+      return res.status(400).json({ error: 'Phone number must include country code (e.g., +91XXXXXXXXXX).' });
+    }
+
+    // Send WhatsApp message using Twilio
+    const response = await twilioClient.messages.create({
+      from: process.env.TWILIO_WHATSAPP_NUMBER,
+      to: `whatsapp:${phone}`,
+      body: message
+    });
+
+    console.log('WhatsApp message sent:', response.sid);
+
+    res.status(200).json({
+      success: true,
+      message: 'WhatsApp message sent successfully!',
+      messageId: response.sid
+    });
+
+  } catch (error) {
+    console.error('Error sending WhatsApp message:', error);
+    res.status(500).json({
+      error: 'Failed to send WhatsApp message.',
+      details: error.message
+    });
+  }
+});
+
+// --- Bulk WhatsApp Broadcast Endpoint ---
+app.post('/api/broadcast-whatsapp', async (req, res) => {
+  try {
+    const { phones, message } = req.body;
+
+    if (!phones || !Array.isArray(phones) || phones.length === 0 || !message) {
+      return res.status(400).json({ error: 'Valid phone array and message are required.' });
+    }
+
+    const results = [];
+    const errors = [];
+
+    // Send messages with rate limiting (Twilio has limits)
+    for (let i = 0; i < phones.length; i++) {
+      try {
+        const phone = phones[i];
+        if (!phone.startsWith('+')) {
+          errors.push({ phone, error: 'Invalid phone format' });
+          continue;
+        }
+
+        const response = await twilioClient.messages.create({
+          from: process.env.TWILIO_WHATSAPP_NUMBER,
+          to: `whatsapp:${phone}`,
+          body: message
+        });
+
+        results.push({ phone, messageId: response.sid, status: 'sent' });
+
+        // Small delay to avoid rate limits
+        if (i < phones.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+
+      } catch (error) {
+        console.error(`Error sending to ${phones[i]}:`, error.message);
+        errors.push({ phone: phones[i], error: error.message });
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Broadcast completed. ${results.length} sent, ${errors.length} failed.`,
+      results,
+      errors
+    });
+
+  } catch (error) {
+    console.error('Error in broadcast:', error);
+    res.status(500).json({ error: 'Broadcast failed.', details: error.message });
   }
 });
 

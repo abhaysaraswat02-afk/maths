@@ -208,7 +208,7 @@
             <!-- NOTIFICATIONS (New) -->
             <div x-show="activeTab === 'notifications'" x-cloak>
                 <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-sm">
-                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> WhatsApp & Dashboard Notification</h2>
+                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> Dashboard Notification</h2>
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Notification Title</label>
@@ -219,7 +219,7 @@
                             <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
                         </div>
                         <button @click="sendNotification()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition">
-                            Send & Broadcast via WhatsApp
+                            Send & Broadcast
                         </button>
                     </div>
                 </div>
@@ -386,9 +386,6 @@
                                        <button @click="markManualAttendance(student)" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition" title="Mark Manual Attendance">
                                            <i class="fas fa-calendar-check"></i>
                                        </button>
-                                       <button @click="triggerWhatsApp(student)" class="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="WhatsApp Reminder">
-                                           <i class="fab fa-whatsapp"></i>
-                                       </button>
                                        <button @click="toggleStatus(student)" class="w-8 h-8 rounded-lg flex items-center justify-center transition" 
                                             :class="student.status === 'Confirmed' ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-50 text-green-500 hover:bg-green-100'"
                                             :title="student.status === 'Confirmed' ? 'Revoke Admission' : 'Approve Admission'">
@@ -410,6 +407,85 @@
                            </tr>
                        </tbody>
                    </table>
+                   </div>
+               </div>
+
+               <!-- Test Scores Management Section -->
+               <div class="bg-white rounded-3xl border overflow-hidden shadow-sm mt-8">
+                   <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                       <div>
+                           <h3 class="font-bold text-lg">Test Scores Management</h3>
+                           <div class="relative mt-2">
+                               <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                               <input type="text" x-model="testScoreSearchQuery" placeholder="Search by student email, subject, or class..." class="bg-white border border-slate-200 rounded-xl pl-8 pr-4 py-2 text-sm focus:border-blue-500 outline-none w-64 transition">
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Add Test Score Form -->
+                   <div class="p-6 border-b bg-slate-50">
+                       <h4 class="font-bold text-md mb-4">Add New Test Score</h4>
+                       <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                           <input type="email" x-model="newTestScore.studentEmail" placeholder="Student Email" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none">
+                           <input type="text" x-model="newTestScore.subject" placeholder="Subject" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none">
+                           <input type="number" x-model="newTestScore.score" placeholder="Score" min="0" step="0.1" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none">
+                           <input type="number" x-model="newTestScore.maxScore" placeholder="Max Score" min="0.1" step="0.1" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none">
+                           <select x-model="newTestScore.classGrade" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none">
+                               <option value="">Select Class</option>
+                               <option value="9">Class 9</option>
+                               <option value="10">Class 10</option>
+                               <option value="11">Class 11</option>
+                               <option value="12">Class 12</option>
+                           </select>
+                       </div>
+                       <button @click="addTestScore()" class="mt-4 bg-blue-600 text-white font-bold px-6 py-2 rounded-xl hover:bg-blue-700 transition">
+                           <i class="fas fa-plus mr-2"></i>Add Test Score
+                       </button>
+                   </div>
+
+                   <!-- Test Scores Table -->
+                   <div class="overflow-x-auto">
+                       <table class="w-full text-left border-collapse">
+                           <thead class="bg-slate-50 border-b">
+                               <tr>
+                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Student Email</th>
+                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Subject</th>
+                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Score</th>
+                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Percentage</th>
+                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Class</th>
+                                   <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Date</th>
+                                   <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Actions</th>
+                               </tr>
+                           </thead>
+                           <tbody class="divide-y divide-slate-100">
+                               <template x-for="score in filteredTestScores" :key="score.id">
+                                   <tr class="hover:bg-slate-50 transition">
+                                       <td class="p-4 font-bold text-slate-700" x-text="score.studentEmail"></td>
+                                       <td class="p-4 text-sm text-slate-600" x-text="score.subject"></td>
+                                       <td class="p-4 text-sm font-bold text-slate-700" x-text="score.score + '/' + score.maxScore"></td>
+                                       <td class="p-4">
+                                           <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest"
+                                                 :class="{
+                                                     'bg-green-100 text-green-700': score.percentage >= 80,
+                                                     'bg-yellow-100 text-yellow-700': score.percentage >= 60 && score.percentage < 80,
+                                                     'bg-red-100 text-red-600': score.percentage < 60
+                                                 }" 
+                                                 x-text="score.percentage + '%'"></span>
+                                       </td>
+                                       <td class="p-4 text-sm font-bold text-slate-600" x-text="'Class ' + score.classGrade"></td>
+                                       <td class="p-4 text-right text-xs font-bold text-slate-400" x-text="formatDate(score.timestamp)"></td>
+                                       <td class="p-4 text-right">
+                                           <button @click="deleteTestScore(score.id)" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition" title="Delete Score">
+                                               <i class="fas fa-trash-alt"></i>
+                                           </button>
+                                       </td>
+                                   </tr>
+                               </template>
+                               <tr x-show="filteredTestScores.length === 0">
+                                   <td colspan="7" class="p-12 text-center text-slate-400 italic">No test scores found.</td>
+                               </tr>
+                           </tbody>
+                       </table>
                    </div>
                </div>
             </div>
@@ -488,6 +564,9 @@
                 isEditingAchiever: false,
                 currentAchieverId: null,
                 staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
+                testScores: [],
+                newTestScore: { studentEmail: '', subject: '', score: '', maxScore: '', classGrade: '' },
+                testScoreSearchQuery: '',
 
                 get filteredAdmissions() {
                     if (!this.searchQuery) {
@@ -496,6 +575,17 @@
                     return this.admissionList.filter(student => 
                         (student.name && student.name.toLowerCase().includes(this.searchQuery.toLowerCase())) || 
                         (student.email && student.email.toLowerCase().includes(this.searchQuery.toLowerCase()))
+                    );
+                },
+
+                get filteredTestScores() {
+                    if (!this.testScoreSearchQuery) {
+                        return this.testScores;
+                    }
+                    return this.testScores.filter(score => 
+                        (score.studentEmail && score.studentEmail.toLowerCase().includes(this.testScoreSearchQuery.toLowerCase())) ||
+                        (score.subject && score.subject.toLowerCase().includes(this.testScoreSearchQuery.toLowerCase())) ||
+                        (score.classGrade && score.classGrade.toLowerCase().includes(this.testScoreSearchQuery.toLowerCase()))
                     );
                 },
 
@@ -518,6 +608,7 @@
                     this.fetchData('live_classes', 'liveClasses');
                     this.fetchData('achievers', 'achievers');
                     this.fetchData('attendance', 'attendanceLogs');
+                    this.fetchData('test_scores', 'testScores');
                     this.cleanupOldNotifications();
                 },
 
@@ -530,11 +621,19 @@
                 cleanupOldNotifications() {
                     // Delete notifications older than 48 hours to keep DB clean
                     const cutoffDate = new Date(Date.now() - 48 * 60 * 60 * 1000);
+                    console.log('Cleaning up notifications older than:', cutoffDate);
                     db.collection('notifications').where('timestamp', '<', cutoffDate).get().then(snap => {
+                        console.log(`Found ${snap.docs.length} old notifications to delete`);
                         const batch = db.batch();
                         snap.docs.forEach(doc => batch.delete(doc.ref));
-                        if (!snap.empty) batch.commit();
-                    }).catch(console.error);
+                        if (!snap.empty) {
+                            batch.commit().then(() => {
+                                console.log('Old notifications deleted successfully');
+                            });
+                        }
+                    }).catch(err => {
+                        console.error('Error cleaning up notifications:', err);
+                    });
                 },
 
                 showAlert(title, message) {
@@ -608,9 +707,6 @@
                         });
 
                         this.showToast('Resource saved & Students notified!');
-                        if (confirm("Resource uploaded! Send WhatsApp alert to all confirmed students?")) {
-                            this.broadcastWhatsApp(`*${notifTitle}*\n\n${notifBody}`);
-                        }
                         this.newResource = { title: '', link: '', type: 'pdf_upload', classGrade: 'All' };
                     });
                 },
@@ -623,12 +719,6 @@
                         this.showAlert('Success', 'Live class scheduled successfully!');
                         this.newLiveClass = { url: '', time: '' };
                     });
-                },
-
-                triggerWhatsApp(student) {
-                    if (!student.phone) return this.showToast("No phone number found for this student.", "error");
-                    const msg = encodeURIComponent(`Hello ${student.name}, this is a reminder from Era of MathAntics regarding your academic updates. Please log in to your dashboard to view new resources or join upcoming classes.`);
-                    window.open(`https://wa.me/${student.phone}?text=${msg}`, '_blank');
                 },
 
                 markManualAttendance(student) {
@@ -787,6 +877,49 @@
                     return date.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 },
 
+                addTestScore() {
+                    if (!this.newTestScore.studentEmail || !this.newTestScore.subject || !this.newTestScore.score || !this.newTestScore.maxScore || !this.newTestScore.classGrade) {
+                        this.showToast('Please fill all fields.', 'error');
+                        return;
+                    }
+
+                    const score = parseFloat(this.newTestScore.score);
+                    const maxScore = parseFloat(this.newTestScore.maxScore);
+                    if (isNaN(score) || isNaN(maxScore) || score < 0 || maxScore <= 0 || score > maxScore) {
+                        this.showToast('Invalid scores. Score must be between 0 and max score.', 'error');
+                        return;
+                    }
+
+                    const testScoreData = {
+                        studentEmail: this.newTestScore.studentEmail,
+                        subject: this.newTestScore.subject,
+                        score: score,
+                        maxScore: maxScore,
+                        classGrade: this.newTestScore.classGrade,
+                        percentage: Math.round((score / maxScore) * 100),
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    };
+
+                    db.collection('test_scores').add(testScoreData).then(() => {
+                        this.showToast('Test score added successfully!', 'success');
+                        this.newTestScore = { studentEmail: '', subject: '', score: '', maxScore: '', classGrade: '' };
+                    }).catch(err => {
+                        console.error('Error adding test score:', err);
+                        this.showToast('Failed to add test score.', 'error');
+                    });
+                },
+
+                deleteTestScore(id) {
+                    if (confirm('Are you sure you want to delete this test score?')) {
+                        db.collection('test_scores').doc(id).delete().then(() => {
+                            this.showToast('Test score deleted successfully!', 'success');
+                        }).catch(err => {
+                            console.error('Error deleting test score:', err);
+                            this.showToast('Failed to delete test score.', 'error');
+                        });
+                    }
+                },
+
                 sendNotification() {
                     if(!this.notification.title || !this.notification.body) {
                         this.showToast("Title and body are required.", "error");
@@ -798,54 +931,12 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
-                    const waMsg = `*${payload.title}*\n\n${payload.body}`;
-                    this.notification = { title: '', body: '' };
-                    this.showToast("Broadcasting to all registered numbers now. Please allow popups for this site.");
-                    this.broadcastWhatsApp(waMsg, true /* open WhatsApp tabs for delivery */);
-
-                    // Try to save notification to Firestore; if it fails, still continue.
                     firebase.firestore().collection('notifications').add(payload).then(() => {
-                        this.showToast("Notification saved in database!");
+                        this.showToast("Notification sent to all students!");
+                        this.notification = { title: '', body: '' };
                     }).catch(err => {
-                        console.error("Error saving notification to Firestore:", err);
-                        // Keep UX smooth: still successful for broadcasting.
-                    });
-                },
-
-                broadcastWhatsApp(msg, openWhatsAppTabs = true) {
-                    // Send to all available students who have phone numbers, not just confirmed ones.
-                    const list = this.admissionList.filter(s => s.phone && s.phone.trim());
-                    if (list.length === 0) {
-                        return this.showToast("No students with phone numbers found.", "error");
-                    }
-
-                    const cleanPhones = list.map(s => s.phone.replace(/[\s\-()]/g, ''));
-                    const broadcastRecord = {
-                        message: String(msg),
-                        phones: cleanPhones,
-                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    };
-
-                    // Store the broadcast in Firebase for tracking/audit and student feed.
-                    // Firestore write failures should not block broadcast success.
-                    firebase.firestore().collection('whatsapp_broadcasts').add(broadcastRecord).then(() => {
-                        console.log('WhatsApp broadcast record stored successfully.');
-                    }).catch(err => {
-                        console.warn('Unable to store WhatsApp broadcast record (non-blocking):', err);
-                        // Do not show an error toast; we still consider broadcast as successful.
-                    });
-
-                    if (!openWhatsAppTabs) {
-                        this.showToast(`Broadcast queued for ${list.length} students without redirects.`);
-                        return;
-                    }
-
-                    this.showToast(`Broadcasting to ${list.length} students (opening WhatsApp windows)...`);
-                    list.forEach((student, index) => {
-                        setTimeout(() => {
-                            const url = `https://wa.me/${student.phone.replace(/[\s\-()]/g, '')}?text=${encodeURIComponent(msg)}`;
-                            window.open(url, '_blank');
-                        }, index * 2500);
+                        console.error("Error sending notification:", err);
+                        this.showToast("Failed to send notification.", "error");
                     });
                 },
 

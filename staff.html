@@ -800,28 +800,43 @@
 
                     const waMsg = `*${payload.title}*\n\n${payload.body}`;
                     this.notification = { title: '', body: '' };
-                    this.showToast("WhatsApp broadcast started (saving notification in DB)...");
-                    this.broadcastWhatsApp(waMsg);
+                    this.showToast("One-click broadcast to all registered numbers started (no redirect to student pages). ");
+                    this.broadcastWhatsApp(waMsg, false /* no WhatsApp redirect tabs */);
 
                     // Try to save notification to Firestore; if it fails, still continue.
                     firebase.firestore().collection('notifications').add(payload).then(() => {
                         this.showToast("Notification saved in database!");
                     }).catch(err => {
                         console.error("Error saving notification to Firestore:", err);
-                        this.showToast("Broadcast sent but could not save notification in DB.", "error");
+                        this.showToast("Broadcast queue creation succeeded, but DB save failed.", "error");
                     });
                 },
 
-                broadcastWhatsApp(msg) {
+                broadcastWhatsApp(msg, openWhatsAppTabs = false) {
                     // Send to all available students who have phone numbers, not just confirmed ones.
                     const list = this.admissionList.filter(s => s.phone && s.phone.trim());
                     if (list.length === 0) {
                         return this.showToast("No students with phone numbers found.", "error");
                     }
 
-                    this.showToast(`Broadcasting to ${list.length} students...`);
+                    const cleanPhones = list.map(s => s.phone.replace(/[\s\-()]/g, ''));
+                    const broadcastRecord = {
+                        message: String(msg),
+                        phones: cleanPhones,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    };
 
-                    // For a definitive broadcast, open each WhatsApp URL with a spaced delay to reduce popup blocking.
+                    // Store the broadcast in Firebase for tracking/audit and student feed
+                    firebase.firestore().collection('whatsapp_broadcasts').add(broadcastRecord).catch(err => {
+                        console.error('Unable to store WhatsApp broadcast record:', err);
+                    });
+
+                    if (!openWhatsAppTabs) {
+                        this.showToast(`Broadcast queued for ${list.length} students without redirects.`);
+                        return;
+                    }
+
+                    this.showToast(`Broadcasting to ${list.length} students (opening WhatsApp windows)...`);
                     list.forEach((student, index) => {
                         setTimeout(() => {
                             const url = `https://wa.me/${student.phone.replace(/[\s\-()]/g, '')}?text=${encodeURIComponent(msg)}`;

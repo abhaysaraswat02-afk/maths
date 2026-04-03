@@ -77,9 +77,12 @@
                 </a>
             </div>
 
-            <button @click="mobileMenu = !mobileMenu" class="md:hidden text-2xl text-slate-800">
-                <i class="fas" :class="mobileMenu ? 'fa-times' : 'fa-bars'"></i>
-            </button>
+            <div class="flex items-center gap-3 md:hidden">
+                <a x-show="isLoggedIn || isStaffLoggedIn" :href="isStaffLoggedIn ? 'staff.html' : 'student.html'" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg" x-cloak>Dashboard</a>
+                <button @click="mobileMenu = !mobileMenu" class="text-2xl text-slate-800 focus:outline-none">
+                    <i class="fas" :class="mobileMenu ? 'fa-times' : 'fa-bars'"></i>
+                </button>
+            </div>
         </div>
 
         <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t p-6 space-y-4 absolute w-full shadow-xl">
@@ -105,8 +108,9 @@
                     India's most trusted math learning platform. Join live batches, get personalized mentorship, and achieve your dream rank.
                 </p>
                 <div class="flex flex-wrap gap-4">
-                    <a href="#apply" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 flex items-center gap-2">
-                        LOGIN // REGISTER AS A NEW STUDENT <i class="fas fa-arrow-right"></i>
+                    <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 flex items-center gap-2 text-center">
+                        <span x-text="isLoggedIn || isStaffLoggedIn ? 'GO TO MY DASHBOARD' : 'LOGIN // REGISTER AS A NEW STUDENT'"></span>
+                        <i class="fas fa-arrow-right"></i>
                     </a>
                     <a href="#demos" class="bg-white text-slate-900 border-2 border-slate-200 px-8 py-4 rounded-xl font-bold hover:border-blue-600 hover:text-blue-600 transition-all flex items-center gap-2">
                         <i class="fas fa-play-circle"></i> Watch Demo

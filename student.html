@@ -44,7 +44,6 @@
                 <span x-show="hasNewNotifications" class="absolute right-4 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
             <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
-            <button @click="tab = 'fees'; mobileMenu = false" :class="tab === 'fees' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">💳 Fees & Payments</button>
             <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
         </nav>
     </aside>
@@ -242,53 +241,6 @@
                         <button class="text-xs font-bold px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700" x-text="res.type === 'test' ? 'Start Test' : 'Download'"></button>
                     </a>
                 </template>
-            </div>
-        </div>
-
-        <div x-show="tab === 'fees'" class="space-y-6" x-cloak>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-3xl border shadow-sm">
-                    <p class="text-xs font-bold text-slate-400 uppercase">Total Package</p>
-                    <h4 class="text-2xl font-black mt-1">₹<span x-text="studentData.feeTotal || 0"></span></h4>
-                </div>
-                <div class="bg-green-50 p-6 rounded-3xl border border-green-100 shadow-sm">
-                    <p class="text-xs font-bold text-green-600 uppercase">Amount Paid</p>
-                    <h4 class="text-2xl font-black text-green-700 mt-1">₹<span x-text="studentData.feePaid || 0"></span></h4>
-                </div>
-                <div class="bg-red-50 p-6 rounded-3xl border border-red-100 shadow-sm">
-                    <p class="text-xs font-bold text-red-600 uppercase">Pending Balance</p>
-                    <h4 class="text-2xl font-black text-red-700 mt-1">₹<span x-text="studentData.feeBalance || 0"></span></h4>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-3xl border shadow-sm">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-lg font-bold">Payment History</h3>
-                    <button @click="payFees()" class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition">Pay Installment</button>
-                </div>
-                <div class="space-y-3">
-                    <template x-for="payment in feeHistory" :key="payment.id">
-                        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 bg-green-100 text-green-600 rounded-full flex items-center justify-center">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-sm">₹<span x-text="payment.amount"></span> Received</p>
-                                    <p class="text-[10px] text-slate-400 font-bold uppercase" x-text="formatDate(payment.timestamp)"></p>
-                                </div>
-                            </div>
-                            <button @click="downloadReceipt(payment)" class="text-blue-600 hover:underline text-xs font-bold">
-                                <i class="fas fa-file-invoice mr-1"></i> Receipt
-                            </button>
-                        </div>
-                    </template>
-                    <div x-show="feeHistory.length === 0" class="text-center py-8 text-slate-400 italic">No payment records found.</div>
-                </div>
-            </div>
-
-            <div id="receipt-template" class="hidden">
-                <!-- Hidden element for PDF generation -->
             </div>
         </div>
 
@@ -508,7 +460,6 @@
                 resources: [],
                 liveClasses: [],
                 notifications: [],
-                feeHistory: [],
                 hasNewNotifications: false,
                 pageLoadTimestamp: null,
                 videoModal: { open: false, videoId: '' },
@@ -613,10 +564,6 @@
                                 const cutoffDate = new Date(Date.now() - 48 * 60 * 60 * 1000); // 48 hours ago
                                 db.collection('notifications').where('timestamp', '>=', cutoffDate).orderBy('timestamp', 'desc').onSnapshot(snap => {
                                     this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
-                                // Fetch Payment History
-                                db.collection('payments').where('email', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                    this.feeHistory = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
 
                                 if (localStorage.getItem('showIdCardWelcome') === 'true') {
@@ -819,42 +766,6 @@
                     } catch (e) {
                         console.error("Attendance log failed", e);
                     }
-                },
-
-                payFees() {
-                    // Note: Razorpay integration requires a live Key ID
-                    const amount = prompt("Enter amount to pay:", "1000");
-                    if(!amount || isNaN(amount)) return;
-                    
-                    this.showAlert("Redirecting to Gateway", "In a production environment, this would open the secure Razorpay payment window for ₹" + amount);
-                    // Placeholder for actual Razorpay .open() logic
-                },
-
-                downloadReceipt(payment) {
-                    const dateStr = this.formatDate(payment.timestamp);
-                    const htmlContent = `
-                        <div style="padding: 40px; font-family: sans-serif; border: 1px solid #eee;">
-                            <h1 style="color: #1e40af;">Era of MathAntics</h1>
-                            <h3>FEES RECEIPT</h3>
-                            <hr>
-                            <p><strong>Student Name:</strong> ${this.studentName}</p>
-                            <p><strong>Email:</strong> ${this.studentEmail}</p>
-                            <p><strong>Transaction ID:</strong> ${payment.id}</p>
-                            <p><strong>Date:</strong> ${dateStr}</p>
-                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin-top: 20px;">
-                                <h2 style="margin: 0;">Amount Paid: ₹${payment.amount}</h2>
-                            </div>
-                            <p style="margin-top: 40px; font-size: 12px; color: #64748b;">This is a computer-generated receipt.</p>
-                        </div>
-                    `;
-                    const opt = {
-                        margin: 1,
-                        filename: `Receipt_${payment.id}.pdf`,
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2 },
-                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
-                    };
-                    html2pdf().from(htmlContent).set(opt).save();
                 },
 
                 extractYouTubeID(url) {

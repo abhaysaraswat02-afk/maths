@@ -59,9 +59,6 @@
                 <button @click="activeTab = 'notifications'" :class="{'active': activeTab === 'notifications'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-bell w-5"></i> <span class="font-medium">Notifications</span>
                 </button>
-                <button @click="activeTab = 'fees'" :class="{'active': activeTab === 'fees'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-wallet w-5"></i> <span class="font-medium">Fee Management</span>
-                </button>
                 <button @click="activeTab = 'attendance'" :class="{'active': activeTab === 'attendance'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
                     <i class="fas fa-clipboard-user w-5"></i> <span class="font-medium">Attendance Logs</span>
                 </button>
@@ -295,44 +292,6 @@
                 </div>
             </div>
 
-            <!-- FEE MANAGEMENT -->
-            <div x-show="activeTab === 'fees'" x-cloak>
-                <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
-                    <div class="p-6 border-b bg-slate-50">
-                        <h3 class="font-bold text-lg">Student Fee Records</h3>
-                    </div>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50 border-b">
-                                <tr>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Student</th>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Total Fee</th>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Paid</th>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Balance</th>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                <template x-for="student in admissionList" :key="student.id">
-                                    <tr class="hover:bg-slate-50">
-                                        <td class="p-4">
-                                            <p class="font-bold" x-text="student.name"></p>
-                                            <p class="text-xs text-slate-400" x-text="student.email"></p>
-                                        </td>
-                                        <td class="p-4 font-bold text-slate-600">₹<span x-text="student.feeTotal || 0"></span></td>
-                                        <td class="p-4 font-bold text-green-600">₹<span x-text="student.feePaid || 0"></span></td>
-                                        <td class="p-4 font-bold text-red-600">₹<span x-text="student.feeBalance || 0"></span></td>
-                                        <td class="p-4 text-right">
-                                            <button @click="updateFeeRecord(student)" class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-600 hover:text-white transition">Update Payment</button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
             <!-- ATTENDANCE LOGS -->
             <div x-show="activeTab === 'attendance'" x-cloak>
                 <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
@@ -395,7 +354,6 @@
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Student Name</th>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">School</th>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Status</th>
-                               <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Progress</th>
                                <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider text-right">Actions</th>
                            </tr>
                        </thead>
@@ -420,17 +378,10 @@
                                              <span x-text="student.status"></span>
                                        </span>
                                    </td>
-                                   <td class="p-4 align-middle min-w-[150px]">
-                                       <div class="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
-                                           <div class="bg-blue-600 h-1.5 rounded-full" style="width: 0%"></div>
-                                       </div>
-                                       <div class="flex justify-between items-center mt-1">
-                                           <p class="text-[8px] font-black text-slate-400" x-text="student.phone || 'No Phone'"></p>
-                                           <button @click="triggerWhatsApp(student)" class="text-green-500 hover:text-green-600" title="Send WhatsApp Reminder"><i class="fab fa-whatsapp"></i></button>
-                                       </div>
-                                       <p class="text-[10px] text-right mt-1 font-bold text-slate-400">0%</p>
-                                   </td>
                                    <td class="p-4 align-middle text-right space-x-2">
+                                       <button @click="triggerWhatsApp(student)" class="w-8 h-8 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 flex items-center justify-center transition" title="Send WhatsApp Reminder">
+                                           <i class="fab fa-whatsapp"></i>
+                                       </button>
                                        <button @click="toggleStatus(student)" class="w-8 h-8 rounded-lg flex items-center justify-center transition" 
                                             :class="student.status === 'Confirmed' ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-50 text-green-500 hover:bg-green-100'"
                                             :title="student.status === 'Confirmed' ? 'Revoke Admission' : 'Approve Admission'">
@@ -667,28 +618,6 @@
                     if (!student.phone) return this.showToast("No phone number found for this student.", "error");
                     const msg = encodeURIComponent(`Hello ${student.name}, this is a reminder from Era of MathAntics regarding your academic updates. Please log in to your dashboard to view new resources or join upcoming classes.`);
                     window.open(`https://wa.me/${student.phone}?text=${msg}`, '_blank');
-                },
-
-                updateFeeRecord(student) {
-                    const amount = prompt(`Enter payment amount received from ${student.name}:`, "0");
-                    if (!amount || isNaN(amount)) return;
-                    
-                    const paid = (student.feePaid || 0) + parseFloat(amount);
-                    const total = student.feeTotal || 5000;
-                    const balance = total - paid;
-
-                    db.collection('admissions').doc(student.id).update({
-                        feePaid: paid,
-                        feeBalance: balance
-                    }).then(() => {
-                        db.collection('payments').add({
-                            studentId: student.id,
-                            email: student.email,
-                            amount: parseFloat(amount),
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        this.showToast("Fee record updated successfully!");
-                    });
                 },
 
                 async uploadAchieverImage(event) {

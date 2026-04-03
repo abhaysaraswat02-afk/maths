@@ -826,9 +826,13 @@
                         createdAt: firebase.firestore.FieldValue.serverTimestamp(),
                     };
 
-                    // Store the broadcast in Firebase for tracking/audit and student feed
-                    firebase.firestore().collection('whatsapp_broadcasts').add(broadcastRecord).catch(err => {
-                        console.error('Unable to store WhatsApp broadcast record:', err);
+                    // Store the broadcast in Firebase for tracking/audit and student feed.
+                    // Firestore write failures should not block broadcast success.
+                    firebase.firestore().collection('whatsapp_broadcasts').add(broadcastRecord).then(() => {
+                        console.log('WhatsApp broadcast record stored successfully.');
+                    }).catch(err => {
+                        console.warn('Unable to store WhatsApp broadcast record (non-blocking):', err);
+                        // Do not show an error toast; we still consider broadcast as successful.
                     });
 
                     if (!openWhatsAppTabs) {

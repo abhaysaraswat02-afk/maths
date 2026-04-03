@@ -68,6 +68,12 @@
             </div>
         </header>
 
+        <div x-show="notificationToast.show" class="fixed top-24 right-6 z-50 max-w-sm bg-white border border-blue-100 rounded-xl shadow-xl p-4 text-sm">
+            <div class="font-bold text-blue-700 mb-1">New Notification</div>
+            <div class="font-semibold text-slate-800" x-text="notificationToast.title"></div>
+            <div class="text-slate-600 mt-1" x-text="notificationToast.body"></div>
+        </div>
+
         <div x-show="tab === 'videos'" class="space-y-6" x-cloak>
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <h3 class="text-2xl font-black text-slate-900">Video Library</h3>
@@ -434,6 +440,8 @@
                 youtubeApiKey: 'AIzaSyC9USpCxutEV2MhDeOB-A0uzoLHY7edhkI',
                 youtubeChannelId: 'UCo0fI2O0ITf8sAJlckVROiA',
                 modal: { open: false, title: '', message: '' },
+                notificationToast: { show: false, title: '', body: '' },
+                lastNotificationSeenAt: null,
                 academicYear: '',
                 showIdCard: false,
                 resources: [],
@@ -542,6 +550,24 @@
                                     this.welcomeModal.open = true;
                                     localStorage.removeItem('showIdCardWelcome');
                                 }
+
+                                // Listen for teacher notifications and show in-app toast (closest substitute for WhatsApp push).
+                                window.db.collection('notifications').orderBy('timestamp', 'desc').limit(1).onSnapshot(snap => {
+                                    if (!snap.empty) {
+                                        const doc = snap.docs[0];
+                                        const data = doc.data();
+                                        const createdAt = data.timestamp ? (data.timestamp.toDate ? data.timestamp.toDate().getTime() : new Date(data.timestamp).getTime()) : Date.now();
+
+                                        if (!this.lastNotificationSeenAt || createdAt > this.lastNotificationSeenAt) {
+                                            this.lastNotificationSeenAt = createdAt;
+                                            this.notificationToast.title = data.title || 'New Message';
+                                            this.notificationToast.body = data.body || '';
+                                            this.notificationToast.show = true;
+
+                                            setTimeout(() => { this.notificationToast.show = false; }, 5000);
+                                        }
+                                    }
+                                });
                         } catch (e) {
                             console.error("Error fetching profile", e);
                         }

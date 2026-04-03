@@ -800,8 +800,8 @@
 
                     const waMsg = `*${payload.title}*\n\n${payload.body}`;
                     this.notification = { title: '', body: '' };
-                    this.showToast("One-click broadcast to all registered numbers started (no redirect to student pages). ");
-                    this.broadcastWhatsApp(waMsg, false /* no WhatsApp redirect tabs */);
+                    this.showToast("Broadcasting to all registered numbers now. Please allow popups for this site.");
+                    this.broadcastWhatsApp(waMsg, true /* open WhatsApp tabs for delivery */);
 
                     // Try to save notification to Firestore; if it fails, still continue.
                     firebase.firestore().collection('notifications').add(payload).then(() => {
@@ -812,7 +812,7 @@
                     });
                 },
 
-                broadcastWhatsApp(msg, openWhatsAppTabs = false) {
+                broadcastWhatsApp(msg, openWhatsAppTabs = true) {
                     // Send to all available students who have phone numbers, not just confirmed ones.
                     const list = this.admissionList.filter(s => s.phone && s.phone.trim());
                     if (list.length === 0) {

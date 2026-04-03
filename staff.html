@@ -946,7 +946,7 @@
                     const score = parseFloat(this.newTestScore.score);
                     const total = parseFloat(this.newTestScore.total);
                     if (isNaN(score) || isNaN(total) || score < 0 || total <= 0 || score > total) {
-                        this.showToast('Invalid scores. Score must be between 0 and max score.', 'error');
+                        this.showToast('Invalid scores. Score must be between 0 and total marks.', 'error');
                         return;
                     }
 

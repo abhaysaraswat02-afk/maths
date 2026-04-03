@@ -215,6 +215,16 @@
                             <input type="text" x-model="notification.title" placeholder="e.g. New Assignment Uploaded!" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold focus:ring-2 focus:ring-purple-500 outline-none transition">
                         </div>
                         <div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Target Class</label>
+                            <select x-model="notification.target" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold focus:ring-2 focus:ring-purple-500 outline-none transition">
+                                <option value="All">All Students</option>
+                                <option value="Class 9">Class 9</option>
+                                <option value="Class 10">Class 10</option>
+                                <option value="Class 11">Class 11</option>
+                                <option value="Class 12">Class 12</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Message Body</label>
                             <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
                         </div>
@@ -317,11 +327,11 @@
                                         <td class="p-4">
                                             <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest"
                                                   :class="{
-                                                      'bg-green-100 text-green-700': log.type === 'Manual',
-                                                      'bg-red-100 text-red-600': log.type.includes('Live'),
-                                                      'bg-blue-100 text-blue-600': log.type.includes('Video')
+                                                      'bg-green-100 text-green-700': log.type === 'Manual' || !log.type,
+                                                      'bg-red-100 text-red-600': log.type && log.type.includes('Live'),
+                                                      'bg-blue-100 text-blue-600': log.type && log.type.includes('Video')
                                                   }" 
-                                                  x-text="log.type || 'Activity'"></span>
+                                                  x-text="log.type || 'Manual'"></span>
                                         </td>
                                         <td class="p-4 text-right text-xs font-bold text-slate-400" x-text="formatDate(log.timestamp)"></td>
                                     </tr>
@@ -589,7 +599,7 @@
                 achievers: [],
                 attendanceLogs: [],
                 newResource: { title: '', link: '', type: 'pdf_upload', classGrade: 'All' },
-                notification: { title: '', body: '' },
+                notification: { title: '', body: '', target: 'All' },
                 newLiveClass: { url: '', time: '' },
                 searchQuery: '',
                 toast: { show: false, message: '', type: 'success' },
@@ -745,6 +755,7 @@
                         db.collection('notifications').add({
                             title: String(notifTitle),
                             body: String(notifBody),
+                            target: String(this.newResource.classGrade || 'All'),
                             timestamp: firebase.firestore.FieldValue.serverTimestamp()
                         }).then(() => {
                             console.log('Resource notification sent');
@@ -846,12 +857,6 @@
                     const file = event.target.files[0];
                     if (!file) return;
 
-                    // Check if default credentials are still in use
-                    if (this.cloudinaryCloudName === 'demo' || this.cloudinaryUploadPreset === 'docs_upload_example_preset') {
-                        this.showAlert('Configuration Required', 'Please open staff.html and replace "demo" and "docs_upload_example_preset" with your actual Cloudinary Cloud Name and Unsigned Upload Preset.');
-                        return;
-                    }
-
                     // Check file size (limit to 5MB)
                     if (file.size > 5 * 1024 * 1024) {
                         this.showAlert('File Too Large', 'Please select an image under 5MB.');
@@ -910,6 +915,10 @@
                 },
 
                 saveAchiever() {
+                    if (!this.newAchiever.name || !this.newAchiever.achievement) {
+                        this.showToast('Name and Achievement are required.', 'error');
+                        return;
+                    }
                     const achieverData = {
                         name: this.newAchiever.name,
                         achievement: this.newAchiever.achievement,
@@ -1037,13 +1046,14 @@
                     const payload = {
                         title: String(this.notification.title),
                         body: String(this.notification.body),
+                        target: String(this.notification.target || 'All'),
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
                     db.collection('notifications').add(payload).then(() => {
                         console.log('Notification saved successfully:', payload);
                         this.showToast("Notification sent to student portal!");
-                        this.notification = { title: '', body: '' };
+                        this.notification = { title: '', body: '', target: 'All' };
                     }).catch(err => {
                         console.error("Error sending notification:", err);
                         this.showToast("Failed to send notification.", "error");

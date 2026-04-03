@@ -583,8 +583,7 @@
                                         snapshot.docChanges().forEach(change => {
                                             if (change.type === 'added') {
                                                 const data = change.doc.data();
-                                                this.showAlert(data.title || 'New Announcement', data.body || '');
-                                            }
+                                                
                                         });
                                     });
 

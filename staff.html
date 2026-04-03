@@ -810,17 +810,20 @@
                 },
 
                 broadcastWhatsApp(msg) {
-                    const list = this.admissionList.filter(s => s.status === 'Confirmed' && s.phone);
+                    // Send to all available students who have phone numbers, not just confirmed ones.
+                    const list = this.admissionList.filter(s => s.phone && s.phone.trim());
                     if (list.length === 0) {
-                        return this.showToast("No confirmed students with phone numbers found.", "error");
+                        return this.showToast("No students with phone numbers found.", "error");
                     }
 
                     this.showToast(`Broadcasting to ${list.length} students...`);
+
+                    // For a definitive broadcast, open each WhatsApp URL with a spaced delay to reduce popup blocking.
                     list.forEach((student, index) => {
                         setTimeout(() => {
-                            const url = `https://wa.me/${student.phone}?text=${encodeURIComponent(msg)}`;
+                            const url = `https://wa.me/${student.phone.replace(/[\s\-()]/g, '')}?text=${encodeURIComponent(msg)}`;
                             window.open(url, '_blank');
-                        }, index * 2500); // 2.5s delay to mitigate browser popup blocks
+                        }, index * 2500);
                     });
                 },
 

@@ -575,6 +575,8 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        console.log('Firebase initialized successfully');
+        console.log('Firestore instance:', db);
 
         function staffPortal() {
             return {
@@ -629,15 +631,18 @@
                 },
 
                 init() {
+                    console.log('Staff portal initializing...');
                     // Production-grade Security Check
                     const userEmail = localStorage.getItem('student_email');
                     const isStaff = localStorage.getItem('isStaffLoggedIn') === 'true';
                     
                     if (!isStaff || !this.staffEmails.includes(userEmail)) {
+                        console.log('Security check failed, redirecting to index.html');
                         window.location.href = 'index.html';
                         return;
                     }
 
+                    console.log('Security check passed, fetching data...');
                     this.fetchData('admissions', 'admissionList');
                     this.fetchData('resources', 'resources');
                     this.fetchData('live_classes', 'liveClasses');
@@ -645,6 +650,7 @@
                     this.fetchData('attendance', 'attendanceLogs');
                     this.fetchData('test_scores', 'testScores');
                     this.cleanupOldNotifications();
+                    console.log('Data fetching initiated');
                 },
 
                 fetchData(collection, target) {
@@ -733,16 +739,24 @@
                         classGrade: this.newResource.classGrade || 'All',
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
-                    firebase.firestore().collection('resources').add(resourceToSave).then(() => {
+                    db.collection('resources').add(resourceToSave).then(() => {
+                        console.log('Resource saved successfully:', resourceToSave);
                         // Automatically send notification to students
-                        firebase.firestore().collection('notifications').add({
+                        db.collection('notifications').add({
                             title: String(notifTitle),
                             body: String(notifBody),
                             timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        }).then(() => {
+                            console.log('Resource notification sent');
+                        }).catch(err => {
+                            console.error('Error sending resource notification:', err);
                         });
 
                         this.showToast('Resource saved & Students notified!');
                         this.newResource = { title: '', link: '', type: 'pdf_upload', classGrade: 'All' };
+                    }).catch(err => {
+                        console.error('Error saving resource:', err);
+                        this.showAlert('Save Failed', 'Failed to save resource. Please try again.');
                     });
                 },
 
@@ -792,6 +806,13 @@
                 async uploadScoreImage(event) {
                     const file = event.target.files[0];
                     if (!file) return;
+                    
+                    // Check file size (limit to 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        this.showToast('File too large. Please select an image under 5MB.', 'error');
+                        return;
+                    }
+                    
                     const formData = new FormData();
                     formData.append('file', file);
                     formData.append('upload_preset', this.cloudinaryUploadPreset);
@@ -802,13 +823,22 @@
                             method: 'POST',
                             body: formData
                         });
+                        
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            throw new Error(errorData.error?.message || `Upload failed: ${response.status}`);
+                        }
+                        
                         const data = await response.json();
                         if (data.secure_url) {
                             this.newTestScore.resultImage = data.secure_url;
-                            this.showToast('Result image uploaded!');
+                            this.showToast('Result image uploaded successfully!');
+                        } else {
+                            throw new Error('No image URL received from Cloudinary');
                         }
                     } catch (err) {
-                        this.showToast('Cloudinary upload failed', 'error');
+                        console.error('Cloudinary upload error:', err);
+                        this.showToast(`Upload failed: ${err.message}`, 'error');
                     }
                 },
 
@@ -822,13 +852,18 @@
                         return;
                     }
 
+                    // Check file size (limit to 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        this.showAlert('File Too Large', 'Please select an image under 5MB.');
+                        return;
+                    }
+
                     const formData = new FormData();
                     formData.append('file', file);
                     formData.append('upload_preset', this.cloudinaryUploadPreset);
 
                     try {
                         this.showToast('Uploading to Cloudinary...', 'info');
-                        // Note: Replace 'demo' in the URL with this.cloudinaryCloudName if you change the variable above
                         const response = await fetch(`https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`, {
                             method: 'POST',
                             body: formData
@@ -855,7 +890,7 @@
                         }
                     } catch (error) {
                         console.error('Cloudinary upload error:', error);
-                        this.showAlert('Upload Failed', error.message);
+                        this.showAlert('Upload Failed', `Image upload failed: ${error.message}`);
                     }
                 },
 
@@ -972,6 +1007,7 @@
                     };
 
                     db.collection('test_scores').add(testScoreData).then(() => {
+                        console.log('Test score added successfully:', testScoreData);
                         this.showToast('Test score added successfully!', 'success');
                         this.scoreModal.open = false;
                         this.newTestScore = { studentEmail: '', testName: '', score: '', total: '', classGrade: '', resultImage: '' };
@@ -1003,7 +1039,8 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
-                    firebase.firestore().collection('notifications').add(payload).then(() => {
+                    db.collection('notifications').add(payload).then(() => {
+                        console.log('Notification saved successfully:', payload);
                         const waMsg = `*${payload.title}*\n\n${payload.body}`;
                         this.broadcastWhatsApp(waMsg);
                         this.showToast("Notification saved and broadcast started!");

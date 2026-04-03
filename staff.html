@@ -694,10 +694,10 @@
                         input.accept = 'application/pdf';
                         input.onchange = async (e) => {
                             const file = e.target.files[0];
-                            if (!file) return;
+                            if (!file || file.type !== 'application/pdf') return this.showToast('Please select a valid PDF file.', 'error');
                             const storageRef = firebase.storage().ref(`resources/${Date.now()}_${file.name}`);
                             try {
-                                this.showToast('Uploading PDF... Please wait.', 'success');
+                                this.showToast('Uploading PDF... Please wait.', 'info');
                                 const snapshot = await storageRef.put(file);
                                 const url = await snapshot.ref.getDownloadURL();
                                 this.newResource.link = url;
@@ -990,7 +990,7 @@
 
                     const score = parseFloat(this.newTestScore.score);
                     const total = parseFloat(this.newTestScore.total);
-                    if (isNaN(score) || isNaN(total) || score < 0 || total <= 0 || score > total) {
+                    if (isNaN(score) || isNaN(total) || score < 0 || total <= 0) {
                         this.showToast('Invalid scores. Score must be between 0 and total marks.', 'error');
                         return;
                     }

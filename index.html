@@ -538,6 +538,7 @@
         };
         firebase.initializeApp(firebaseConfig);
         window.db = firebase.firestore();
+        window.auth = firebase.auth();
 
         function mathAnticsWebsite() {
             return {
@@ -593,6 +594,10 @@
                     this.fetchBatches();
                     this.fetchStaffVideos();
                     this.fetchAchievers();
+
+                    // Initialize anonymous auth to satisfy security rules that require "request.auth != null"
+                    window.auth.signInAnonymously().catch(err => console.warn("Firebase Auth:", err.message));
+
                     this.isLoggedIn = localStorage.getItem('isStudentLoggedIn') === 'true';
                     this.isStaffLoggedIn = localStorage.getItem('isStaffLoggedIn') === 'true';
                 },
@@ -779,7 +784,7 @@
                         }
                     } catch (dbError) {
                         console.error("User check failed:", dbError);
-                        this.showAlert("Access Denied", "Unable to connect to database. Please check your internet or security rules.");
+                        this.showAlert("Access Denied", "Database Error: " + dbError.message + ". Please check your Firebase Security Rules.");
                         this.isSubmitting = false;
                         return;
                     }

@@ -125,9 +125,15 @@ function createVerificationToken(email, otp, expiry) {
 app.post('/api/send-otp', async (req, res) => {
   if (!db) {
     console.error("DB not initialized");
-    return res.status(500).json({ error: 'Server database error. Check server logs.' });
+    return res.status(500).json({ error: 'Firebase Admin not initialized. Check your FIREBASE_ env variables.' });
   }
   const { email } = req.body;
+
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+    console.error("SMTP config missing");
+    return res.status(500).json({ error: 'Email service not configured (GMAIL_USER/PASS missing in .env).' });
+  }
+
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return res.status(400).json({ error: 'Invalid email address.' });
   }

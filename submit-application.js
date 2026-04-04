@@ -47,11 +47,17 @@ const twilio = require('twilio');
 // }
 let db;
 try {
-  const projectId = (process.env.FIREBASE_PROJECT_ID || '').replace(/^"(.*)"$/, '$1');
-  const clientEmail = (process.env.FIREBASE_CLIENT_EMAIL || '').replace(/^"(.*)"$/, '$1');
-  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '')
-    .replace(/\\n/g, '\n')
-    .replace(/^"(.*)"$/, '$1');
+  const stripQuotes = value => {
+    if (!value) return '';
+    if (value.startsWith('"') && value.endsWith('"')) {
+      return value.slice(1, -1);
+    }
+    return value;
+  };
+
+  const projectId = stripQuotes(process.env.FIREBASE_PROJECT_ID || '');
+  const clientEmail = stripQuotes(process.env.FIREBASE_CLIENT_EMAIL || '');
+  const privateKey = stripQuotes((process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'));
 
   const serviceAccount = {
     projectId,

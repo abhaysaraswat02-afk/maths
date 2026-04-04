@@ -23,6 +23,28 @@ const twilio = require('twilio');
 // --- Firebase Admin SDK Initialization ---
 // IMPORTANT: In production, use Vercel Environment Variables for this!
 // DO NOT hardcode your credentials.
+
+// FIRESTORE SECURITY RULES NEEDED:
+// Add the following to your Firestore Rules for backend operations to work:
+// rules_version = '2';
+// service cloud.firestore {
+//   match /databases/{database}/documents {
+//     match /admissions/{document=**} {
+//       allow read: if request.auth != null || request.auth.uid == null;
+//       allow write: if request.auth != null;
+//     }
+//     match /notifications/{document=**} {
+//       allow read, write: if request.auth != null;
+//     }
+//     match /payments/{document=**} {
+//       allow read, write: if request.auth != null;
+//     }
+//     match /resources/{document=**} {
+//       allow read: if true;
+//       allow write: if request.auth != null;
+//     }
+//   }
+// }
 let db;
 try {
   const serviceAccount = {
@@ -139,14 +161,21 @@ app.post('/api/send-otp', async (req, res) => {
   }
 
   try {
-    // Check if user already exists (server-side, no security rule issues)
-    const existingUser = await db.collection('admissions').where('email', '==', email).get();
-    const isExistingUser = !existingUser.empty;
-
     // Generate 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
     const token = createVerificationToken(email, otp, expiry);
+
+    // Try to check if user already exists (optional - if it fails, still send OTP)
+    let isExistingUser = false;
+    try {
+      const existingUser = await db.collection('admissions').where('email', '==', email).get();
+      isExistingUser = !existingUser.empty;
+    } catch (dbError) {
+      console.warn('Could not check user existence:', dbError.message);
+      // Continue anyway - user will verify via OTP
+      isExistingUser = false;
+    }
 
     // Send Email
     await transporter.sendMail({

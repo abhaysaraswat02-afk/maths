@@ -827,7 +827,16 @@
                             body: JSON.stringify({ 
                                 email: this.applicationForm.email, 
                                 code: this.enteredOtp,
-                                verificationToken: this.verificationToken // Send signature back
+                                verificationToken: this.verificationToken, // Send signature back
+                                isExistingUser: this.isExistingUser,
+                                applicationForm: {
+                                    name: this.applicationForm.name,
+                                    phone: this.applicationForm.phone,
+                                    fatherName: this.applicationForm.fatherName,
+                                    studentClass: this.applicationForm.studentClass,
+                                    dob: this.applicationForm.dob,
+                                    schoolName: this.applicationForm.schoolName
+                                }
                             })
                         });
 
@@ -857,33 +866,6 @@
                         }
 
                         // User signed in successfully.
-
-                        if (this.isExistingUser) {
-                            // Update last login for existing user
-                            const userSnap = await window.db.collection("admissions").where("email", "==", this.applicationForm.email).get();
-                            if (!userSnap.empty) {
-                                await userSnap.docs[0].ref.update({
-                                    lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                                });
-                            }
-                        } else {
-                            // Save new student data to Firestore
-                            await window.db.collection("admissions").add({
-                                name: this.applicationForm.name,
-                                email: this.applicationForm.email,
-                                phone: this.applicationForm.phone,
-                                fatherName: this.applicationForm.fatherName,
-                                studentClass: this.applicationForm.studentClass,
-                                dob: this.applicationForm.dob,
-                                schoolName: this.applicationForm.schoolName,
-                                status: 'Pending',
-                                feeTotal: 5000, // Default fee
-                                feePaid: 0,
-                                feeBalance: 5000,
-                                createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                                lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-                            });
-                        }
                         localStorage.setItem('showIdCardWelcome', 'true');
 
                         // Common logic for both new and existing users

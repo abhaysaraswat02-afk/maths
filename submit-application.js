@@ -208,7 +208,7 @@ app.post('/api/verify-otp', async (req, res) => {
   if (!db) {
     return res.status(500).json({ error: 'Server database error.' });
   }
-  const { email, code, verificationToken } = req.body;
+  const { email, code, verificationToken, isExistingUser, applicationForm } = req.body;
   
   if (!verificationToken) return res.status(400).json({ error: 'Missing verification session.' });
 
@@ -223,6 +223,40 @@ app.post('/api/verify-otp', async (req, res) => {
   const expectedHash = createVerificationToken(email, code, expiry);
   if (hash !== expectedHash) {
     return res.status(400).json({ success: false, error: 'Invalid or expired OTP.' });
+  }
+
+  if (applicationForm) {
+    try {
+      if (isExistingUser) {
+        const existingUserSnap = await db.collection('admissions').where('email', '==', email).get();
+        if (!existingUserSnap.empty) {
+          await existingUserSnap.docs[0].ref.update({
+            lastLogin: admin.firestore.FieldValue.serverTimestamp()
+          });
+        } else {
+          return res.status(400).json({ success: false, error: 'Existing user record not found.' });
+        }
+      } else {
+        await db.collection('admissions').add({
+          name: applicationForm.name || '',
+          email: email,
+          phone: applicationForm.phone || 'Not Provided',
+          fatherName: applicationForm.fatherName || '',
+          studentClass: applicationForm.studentClass || '',
+          dob: applicationForm.dob || '',
+          schoolName: applicationForm.schoolName || '',
+          status: 'Pending',
+          feeTotal: 5000,
+          feePaid: 0,
+          feeBalance: 5000,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          lastLogin: admin.firestore.FieldValue.serverTimestamp()
+        });
+      }
+    } catch (dbError) {
+      console.error('OTP completion database error:', dbError);
+      return res.status(500).json({ success: false, error: 'Failed to save registration data: ' + dbError.message });
+    }
   }
 
   res.status(200).json({ success: true, message: 'OTP Verified' });

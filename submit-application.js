@@ -47,25 +47,33 @@ const twilio = require('twilio');
 // }
 let db;
 try {
+  const projectId = (process.env.FIREBASE_PROJECT_ID || '').replace(/^"(.*)"$/, '$1');
+  const clientEmail = (process.env.FIREBASE_CLIENT_EMAIL || '').replace(/^"(.*)"$/, '$1');
+  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '')
+    .replace(/\\n/g, '\n')
+    .replace(/^"(.*)"$/, '$1');
+
   const serviceAccount = {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    privateKey: (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'),
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    projectId,
+    privateKey,
+    clientEmail,
   };
 
   if (!admin.apps.length) {
-    if (serviceAccount.privateKey && serviceAccount.clientEmail) {
+    if (serviceAccount.privateKey && serviceAccount.clientEmail && serviceAccount.projectId) {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.projectId,
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
       });
     } else {
-      throw new Error("Firebase credentials missing in .env file. Check FIREBASE_PRIVATE_KEY and FIREBASE_CLIENT_EMAIL.");
+      throw new Error("Firebase credentials missing or malformed in .env file. Check FIREBASE_PROJECT_ID, FIREBASE_PRIVATE_KEY, and FIREBASE_CLIENT_EMAIL.");
     }
   }
   if (admin.apps.length) {
     db = admin.firestore(); // Use Firestore for consistency with frontend
-    console.log(`Firebase Admin SDK initialized for: ${process.env.FIREBASE_PROJECT_ID}`);
-    console.log(`Using Service Account: ${process.env.FIREBASE_CLIENT_EMAIL}`);
+    console.log(`Firebase Admin SDK initialized for: ${serviceAccount.projectId}`);
+    console.log(`Using Service Account: ${serviceAccount.clientEmail}`);
     if (!process.env.FIREBASE_PRIVATE_KEY) {
       console.error("CRITICAL: FIREBASE_PRIVATE_KEY is missing from your .env file!");
     }

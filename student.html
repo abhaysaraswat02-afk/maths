@@ -970,6 +970,23 @@
                     }).catch(err => console.error(err));
                 },
 
+                async submitPayment() {
+                    if (!this.payForm.amount || this.payForm.amount <= 0) return this.showAlert('Invalid Amount', 'Please enter a valid amount.');
+                    
+                    try {
+                        await window.db.collection('payments').add({
+                            email: this.studentEmail,
+                            amount: Number(this.payForm.amount),
+                            verified: false,
+                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        this.payForm.amount = '';
+                        this.showAlert('Success', 'Payment record submitted for verification.');
+                    } catch (err) {
+                        this.showAlert('Error', 'Failed to submit payment: ' + err.message);
+                    }
+                },
+
                 logout() {
                     localStorage.clear();
                     window.location.href = 'index.html';

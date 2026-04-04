@@ -89,52 +89,80 @@ function staffPortal() {
 
         async approveAdmission(id) {
             this.loading = true;
-            await db.collection('admissions').doc(id).update({ status: 'Approved' });
-            this.loading = false;
+            try {
+                await db.collection('admissions').doc(id).update({ status: 'Approved' });
+                alert('Admission approved successfully!');
+            } catch (err) {
+                console.error("Approval error:", err);
+                alert('Failed to approve admission: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
         },
 
         async verifyPayment(id) {
             this.loading = true;
-            const payRef = db.collection('payments').doc(id);
-            const payDoc = await payRef.get();
-            
-            if (payDoc.exists) {
-                const payData = payDoc.data();
-                await payRef.update({ verified: true });
+            try {
+                const payRef = db.collection('payments').doc(id);
+                const payDoc = await payRef.get();
                 
-                // Automatically update student's paid balance in admissions
-                const studentSnap = await db.collection('admissions').where('email', '==', payData.email).get();
-                if (!studentSnap.empty) {
-                    const studentRef = studentSnap.docs[0].ref;
-                    const currentPaid = studentSnap.docs[0].data().feePaid || 0;
-                    await studentRef.update({ feePaid: currentPaid + Number(payData.amount) });
+                if (payDoc.exists) {
+                    const payData = payDoc.data();
+                    await payRef.update({ verified: true });
+                    
+                    // Automatically update student's paid balance in admissions
+                    const studentSnap = await db.collection('admissions').where('email', '==', payData.email).get();
+                    if (!studentSnap.empty) {
+                        const studentRef = studentSnap.docs[0].ref;
+                        const currentPaid = studentSnap.docs[0].data().feePaid || 0;
+                        const amount = Number(payData.amount) || 0;
+                        await studentRef.update({ feePaid: currentPaid + amount });
+                    }
+                    alert('Payment verified and student balance updated!');
                 }
+            } catch (err) {
+                console.error("Payment verification error:", err);
+                alert('Failed to verify payment: ' + err.message);
+            } finally {
+                this.loading = false;
             }
-            this.loading = false;
         },
 
         async postNews() {
             this.loading = true;
-            await db.collection('notifications').add({
-                ...this.newsForm,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            this.newsForm = { title: '', content: '' };
-            alert('News posted successfully!');
-            this.loading = false;
+            try {
+                await db.collection('notifications').add({
+                    ...this.newsForm,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                this.newsForm = { title: '', content: '' };
+                alert('News posted successfully!');
+            } catch (err) {
+                console.error("Post news error:", err);
+                alert('Failed to post news: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
         },
 
         async addDoc() {
             this.loading = true;
-            await db.collection('resources').add({
-                title: this.docForm.name,
-                link: this.docForm.url,
-                type: 'pdf',
-                classGrade: 'All',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            this.docForm = { name: '', url: '' };
-            this.loading = false;
+            try {
+                await db.collection('resources').add({
+                    title: this.docForm.name,
+                    link: this.docForm.url,
+                    type: 'pdf',
+                    classGrade: 'All',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                this.docForm = { name: '', url: '' };
+                alert('Resource added successfully!');
+            } catch (err) {
+                console.error("Add resource error:", err);
+                alert('Failed to add resource: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
         },
 
         async deleteDoc(id) {

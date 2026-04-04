@@ -53,7 +53,18 @@ try {
 }
 
 // --- Twilio Client Initialization ---
-const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+let twilioClient;
+try {
+  if (process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_ACCOUNT_SID.startsWith('AC')) {
+    twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+    console.log('Twilio client initialized successfully');
+  } else {
+    console.log('Twilio credentials not provided or invalid - WhatsApp features disabled');
+  }
+} catch (error) {
+  console.error('Error initializing Twilio:', error.message);
+  console.log('WhatsApp features will be disabled');
+}
 
 const app = express();
 
@@ -217,6 +228,10 @@ app.post('/api/submit-application', async (req, res) => {
 
 // --- WhatsApp Message Sending Endpoint ---
 app.post('/api/send-whatsapp', async (req, res) => {
+  if (!twilioClient) {
+    return res.status(503).json({ error: 'WhatsApp service is not configured.' });
+  }
+  
   try {
     const { phone, message } = req.body;
 
@@ -256,6 +271,10 @@ app.post('/api/send-whatsapp', async (req, res) => {
 
 // --- Bulk WhatsApp Broadcast Endpoint ---
 app.post('/api/broadcast-whatsapp', async (req, res) => {
+  if (!twilioClient) {
+    return res.status(503).json({ error: 'WhatsApp service is not configured.' });
+  }
+  
   try {
     const { phones, message } = req.body;
 

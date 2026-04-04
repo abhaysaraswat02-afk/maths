@@ -20,6 +20,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
 
     <style>
         [x-cloak] { display: none !important; }
@@ -118,8 +119,9 @@
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Scheduled Time</label>
                             <input type="datetime-local" x-model="newLiveClass.time" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-600">
                         </div>
-                        <button @click="scheduleLiveClass()" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition animate-pulse">
-                            Start Session & Notify
+                        <button @click="scheduleLiveClass()" :disabled="isSchedulingLive" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition animate-pulse disabled:bg-red-400 flex items-center justify-center">
+                            <i x-show="isSchedulingLive" class="fas fa-spinner fa-spin mr-2"></i>
+                            <span x-text="isSchedulingLive ? 'Scheduling...' : 'Start Session & Notify'"></span>
                         </button>
                     </div>
                 </div>
@@ -173,9 +175,11 @@
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource URL</label>
                             <input type="url" x-model="newResource.link" placeholder="https://..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
                         </div>
-                        <button @click="uploadResource()" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition">
-                            <span x-show="newResource.type === 'pdf_upload'">Upload PDF File</span>
-                            <span x-show="newResource.type !== 'pdf_upload'">Save Resource Link</span>
+                        <button @click="uploadResource()" :disabled="isUploading" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition disabled:bg-green-400 flex items-center justify-center">
+                            <i x-show="isUploading" class="fas fa-spinner fa-spin mr-2"></i>
+                            <span x-show="isUploading">Uploading...</span>
+                            <span x-show="!isUploading && newResource.type === 'pdf_upload'">Upload PDF File</span>
+                            <span x-show="!isUploading && newResource.type !== 'pdf_upload'">Save Resource Link</span>
                         </button>
                     </div>
                 </div>
@@ -184,6 +188,13 @@
                 <div class="bg-white p-8 rounded-3xl border max-w-4xl mx-auto shadow-sm">
                     <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
                         <h3 class="text-lg font-bold">All Resources</h3>
+                        <select x-model="resourceFilter" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none transition shadow-sm font-bold text-slate-700">
+                            <option value="All">All Classes</option>
+                            <option value="Class 9">Class 9</option>
+                            <option value="Class 10">Class 10</option>
+                            <option value="Class 11">Class 11</option>
+                            <option value="Class 12">Class 12</option>
+                        </select>
                     </div>
                     
                     <div class="grid gap-3">
@@ -228,8 +239,9 @@
                             <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Message Body</label>
                             <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
                         </div>
-                        <button @click="sendNotification()" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition">
-                            Send to Student Portal
+                        <button @click="sendNotification()" :disabled="isSendingNotification" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition disabled:bg-purple-400 flex items-center justify-center">
+                            <i x-show="isSendingNotification" class="fas fa-spinner fa-spin mr-2"></i>
+                            <span x-text="isSendingNotification ? 'Sending...' : 'Send to Student Portal'"></span>
                         </button>
                     </div>
                 </div>
@@ -584,9 +596,9 @@
             appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
         };
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        window.db = firebase.firestore();
         console.log('Firebase initialized successfully');
-        console.log('Firestore instance:', db);
+        console.log('Firestore instance:', window.db);
 
         function staffPortal() {
             return {
@@ -602,6 +614,9 @@
                 notification: { title: '', body: '', target: 'All' },
                 newLiveClass: { url: '', time: '' },
                 searchQuery: '',
+                isUploading: false,
+                isSendingNotification: false,
+                isSchedulingLive: false,
                 toast: { show: false, message: '', type: 'success' },
                 modal: { open: false, title: '', message: '' },
                 scoreModal: { open: false },
@@ -614,6 +629,7 @@
                 testScores: [],
                 newTestScore: { studentEmail: '', testName: '', score: '', total: '', classGrade: '', resultImage: '' },
                 testScoreSearchQuery: '',
+                resourceFilter: 'All',
 
                 get filteredAdmissions() {
                     if (!this.searchQuery) {
@@ -637,7 +653,10 @@
                 },
 
                 get filteredResources() {
-                    return this.resources;
+                    if (this.resourceFilter === 'All') {
+                        return this.resources;
+                    }
+                    return this.resources.filter(res => res.classGrade === this.resourceFilter);
                 },
 
                 init() {
@@ -664,7 +683,7 @@
                 },
 
                 fetchData(collection, target) {
-                    db.collection(collection).onSnapshot(snap => {
+                    window.db.collection(collection).onSnapshot(snap => {
                         this[target] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                     });
                 },
@@ -673,9 +692,9 @@
                     // Delete notifications older than 48 hours to keep DB clean
                     const cutoffDate = new Date(Date.now() - 48 * 60 * 60 * 1000);
                     console.log('Cleaning up notifications older than:', cutoffDate);
-                    db.collection('notifications').where('timestamp', '<', cutoffDate).get().then(snap => {
+                    window.db.collection('notifications').where('timestamp', '<', cutoffDate).get().then(snap => {
                         console.log(`Found ${snap.docs.length} old notifications to delete`);
-                        const batch = db.batch();
+                        const batch = window.db.batch();
                         snap.docs.forEach(doc => batch.delete(doc.ref));
                         if (!snap.empty) {
                             batch.commit().then(() => {
@@ -698,6 +717,8 @@
                         return this.showAlert('Missing Title', 'Please enter a title for this resource.');
                     }
 
+                    this.isUploading = true;
+
                     if (this.newResource.type === 'pdf_upload') {
                         const input = document.createElement('input');
                         input.type = 'file';
@@ -715,6 +736,7 @@
                             } catch (err) {
                                 console.error(err);
                                 this.showAlert('Upload Failed', 'There was an error uploading the PDF.');
+                                this.isUploading = false;
                             }
                         };
                         input.click();
@@ -749,10 +771,10 @@
                         classGrade: this.newResource.classGrade || 'All',
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
-                    db.collection('resources').add(resourceToSave).then(() => {
+                    window.db.collection('resources').add(resourceToSave).then(() => {
                         console.log('Resource saved successfully:', resourceToSave);
                         // Automatically send notification to students
-                        db.collection('notifications').add({
+                        window.db.collection('notifications').add({
                             title: String(notifTitle),
                             body: String(notifBody),
                             target: String(this.newResource.classGrade || 'All'),
@@ -765,9 +787,11 @@
 
                         this.showToast('Resource saved & Students notified!');
                         this.newResource = { title: '', link: '', type: 'pdf_upload', classGrade: 'All' };
+                        this.isUploading = false;
                     }).catch(err => {
                         console.error('Error saving resource:', err);
                         this.showAlert('Save Failed', 'Failed to save resource. Please try again.');
+                        this.isUploading = false;
                     });
                 },
 
@@ -775,9 +799,17 @@
                     if (!this.newLiveClass.url || !this.newLiveClass.time) {
                         return this.showAlert('Missing Fields', 'All fields are required to schedule a live class.');
                     }
-                    db.collection('live_classes').add(this.newLiveClass).then(() => {
+                    
+                    this.isSchedulingLive = true;
+                    
+                    window.db.collection('live_classes').add(this.newLiveClass).then(() => {
                         this.showAlert('Success', 'Live class scheduled successfully!');
                         this.newLiveClass = { url: '', time: '' };
+                        this.isSchedulingLive = false;
+                    }).catch(err => {
+                        console.error('Error scheduling live class:', err);
+                        this.showAlert('Error', 'Failed to schedule live class.');
+                        this.isSchedulingLive = false;
                     });
                 },
 
@@ -794,7 +826,7 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
-                    db.collection('attendance').add(attendanceData).then(() => {
+                    window.db.collection('attendance').add(attendanceData).then(() => {
                         this.showToast(`Attendance marked for ${student.name}`);
                     }).catch(err => {
                         console.error("Attendance Error:", err);
@@ -928,12 +960,12 @@
                     };
 
                     if (this.isEditingAchiever) {
-                        db.collection('achievers').doc(this.currentAchieverId).update(achieverData).then(() => {
+                        window.db.collection('achievers').doc(this.currentAchieverId).update(achieverData).then(() => {
                             this.showToast('Achiever updated successfully!');
                             this.cancelEditAchiever();
                         });
                     } else {
-                        db.collection('achievers').add(achieverData).then(() => {
+                        window.db.collection('achievers').add(achieverData).then(() => {
                             this.showToast('New achiever added!');
                             this.newAchiever = { name: '', achievement: '', details: '', image: '' };
                         });
@@ -942,13 +974,13 @@
 
                 deleteItem(collection, id) {
                     if (confirm('Are you sure?')) {
-                        db.collection(collection).doc(id).delete();
+                        window.db.collection(collection).doc(id).delete();
                     }
                 },
 
                 toggleStatus(student) {
                     const newStatus = student.status === 'Confirmed' ? 'Pending' : 'Confirmed';
-                    db.collection('admissions').doc(student.id).update({ status: newStatus });
+                    window.db.collection('admissions').doc(student.id).update({ status: newStatus });
                 },
 
                 exportCSV() {
@@ -1016,7 +1048,7 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
-                    db.collection('test_scores').add(testScoreData).then(() => {
+                    window.db.collection('test_scores').add(testScoreData).then(() => {
                         console.log('Test score added successfully:', testScoreData);
                         this.showToast('Test score added successfully!', 'success');
                         this.scoreModal.open = false;
@@ -1029,7 +1061,7 @@
 
                 deleteTestScore(id) {
                     if (confirm('Are you sure you want to delete this test score?')) {
-                        db.collection('test_scores').doc(id).delete().then(() => {
+                        window.db.collection('test_scores').doc(id).delete().then(() => {
                             this.showToast('Test score deleted successfully!', 'success');
                         }).catch(err => {
                             console.error('Error deleting test score:', err);
@@ -1043,6 +1075,9 @@
                         this.showToast("Title and body are required.", "error");
                         return;
                     }
+                    
+                    this.isSendingNotification = true;
+                    
                     const payload = {
                         title: String(this.notification.title),
                         body: String(this.notification.body),
@@ -1050,13 +1085,15 @@
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     };
 
-                    db.collection('notifications').add(payload).then(() => {
+                    window.db.collection('notifications').add(payload).then(() => {
                         console.log('Notification saved successfully:', payload);
                         this.showToast("Notification sent to student portal!");
                         this.notification = { title: '', body: '', target: 'All' };
+                        this.isSendingNotification = false;
                     }).catch(err => {
                         console.error("Error sending notification:", err);
                         this.showToast("Failed to send notification.", "error");
+                        this.isSendingNotification = false;
                     });
                 },
 

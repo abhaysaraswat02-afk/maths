@@ -15,10 +15,6 @@
     <template x-if="!isLoggedIn">
         <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-red-600 p-4">
             <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
-                <div class="text-center mb-8">
-                    <h1 class="text-3xl font-bold text-gray-800">Staff Access</h1>
-                    <p class="text-gray-500 mt-2">Please enter the administrative password</p>
-                </div>
                 <form @submit.prevent="login">
                     <div class="mb-6">
                         <label class="block text-sm font-semibold mb-2 text-gray-700">Password</label>

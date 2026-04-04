@@ -858,7 +858,7 @@
                             // Allow owner to choose portal
                             if (confirm("Staff Access Detected.\n\nPress OK to enter Staff Dashboard.\nPress Cancel to login as a Student.")) {
                                 localStorage.setItem('isStaffLoggedIn', 'true');
-                                localStorage.removeItem('isStudentLoggedIn'); // Clear student session if exists
+                                localStorage.removeItem('isStudentLoggedIn');
                                 localStorage.setItem('student_email', this.applicationForm.email); // Ensure email is set for staff access
                                 window.location.href = 'staff.html';
                                 return;

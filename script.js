@@ -22,7 +22,6 @@ const auth = firebase.auth();
 function staffPortal() {
     return {
         isLoggedIn: false,
-        loginPass: '',
         error: '',
         activeTab: 'admissions',
         loading: false,
@@ -33,30 +32,31 @@ function staffPortal() {
         docForm: { name: '', url: '' },
 
         init() {
+            // Security check: ensure staff is logged in via OTP on the main site
+            if (localStorage.getItem('isStaffLoggedIn') !== 'true') {
+                window.location.href = 'index.html';
+                return;
+            }
+
             // Listen for authentication state changes
             auth.onAuthStateChanged(user => {
                 this.isLoggedIn = !!user;
                 if (user) {
                     this.loadData();
+                } else {
+                    // Auto-sign in anonymously if local storage says we're staff
+                    auth.signInAnonymously().catch(err => {
+                        this.error = 'Session Error: ' + err.message;
+                    });
                 }
             });
         },
 
-        login() {
-            if (this.loginPass === 'Admin@2026') {
-                auth.signInAnonymously().then(() => {
-                    this.error = '';
-                }).catch(err => {
-                    this.error = 'Authentication failed: ' + err.message;
-                });
-            } else {
-                this.error = 'Invalid password access denied.';
-            }
-        },
-
         logout() {
             auth.signOut().then(() => {
-                this.isLoggedIn = false;
+                localStorage.removeItem('isStaffLoggedIn');
+                localStorage.removeItem('student_email');
+                window.location.href = 'index.html';
             }).catch(err => {
                 console.error('Logout error:', err);
             });

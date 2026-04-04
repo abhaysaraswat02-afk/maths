@@ -13,22 +13,11 @@
 
     <!-- Login Section -->
     <template x-if="!isLoggedIn">
-        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-red-600 p-4">
-            <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
-                <form @submit.prevent="login">
-                    <div class="mb-6">
-                        <label class="block text-sm font-semibold mb-2 text-gray-700">Password</label>
-                        <input type="password" x-model="loginPass" 
-                            class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                            placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl">
-                        Login to Portal
-                    </button>
-                    <p x-show="error" class="text-red-500 text-sm mt-4 text-center" x-text="error"></p>
-                </form>
-            </div>
+        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mb-4"></div>
+            <h2 class="text-xl font-bold">Verifying Staff Access...</h2>
+            <p class="text-slate-400 mt-2 text-sm">If you are not redirected, please <a href="index.html" class="text-blue-400 underline">login here</a>.</p>
+            <div x-show="error" class="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs" x-text="error"></div>
         </div>
     </template>
 

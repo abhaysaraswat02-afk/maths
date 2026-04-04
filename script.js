@@ -17,6 +17,7 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 function staffPortal() {
     return {
@@ -32,27 +33,33 @@ function staffPortal() {
         docForm: { name: '', url: '' },
 
         init() {
-            // Check session storage for persistence
-            if (sessionStorage.getItem('staffAuth') === 'true') {
-                this.isLoggedIn = true;
-                this.loadData();
-            }
+            // Listen for authentication state changes
+            auth.onAuthStateChanged(user => {
+                this.isLoggedIn = !!user;
+                if (user) {
+                    this.loadData();
+                }
+            });
         },
 
         login() {
             if (this.loginPass === 'Admin@2026') {
-                this.isLoggedIn = true;
-                sessionStorage.setItem('staffAuth', 'true');
-                this.error = '';
-                this.loadData();
+                auth.signInAnonymously().then(() => {
+                    this.error = '';
+                }).catch(err => {
+                    this.error = 'Authentication failed: ' + err.message;
+                });
             } else {
                 this.error = 'Invalid password access denied.';
             }
         },
 
         logout() {
-            this.isLoggedIn = false;
-            sessionStorage.removeItem('staffAuth');
+            auth.signOut().then(() => {
+                this.isLoggedIn = false;
+            }).catch(err => {
+                console.error('Logout error:', err);
+            });
         },
 
         tabTitle() {

@@ -6,7 +6,7 @@
  * - Securely connects to Firebase Admin SDK.
  * - Validates and sanitizes input data on the server.
  * - Implements rate-limiting to prevent spam.
- * - Stores data in the 'admissions' Realtime Database.
+ * - Stores data in the 'admissions' Firestore Database.
  * - Handles high-concurrency loads automatically.
  */
 
@@ -29,12 +29,13 @@ const twilio = require('twilio');
 // rules_version = '2';
 // service cloud.firestore {
 //   match /databases/{database}/documents {
+//     // Required for both client-side and server-side verification
 //     match /admissions/{document=**} {
-//       allow read: if request.auth != null || request.auth.uid == null;
-//       allow write: if request.auth != null;
+//       allow read, write: if request.auth != null;
 //     }
 //     match /notifications/{document=**} {
-//       allow read, write: if request.auth != null;
+//       allow read: if true;
+//       allow write: if request.auth != null;
 //     }
 //     match /payments/{document=**} {
 //       allow read, write: if request.auth != null;
@@ -269,7 +270,7 @@ app.post('/api/verify-otp', async (req, res) => {
       }
     } catch (dbError) {
       console.error('OTP completion database error:', dbError);
-      return res.status(500).json({ success: false, error: 'Failed to save registration data: ' + dbError.message });
+      return res.status(500).json({ success: false, error: 'Failed to save registration data: ' + dbError.message + '. Please check IAM roles for your service account.' });
     }
   }
 

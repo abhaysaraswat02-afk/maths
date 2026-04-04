@@ -166,14 +166,27 @@ function staffPortal() {
         },
 
         async deleteDoc(id) {
-            if (confirm('Delete this resource?')) {
+            if (!confirm('Delete this resource?')) return;
+            this.loading = true;
+            try {
                 await db.collection('resources').doc(id).delete();
+                alert('Resource deleted.');
+            } catch (err) {
+                console.error("Delete error:", err);
+                alert('Failed to delete: ' + err.message);
+            } finally {
+                this.loading = false;
             }
         },
 
-        formatDate(isoString) {
-            if (!isoString) return 'N/A';
-            return new Date(isoString).toLocaleDateString('en-IN', {
+        formatDate(timestamp) {
+            if (!timestamp) return 'N/A';
+            // Handle Firestore Timestamp objects or ISO strings
+            const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+            
+            if (isNaN(date.getTime())) return 'N/A';
+
+            return date.toLocaleDateString('en-IN', {
                 day: 'numeric', month: 'short', year: 'numeric'
             });
         },

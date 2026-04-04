@@ -3,1113 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        // Immediate security check before page renders to prevent "flash of content"
-        const staffEmails = ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'];
-        const userEmail = localStorage.getItem('student_email');
-        const isStaff = localStorage.getItem('isStaffLoggedIn') === 'true';
-        if (!isStaff || !staffEmails.includes(userEmail)) {
-            window.location.href = 'index.html';
-        }
-    </script>
-    <title>Staff Hub | Era of MathAntics</title>
+    <title>Staff Portal | Era of MathAntics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
-    <style>
-        [x-cloak] { display: none !important; }
-        .sidebar-item.active { background: #1e40af; color: white; border-radius: 12px; }
-        .glass { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
-        /* Add animations for dashboard */
-    </style>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-slate-100 text-slate-900 font-sans" x-data="staffPortal()" x-init="init()">
+<body class="bg-slate-50 font-['Inter']" x-data="staffPortal()">
 
-    <!-- Mobile Overlay -->
-    <div x-show="mobileMenu" x-transition.opacity class="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm md:hidden" @click="mobileMenu = false" x-cloak></div>
-
-    <div class="flex min-h-screen">
-        <aside :class="mobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-white border-r p-6 transition-transform duration-300 md:relative md:translate-x-0 shadow-2xl md:shadow-none h-full overflow-y-auto">
-            <div class="flex items-center justify-between mb-10">
-                <div class="flex items-center space-x-3">
-                    <img src="channels4_profile (1).jpg" alt="Logo" class="w-8 h-8 rounded-lg">
-                    <span class="font-bold text-xl tracking-tight">StaffPanel</span>
+    <!-- Login Section -->
+    <template x-if="!isLoggedIn">
+        <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-600 to-red-600 p-4">
+            <div class="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-bold text-gray-800">Staff Access</h1>
+                    <p class="text-gray-500 mt-2">Please enter the administrative password</p>
                 </div>
-                <button @click="mobileMenu = false" class="md:hidden text-slate-400 hover:text-red-500"><i class="fas fa-times text-xl"></i></button>
-            </div>
-
-            <nav class="space-y-2">
-                <button @click="activeTab = 'dashboard'" :class="{'active': activeTab === 'dashboard'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-th-large w-5"></i> <span class="font-medium">Dashboard</span>
-                </button>
-                <button @click="activeTab = 'admissions'" :class="{'active': activeTab === 'admissions'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-chart-line w-5"></i> <span class="font-medium">Analytics</span>
-                </button>
-                <button @click="activeTab = 'live'" :class="{'active': activeTab === 'live'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-video w-5"></i> <span class="font-medium">Live Class</span>
-                </button>
-                <button @click="activeTab = 'resources'" :class="{'active': activeTab === 'resources'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-file-upload w-5"></i> <span class="font-medium">Upload Resources</span>
-                </button>
-                <button @click="activeTab = 'notifications'" :class="{'active': activeTab === 'notifications'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-bell w-5"></i> <span class="font-medium">Notifications</span>
-                </button>
-                <button @click="activeTab = 'attendance'" :class="{'active': activeTab === 'attendance'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-clipboard-user w-5"></i> <span class="font-medium">Attendance Logs</span>
-                </button>
-                <button @click="activeTab = 'achievers'" :class="{'active': activeTab === 'achievers'}" class="sidebar-item w-full flex items-center space-x-3 px-4 py-3 text-slate-600 hover:bg-slate-50 transition">
-                    <i class="fas fa-star w-5"></i> <span class="font-medium">Star Achievers</span>
-                </button>
-            </nav>
-        </aside>
-
-        <main class="flex-1 p-4 md:p-10 overflow-y-auto w-full">
-            
-            <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-                <div class="flex items-center gap-4">
-                    <button @click="mobileMenu = true" class="md:hidden text-slate-600 hover:text-blue-600 transition">
-                        <i class="fas fa-bars text-2xl"></i>
+                <form @submit.prevent="login">
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold mb-2 text-gray-700">Password</label>
+                        <input type="password" x-model="loginPass" 
+                            class="w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" 
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-all shadow-lg hover:shadow-xl">
+                        Login to Portal
                     </button>
-                    <h1 class="text-2xl font-black capitalize" x-text="activeTab === 'admissions' ? 'Student Analytics' : activeTab"></h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <span class="text-sm font-bold text-slate-400" x-text="todayDate"></span>
-                    <button @click="logout()" class="bg-red-50 text-red-600 px-4 py-2 rounded-xl text-sm font-bold hover:bg-red-600 hover:text-white transition">Logout</button>
-                </div>
-            </header>
-
-            <div x-show="activeTab === 'dashboard'" class="space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 col-span-2">
-                        <p class="text-slate-400 text-xs font-bold uppercase">Total Students</p>
-                        <h2 class="text-3xl font-black mt-2" x-text="admissionList.length">0</h2>
-                    </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                        <p class="text-slate-400 text-xs font-bold uppercase">Resources Shared</p>
-                        <h2 class="text-3xl font-black mt-2" x-text="resources.length">0</h2>
-                    </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                        <p class="text-slate-400 text-xs font-bold uppercase">Attendance Logs</p>
-                        <h2 class="text-3xl font-black mt-2" x-text="attendanceLogs.length">0</h2>
-                    </div>
-                    <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200">
-                        <p class="text-slate-400 text-xs font-bold uppercase">Live Classes</p>
-                        <h2 class="text-3xl font-black mt-2" x-text="liveClasses.length">0</h2>
-                    </div>
-                </div>
+                    <p x-show="error" class="text-red-500 text-sm mt-4 text-center" x-text="error"></p>
+                </form>
             </div>
+        </div>
+    </template>
 
-            <!-- LIVE CLASS (New) -->
-            <div x-show="activeTab === 'live'" x-cloak>
-                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-xl">
-                    <h2 class="text-xl font-bold mb-6 text-red-600"><i class="fas fa-broadcast-tower mr-2"></i> Go Live</h2>
-                    <p class="text-slate-500 mb-6 text-sm">Start a live session for your batches. Students will see a "Join Live" button on their dashboard.</p>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Meeting URL</label>
-                            <input type="url" x-model="newLiveClass.url" placeholder="https://meet.google.com/..." class="w-full bg-slate-50 border-none rounded-xl p-4">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Scheduled Time</label>
-                            <input type="datetime-local" x-model="newLiveClass.time" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold text-slate-600">
-                        </div>
-                        <button @click="scheduleLiveClass()" :disabled="isSchedulingLive" class="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition animate-pulse disabled:bg-red-400 flex items-center justify-center">
-                            <i x-show="isSchedulingLive" class="fas fa-spinner fa-spin mr-2"></i>
-                            <span x-text="isSchedulingLive ? 'Scheduling...' : 'Start Session & Notify'"></span>
-                        </button>
-                    </div>
+    <!-- Dashboard Section -->
+    <template x-if="isLoggedIn">
+        <div class="flex min-h-screen">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-slate-900 text-white hidden md:block">
+                <div class="p-6">
+                    <h2 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-red-400 bg-clip-text text-transparent">
+                        Admin Dashboard
+                    </h2>
                 </div>
-
-                <!-- Active Live Classes List -->
-                <div class="mt-8 max-w-2xl mx-auto">
-                    <h3 class="font-bold text-lg mb-4 text-slate-700">Active Live Sessions</h3>
-                    <template x-for="live in liveClasses" :key="live.id">
-                        <div class="bg-white p-6 rounded-2xl border shadow-sm flex justify-between items-center mb-4">
-                            <div>
-                                <a :href="live.url" target="_blank" class="font-bold text-blue-600 hover:underline flex items-center gap-2"><i class="fas fa-link"></i> <span x-text="live.url"></span></a>
-                                <p class="text-xs text-slate-500 mt-1 font-bold">Scheduled: <span x-text="new Date(live.time).toLocaleString()"></span></p>
-                            </div>
-                            <button @click="deleteItem('live_classes', live.id)" class="bg-red-50 text-red-600 border border-red-100 px-4 py-2 rounded-xl text-xs font-bold hover:bg-red-600 hover:text-white transition">End Live</button>
-                        </div>
-                    </template>
-                    <div x-show="liveClasses.length === 0" class="text-center text-slate-400 text-sm italic py-4">No active live sessions running.</div>
+                <nav class="mt-6">
+                    <button @click="activeTab = 'admissions'" :class="activeTab === 'admissions' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
+                        <i class="fas fa-user-graduate w-6"></i> Admissions
+                    </button>
+                    <button @click="activeTab = 'payments'" :class="activeTab === 'payments' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
+                        <i class="fas fa-file-invoice-dollar w-6"></i> Payments
+                    </button>
+                    <button @click="activeTab = 'news'" :class="activeTab === 'news' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
+                        <i class="fas fa-newspaper w-6"></i> Post News
+                    </button>
+                    <button @click="activeTab = 'docs'" :class="activeTab === 'docs' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
+                        <i class="fas fa-folder-open w-6"></i> Resources
+                    </button>
+                </nav>
+                <div class="absolute bottom-0 w-64 p-6">
+                    <button @click="logout" class="text-slate-400 hover:text-white flex items-center transition-colors">
+                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                    </button>
                 </div>
-            </div>
+            </aside>
 
-            <!-- UPLOAD RESOURCES (New) -->
-            <div x-show="activeTab === 'resources'" x-cloak>
-                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-xl mb-8">
-                    <h2 class="text-xl font-bold mb-6 text-green-600"><i class="fas fa-file-upload mr-2"></i> Upload Resources</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource Title</label>
-                            <input type="text" x-model="newResource.title" placeholder="e.g. Algebra Worksheet #1" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource Type</label>
-                            <select x-model="newResource.type" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                                <option value="pdf_upload">Upload PDF File</option>
-                                <option value="pdf_link">PDF Link (from Drive)</option>
-                                <option value="online_test">Online Test Link</option>
-                                <option value="video">Recorded Video Link</option>
-                                <option value="youtube">YouTube Video</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Class / Grade</label>
-                            <select x-model="newResource.classGrade" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                                <option value="All">All Classes</option>
-                                <option value="Class 9">Class 9</option>
-                                <option value="Class 10">Class 10</option>
-                                <option value="Class 11">Class 11</option>
-                                <option value="Class 12">Class 12</option>
-                            </select>
-                        </div>
-                        <div x-show="newResource.type !== 'pdf_upload'">
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Resource URL</label>
-                            <input type="url" x-model="newResource.link" placeholder="https://..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                        </div>
-                        <button @click="uploadResource()" :disabled="isUploading" class="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition disabled:bg-green-400 flex items-center justify-center">
-                            <i x-show="isUploading" class="fas fa-spinner fa-spin mr-2"></i>
-                            <span x-show="isUploading">Uploading...</span>
-                            <span x-show="!isUploading && newResource.type === 'pdf_upload'">Upload PDF File</span>
-                            <span x-show="!isUploading && newResource.type !== 'pdf_upload'">Save Resource Link</span>
-                        </button>
-                    </div>
-                </div>
+            <!-- Main Content -->
+            <main class="flex-1 p-8">
+                <header class="flex justify-between items-center mb-8">
+                    <h1 class="text-2xl font-bold text-gray-800" x-text="tabTitle()"></h1>
+                    <button @click="exportData" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md">
+                        <i class="fas fa-download mr-2"></i> Export Data
+                    </button>
+                </header>
 
-                <!-- MANAGE RESOURCES LIST -->
-                <div class="bg-white p-8 rounded-3xl border max-w-4xl mx-auto shadow-sm">
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-                        <h3 class="text-lg font-bold">All Resources</h3>
-                        <select x-model="resourceFilter" class="bg-white border border-slate-200 rounded-xl px-4 py-2 text-sm focus:border-blue-500 outline-none transition shadow-sm font-bold text-slate-700">
-                            <option value="All">All Classes</option>
-                            <option value="Class 9">Class 9</option>
-                            <option value="Class 10">Class 10</option>
-                            <option value="Class 11">Class 11</option>
-                            <option value="Class 12">Class 12</option>
-                        </select>
-                    </div>
-                    
-                    <div class="grid gap-3">
-                        <template x-for="res in filteredResources" :key="res.id">
-                            <div class="flex justify-between items-center p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition">
-                                <div class="overflow-hidden mr-4">
-                                    <div class="font-bold text-slate-800 truncate" x-text="res.title"></div>
-                                    <div class="text-xs text-slate-500 font-medium mt-1 flex items-center gap-2">
-                                        <span class="uppercase tracking-wider text-[10px]" :class="res.type === 'pdf' ? 'text-red-500' : 'text-blue-500'" x-text="res.type"></span>
-                                        <span class="bg-slate-100 px-2 py-0.5 rounded text-[10px] text-slate-600 font-bold" x-show="res.classGrade" x-text="res.classGrade"></span>
-                                    </div>
-                                    <a :href="res.link" target="_blank" class="text-xs text-blue-500 hover:underline truncate block mt-1 opacity-75" x-text="res.link"></a>
-                                </div>
-                                <button @click="deleteItem('resources', res.id)" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </template>
-                        <div x-show="filteredResources.length === 0" class="text-center text-slate-400 py-8 font-medium italic">No resources found for the selected view.</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- NOTIFICATIONS (New) -->
-            <div x-show="activeTab === 'notifications'" x-cloak>
-                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-sm">
-                    <h2 class="text-xl font-bold mb-6 text-purple-600"><i class="fas fa-paper-plane mr-2"></i> Dashboard Notification</h2>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Notification Title</label>
-                            <input type="text" x-model="notification.title" placeholder="e.g. New Assignment Uploaded!" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold focus:ring-2 focus:ring-purple-500 outline-none transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Target Class</label>
-                            <select x-model="notification.target" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold focus:ring-2 focus:ring-purple-500 outline-none transition">
-                                <option value="All">All Students</option>
-                                <option value="Class 9">Class 9</option>
-                                <option value="Class 10">Class 10</option>
-                                <option value="Class 11">Class 11</option>
-                                <option value="Class 12">Class 12</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Message Body</label>
-                            <textarea x-model="notification.body" rows="4" placeholder="Enter your message here..." class="w-full bg-slate-50 border-none rounded-xl p-4 font-medium focus:ring-2 focus:ring-purple-500 outline-none transition"></textarea>
-                        </div>
-                        <button @click="sendNotification()" :disabled="isSendingNotification" class="w-full bg-purple-600 text-white font-bold py-4 rounded-xl hover:bg-purple-700 transition disabled:bg-purple-400 flex items-center justify-center">
-                            <i x-show="isSendingNotification" class="fas fa-spinner fa-spin mr-2"></i>
-                            <span x-text="isSendingNotification ? 'Sending...' : 'Send to Student Portal'"></span>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- STAR ACHIEVERS (New) -->
-            <div x-show="activeTab === 'achievers'" x-cloak>
-                <!-- Form for adding/editing -->
-                <div class="bg-white p-8 rounded-3xl border max-w-2xl mx-auto shadow-xl mb-8">
-                    <h2 class="text-xl font-bold mb-6 text-yellow-500"><i class="fas fa-star-half-alt mr-2"></i> <span x-text="isEditingAchiever ? 'Edit Achiever' : 'Add New Achiever'"></span></h2>
-                    <form @submit.prevent="saveAchiever" class="space-y-4">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Student Name</label>
-                            <input type="text" x-model="newAchiever.name" required placeholder="e.g. Aarav Sharma" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Achievement</label>
-                            <input type="text" x-model="newAchiever.achievement" required placeholder="e.g. 99.5% in Maths" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Details</label>
-                            <input type="text" x-model="newAchiever.details" required placeholder="e.g. Class 12 Board 2024" class="w-full bg-slate-50 border-none rounded-xl p-4 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 uppercase">Student Photo</label>
-                            <div class="flex items-center gap-4">
-                                <div x-show="newAchiever.image" class="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-200 flex-shrink-0">
-                                    <img :src="newAchiever.image" class="w-full h-full object-cover">
-                                    <button type="button" @click="newAchiever.image = ''" class="absolute top-1 right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"><i class="fas fa-times"></i></button>
-                                </div>
-                                <input type="file" @change="uploadAchieverImage" accept="image/*" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition"/>
-                            </div>
-                            <p class="text-[10px] text-slate-400 mt-1">Powered by Cloudinary</p>
-                        </div>
-                        <div class="flex gap-4 pt-4">
-                            <button type="submit" class="w-full bg-yellow-500 text-white font-bold py-4 rounded-xl hover:bg-yellow-600 transition">
-                                <span x-text="isEditingAchiever ? 'Update Achiever' : 'Add Achiever'"></span>
-                            </button>
-                            <button type="button" x-show="isEditingAchiever" @click="cancelEditAchiever()" class="w-full bg-slate-200 text-slate-800 font-bold py-4 rounded-xl hover:bg-slate-300 transition">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- List of achievers -->
-                <div class="bg-white p-8 rounded-3xl border max-w-4xl mx-auto shadow-sm">
-                    <h3 class="text-lg font-bold mb-6">Manage Star Achievers</h3>
-                    <div class="grid gap-3">
-                        <template x-for="achiever in achievers" :key="achiever.id">
-                            <div class="flex justify-between items-center p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
-                                        <img :src="achiever.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + (achiever.name ? achiever.name.split(' ')[0] : 'Student')" alt="Student" class="w-full h-full object-cover">
-                                    </div>
-                                    <div>
-                                        <div class="font-bold text-slate-800" x-text="achiever.name"></div>
-                                        <div class="text-sm text-blue-600 font-semibold" x-text="achiever.achievement"></div>
-                                        <div class="text-xs text-slate-500 font-medium mt-1" x-text="achiever.details"></div>
-                                    </div>
-                                </div>
-                                <div class="flex gap-2">
-                                    <button @click="startEditAchiever(achiever)" class="text-slate-400 hover:text-blue-500 hover:bg-blue-50 p-2 rounded-xl transition"><i class="fas fa-pencil-alt"></i></button>
-                                    <button @click="deleteItem('achievers', achiever.id)" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-xl transition"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        </template>
-                        <div x-show="achievers.length === 0" class="text-center text-slate-400 py-8 font-medium italic">No star achievers added yet.</div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ATTENDANCE LOGS -->
-            <div x-show="activeTab === 'attendance'" x-cloak>
-                <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
-                    <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                        <h3 class="font-bold text-lg">Activity Logs</h3>
-                        <button @click="attendanceLogs = []" class="text-xs font-bold text-red-500">Clear Local View</button>
-                    </div>
-                    <div class="overflow-x-auto">
+                <!-- Admissions Section -->
+                <div x-show="activeTab === 'admissions'" class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
                         <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50 border-b">
+                            <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
                                 <tr>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Student Name</th>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Activity</th>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400">Type</th>
-                                    <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Timestamp</th>
+                                    <th class="px-6 py-4">Student Name</th>
+                                    <th class="px-6 py-4">Course</th>
+                                    <th class="px-6 py-4">Date</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">Action</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-slate-100">
-                                <template x-for="log in attendanceLogs" :key="log.id">
-                                    <tr class="hover:bg-slate-50 transition">
-                                        <td class="p-4 font-bold text-slate-700" x-text="log.studentName"></td>
-                                        <td class="p-4 text-sm text-slate-600 truncate max-w-xs" x-text="log.resourceTitle"></td>
-                                        <td class="p-4">
-                                            <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest"
-                                                  :class="{
-                                                      'bg-green-100 text-green-700': log.type === 'Manual' || !log.type,
-                                                      'bg-red-100 text-red-600': log.type && log.type.includes('Live'),
-                                                      'bg-blue-100 text-blue-600': log.type && log.type.includes('Video')
-                                                  }" 
-                                                  x-text="log.type || 'Manual'"></span>
+                            <tbody class="divide-y">
+                                <template x-for="item in admissions" :key="item.id">
+                                    <tr class="hover:bg-blue-50/50 transition-colors">
+                                        <td class="px-6 py-4 font-medium" x-text="item.name"></td>
+                                        <td class="px-6 py-4 text-gray-600" x-text="item.course"></td>
+                                        <td class="px-6 py-4 text-gray-500 text-sm" x-text="formatDate(item.createdAt)"></td>
+                                        <td class="px-6 py-4">
+                                            <span :class="item.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" 
+                                                class="px-2 py-1 rounded-full text-xs font-semibold" x-text="item.status"></span>
                                         </td>
-                                        <td class="p-4 text-right text-xs font-bold text-slate-400" x-text="formatDate(log.timestamp)"></td>
+                                        <td class="px-6 py-4">
+                                            <button @click="approveAdmission(item.id)" x-show="item.status !== 'Approved'" class="text-blue-600 hover:underline font-semibold text-sm">Approve</button>
+                                        </td>
                                     </tr>
                                 </template>
-                                <tr x-show="attendanceLogs.length === 0">
-                                    <td colspan="4" class="p-12 text-center text-slate-400 italic">No attendance records found.</td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
-            </div>
 
-            <!-- ANALYTICS (Refined Admissions Tab) -->
-            <div x-show="activeTab === 'admissions'" x-cloak>
-               <div class="bg-white rounded-3xl border overflow-hidden shadow-sm">
-                   <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                       <div>
-                           <h3 class="font-bold text-lg">Student Management</h3>
-                           <div class="relative mt-2">
-                               <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                               <input type="text" x-model="searchQuery" placeholder="Search by name or email..." class="bg-white border border-slate-200 rounded-xl pl-8 pr-4 py-2 text-sm focus:border-blue-500 outline-none w-64 transition">
-                           </div>
-                       </div>
-                       <button @click="exportCSV()" class="text-blue-600 font-bold text-xs uppercase tracking-wider hover:bg-blue-50 px-3 py-2 rounded-lg transition">
-                            <i class="fas fa-file-csv mr-1"></i> Export CSV
-                       </button>
-                   </div>
-                   <div class="overflow-x-auto">
-                   <table class="w-full text-left border-collapse">
-                       <thead class="bg-slate-50 border-b border-slate-100">
-                           <tr>
-                               <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Student ID</th>
-                               <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Student Name</th>
-                               <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">School</th>
-                               <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider">Status</th>
-                               <th class="p-4 text-xs font-black uppercase text-slate-400 tracking-wider text-right">Actions</th>
-                           </tr>
-                       </thead>
-                       <tbody class="divide-y divide-slate-100">
-                           <template x-for="student in filteredAdmissions" :key="student.id">
-                               <tr class="hover:bg-blue-50/50 transition duration-150">
-                                   <td class="p-4 align-middle font-mono text-xs font-bold text-slate-500" x-text="'EMA-' + student.id.substring(0,6).toUpperCase()"></td>
-                                   <td class="p-4 align-middle">
-                                       <div class="flex items-center gap-3">
-                                           <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-500 font-bold text-xs" x-text="student.name ? student.name.charAt(0) : '?'"></div>
-                                           <div>
-                                               <p class="font-bold text-slate-800" x-text="student.name"></p>
-                                               <p class="text-xs text-slate-500 font-mono break-all" x-text="student.email"></p>
-                                           </div>
-                                       </div>
-                                   </td>
-                                   <td class="p-4 align-middle text-sm font-bold text-slate-600" x-text="student.schoolName || '-'"></td>
-                                   <td class="p-4 align-middle">
-                                       <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border" 
-                                             :class="student.status === 'Confirmed' ? 'bg-green-50 text-green-700 border-green-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'">
-                                             <span class="w-1.5 h-1.5 rounded-full mr-1.5" :class="student.status === 'Confirmed' ? 'bg-green-500' : 'bg-yellow-500'"></span>
-                                             <span x-text="student.status"></span>
-                                       </span>
-                                   </td>
-                                   <td class="p-4 align-middle text-right space-x-2">
-                                       <button @click="markManualAttendance(student)" class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 flex items-center justify-center transition" title="Mark Manual Attendance">
-                                           <i class="fas fa-calendar-check"></i>
-                                       </button>
-                                       <button @click="openAddScoreModal(student)" class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 hover:bg-purple-100 flex items-center justify-center transition" title="Add Test Score">
-                                           <i class="fas fa-file-invoice"></i>
-                                       </button>
-                                       <button @click="toggleStatus(student)" class="w-8 h-8 rounded-lg flex items-center justify-center transition" 
-                                            :class="student.status === 'Confirmed' ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-green-50 text-green-500 hover:bg-green-100'"
-                                            :title="student.status === 'Confirmed' ? 'Revoke Admission' : 'Approve Admission'">
-                                            <i class="fas" :class="student.status === 'Confirmed' ? 'fa-times' : 'fa-check'"></i>
-                                       </button>
-                                       <button @click="deleteItem('admissions', student.id)" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition" title="Delete Student">
-                                           <i class="fas fa-trash-alt"></i>
-                                       </button>
-                                   </td>
-                               </tr>
-                           </template>
-                           <tr x-show="filteredAdmissions.length === 0">
-                               <td colspan="6" class="p-8 text-center text-slate-400">
-                                   <div class="flex flex-col items-center">
-                                       <i class="fas fa-users-slash text-3xl mb-2 opacity-50"></i>
-                                       <p class="font-medium text-sm">No students found.</p>
-                                   </div>
-                               </td>
-                           </tr>
-                       </tbody>
-                   </table>
-                   </div>
-               </div>
-
-               <!-- Test Scores Management Section -->
-               <div class="bg-white rounded-3xl border overflow-hidden shadow-sm mt-8">
-                   <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                       <div>
-                           <h3 class="font-bold text-lg">Test Scores Management</h3>
-                           <div class="relative mt-2">
-                               <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
-                               <input type="text" x-model="testScoreSearchQuery" placeholder="Search by student email, subject, or class..." class="bg-white border border-slate-200 rounded-xl pl-8 pr-4 py-2 text-sm focus:border-blue-500 outline-none w-64 transition">
-                           </div>
-                       </div>
-                   </div>
-
-                   <!-- Test Scores Table -->
-                   <div class="overflow-x-auto">
-                       <table class="w-full text-left border-collapse">
-                           <thead class="bg-slate-50 border-b">
-                               <tr>
-                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Student Email</th>
-                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Subject</th>
-                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Score</th>
-                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Percentage</th>
-                                   <th class="p-4 text-xs font-black uppercase text-slate-400">Class</th>
-                                   <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Date</th>
-                                   <th class="p-4 text-xs font-black uppercase text-slate-400 text-right">Actions</th>
-                               </tr>
-                           </thead>
-                           <tbody class="divide-y divide-slate-100">
-                               <template x-for="score in filteredTestScores" :key="score.id">
-                                   <tr class="hover:bg-slate-50 transition">
-                                       <td class="p-4 font-bold text-slate-700" x-text="score.studentEmail"></td>
-                                       <td class="p-4 text-sm text-slate-600" x-text="score.testName"></td>
-                                       <td class="p-4 text-sm font-bold text-slate-700" x-text="score.score + '/' + score.total"></td>
-                                       <td class="p-4">
-                                           <span class="px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest"
-                                                 :class="{
-                                                     'bg-green-100 text-green-700': score.percentage >= 80,
-                                                     'bg-yellow-100 text-yellow-700': score.percentage >= 60 && score.percentage < 80,
-                                                     'bg-red-100 text-red-600': score.percentage < 60
-                                                 }" 
-                                                 x-text="score.percentage + '%'"></span>
-                                       </td>
-                                       <td class="p-4 text-sm font-bold text-slate-600" x-text="'Class ' + score.classGrade"></td>
-                                       <td class="p-4 text-right text-xs font-bold text-slate-400" x-text="formatDate(score.timestamp)"></td>
-                                       <td class="p-4 text-right">
-                                           <button @click="deleteTestScore(score.id)" class="w-8 h-8 rounded-lg bg-slate-50 text-slate-400 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition" title="Delete Score">
-                                               <i class="fas fa-trash-alt"></i>
-                                           </button>
-                                       </td>
-                                   </tr>
-                               </template>
-                               <tr x-show="filteredTestScores.length === 0">
-                                   <td colspan="7" class="p-12 text-center text-slate-400 italic">No test scores found.</td>
-                               </tr>
-                           </tbody>
-                       </table>
-                   </div>
-               </div>
-            </div>
-
-        </main>
-    </div>
-
-    <!-- NEW: Toast Notification -->
-    <div x-show="toast.show" x-transition:enter="transform ease-out duration-300" x-transition:enter-start="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2" x-transition:enter-end="translate-y-0 opacity-100 sm:translate-x-0" x-transition:leave="transition ease-in duration-100" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0" class="fixed top-10 right-10 w-full max-w-sm bg-white shadow-lg rounded-xl pointer-events-auto ring-1 ring-black ring-opacity-5 z-50" x-cloak>
-        <div class="p-4">
-            <div class="flex items-start">
-                <div class="flex-shrink-0 pt-0.5">
-                    <i class="fas text-xl" :class="{ 'fa-check-circle text-green-500': toast.type === 'success', 'fa-exclamation-circle text-red-500': toast.type === 'error' }"></i>
-                </div>
-                <div class="ml-3 w-0 flex-1">
-                    <p class="text-sm font-bold text-gray-900" x-text="toast.message"></p>
-                </div>
-                <div class="ml-4 flex-shrink-0 flex">
-                    <button @click="toast.show = false" class="bg-white rounded-md inline-flex text-gray-400 hover:text-gray-500 focus:outline-none">
-                        <span class="sr-only">Close</span>
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Custom Modal -->
-    <div x-show="modal.open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak x-transition.opacity>
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 transform transition-all" @click.away="modal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-4">
-            <div class="text-center">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4 border-white">
-                    <i class="fas fa-info-circle"></i>
-                </div>
-                <h3 class="text-2xl font-black text-slate-900 mb-2" x-text="modal.title">Notification</h3>
-                <p class="text-slate-500 font-medium mb-8 leading-relaxed" x-text="modal.message"></p>
-                <button @click="modal.open = false" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-blue-600 transition shadow-xl hover:-translate-y-1">
-                    Okay, Got it
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- NEW: Test Score Modal -->
-    <div x-show="scoreModal.open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak x-transition.opacity>
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-lg p-8 transform transition-all" @click.away="scoreModal.open = false">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-black text-slate-900">Add Test Score</h3>
-                <button @click="scoreModal.open = false" class="text-slate-400 hover:text-red-500"><i class="fas fa-times"></i></button>
-            </div>
-            <div class="space-y-4">
-                <p class="text-sm font-bold text-slate-500">Student: <span class="text-blue-600" x-text="newTestScore.studentEmail"></span></p>
-                <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Subject / Test Name</label>
-                    <input type="text" x-model="newTestScore.testName" placeholder="e.g. Weekly Algebra Quiz" class="w-full bg-slate-50 border rounded-xl p-3 font-bold">
-                </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Obtained Score</label>
-                        <input type="number" x-model="newTestScore.score" placeholder="45" class="w-full bg-slate-50 border rounded-xl p-3 font-bold">
-                    </div>
-                    <div>
-                        <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Total Marks</label>
-                        <input type="number" x-model="newTestScore.total" placeholder="50" class="w-full bg-slate-50 border rounded-xl p-3 font-bold">
+                <!-- Payments Section -->
+                <div x-show="activeTab === 'payments'" class="space-y-6">
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
+                                <tr>
+                                    <th class="px-6 py-4">Transaction ID</th>
+                                    <th class="px-6 py-4">Student</th>
+                                    <th class="px-6 py-4">Amount</th>
+                                    <th class="px-6 py-4">Verification</th>
+                                    <th class="px-6 py-4">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <template x-for="pay in payments" :key="item.id">
+                                    <tr class="hover:bg-blue-50/50 transition-colors">
+                                        <td class="px-6 py-4 font-mono text-sm" x-text="pay.id.substring(0,8)"></td>
+                                        <td class="px-6 py-4" x-text="pay.studentPhone"></td>
+                                        <td class="px-6 py-4 font-bold text-gray-800" x-text="'₹' + pay.amount"></td>
+                                        <td class="px-6 py-4">
+                                            <span :class="pay.verified ? 'text-green-600' : 'text-red-600'" class="text-sm flex items-center">
+                                                <i :class="pay.verified ? 'fa-circle-check' : 'fa-circle-xmark'" class="fa-solid mr-2"></i>
+                                                <span x-text="pay.verified ? 'Verified' : 'Pending'"></span>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm">
+                                            <button @click="verifyPayment(pay.id)" class="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-all">Verify</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Class / Grade</label>
-                    <select x-model="newTestScore.classGrade" class="w-full bg-slate-50 border rounded-xl p-3 font-bold">
-                        <option value="">Select Class</option>
-                        <option value="9">Class 9</option>
-                        <option value="10">Class 10</option>
-                        <option value="11">Class 11</option>
-                        <option value="12">Class 12</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-[10px] font-black uppercase text-slate-400 mb-1">Result Image (Optional)</label>
-                    <div class="flex items-center gap-3">
-                        <div x-show="newTestScore.resultImage" class="w-12 h-12 rounded-lg border overflow-hidden">
-                            <img :src="newTestScore.resultImage" class="w-full h-full object-cover">
+
+                <!-- Post News Section -->
+                <div x-show="activeTab === 'news'" class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
+                    <form @submit.prevent="postNews">
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold mb-2">Headline</label>
+                            <input type="text" x-model="newsForm.title" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
                         </div>
-                        <input type="file" @change="uploadScoreImage" accept="image/*" class="text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-[10px] file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                        <div class="mb-4">
+                            <label class="block text-sm font-semibold mb-2">Content</label>
+                            <textarea x-model="newsForm.content" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-32" required></textarea>
+                        </div>
+                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md">Publish Update</button>
+                    </form>
+                </div>
+
+                <!-- Documents Section -->
+                <div x-show="activeTab === 'docs'" class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
+                    <div class="mb-8">
+                        <h3 class="font-bold mb-4 border-b pb-2">Add New Resource</h3>
+                        <form @submit.prevent="addDoc">
+                            <div class="grid grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Document Title</label>
+                                    <input type="text" x-model="docForm.name" class="w-full px-4 py-2 border rounded-lg" required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Resource URL</label>
+                                    <input type="url" x-model="docForm.url" class="w-full px-4 py-2 border rounded-lg" placeholder="https://..." required>
+                                </div>
+                            </div>
+                            <button type="submit" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-slate-900 shadow-md">Upload Link</button>
+                        </form>
                     </div>
-                    <p class="text-[9px] text-slate-400 mt-1">Upload via Cloudinary</p>
+                    
+                    <h3 class="font-bold mb-4">Existing Resources</h3>
+                    <div class="space-y-3">
+                        <template x-for="doc in resources" :key="doc.id">
+                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
+                                <div class="flex items-center">
+                                    <i class="fas fa-file-pdf text-red-500 mr-3 text-xl"></i>
+                                    <span class="font-medium" x-text="doc.name"></span>
+                                </div>
+                                <button @click="deleteDoc(doc.id)" class="text-red-500 hover:text-red-700 transition-colors">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
                 </div>
-                <div class="pt-4">
-                    <button @click="addTestScore()" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-blue-600 transition shadow-xl">
-                        Save Score & Notify Student
-                    </button>
-                </div>
-            </div>
+
+            </main>
+        </div>
+    </template>
+
+    <!-- Shared Components / Modals -->
+    <div x-show="loading" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="bg-white p-6 rounded-xl flex items-center shadow-2xl">
+            <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent mr-4"></div>
+            <span class="font-bold text-gray-700">Processing...</span>
         </div>
     </div>
 
-    <script>
-        // Use your existing Firebase Config
-        const firebaseConfig = {
-            apiKey: "AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",
-            authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
-            projectId: "era-of-mathantics-8b6d1",
-            storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
-            messagingSenderId: "521238168559",
-            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
-        };
-        firebase.initializeApp(firebaseConfig);
-        window.db = firebase.firestore();
-        console.log('Firebase initialized successfully');
-        console.log('Firestore instance:', window.db);
-
-        function staffPortal() {
-            return {
-                mobileMenu: false,
-                activeTab: 'dashboard',
-                todayDate: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
-                admissionList: [],
-                resources: [],
-                liveClasses: [],
-                achievers: [],
-                attendanceLogs: [],
-                newResource: { title: '', link: '', type: 'pdf_upload', classGrade: 'All' },
-                notification: { title: '', body: '', target: 'All' },
-                newLiveClass: { url: '', time: '' },
-                searchQuery: '',
-                isUploading: false,
-                isSendingNotification: false,
-                isSchedulingLive: false,
-                toast: { show: false, message: '', type: 'success' },
-                modal: { open: false, title: '', message: '' },
-                scoreModal: { open: false },
-                newAchiever: { name: '', achievement: '', details: '', image: '' },
-                cloudinaryCloudName: 'dcxn3j3n6', // Updated to match student portal
-                cloudinaryUploadPreset: 'eraofmathantics',
-                isEditingAchiever: false,
-                currentAchieverId: null,
-                staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
-                testScores: [],
-                newTestScore: { studentEmail: '', testName: '', score: '', total: '', classGrade: '', resultImage: '' },
-                testScoreSearchQuery: '',
-                resourceFilter: 'All',
-
-                get filteredAdmissions() {
-                    if (!this.searchQuery) {
-                        return this.admissionList;
-                    }
-                    return this.admissionList.filter(student => 
-                        (student.name && student.name.toLowerCase().includes(this.searchQuery.toLowerCase())) || 
-                        (student.email && student.email.toLowerCase().includes(this.searchQuery.toLowerCase()))
-                    );
-                },
-
-                get filteredTestScores() {
-                    if (!this.testScoreSearchQuery) {
-                        return this.testScores;
-                    }
-                    return this.testScores.filter(score => 
-                        (score.studentEmail && score.studentEmail.toLowerCase().includes(this.testScoreSearchQuery.toLowerCase())) ||
-                        (score.testName && score.testName.toLowerCase().includes(this.testScoreSearchQuery.toLowerCase())) ||
-                        (score.classGrade && score.classGrade.toLowerCase().includes(this.testScoreSearchQuery.toLowerCase()))
-                    );
-                },
-
-                get filteredResources() {
-                    if (this.resourceFilter === 'All') {
-                        return this.resources;
-                    }
-                    return this.resources.filter(res => res.classGrade === this.resourceFilter);
-                },
-
-                init() {
-                    console.log('Staff portal initializing...');
-                    // Production-grade Security Check
-                    const userEmail = localStorage.getItem('student_email');
-                    const isStaff = localStorage.getItem('isStaffLoggedIn') === 'true';
-                    
-                    if (!isStaff || !this.staffEmails.includes(userEmail)) {
-                        console.log('Security check failed, redirecting to index.html');
-                        window.location.href = 'index.html';
-                        return;
-                    }
-
-                    console.log('Security check passed, fetching data...');
-                    this.fetchData('admissions', 'admissionList');
-                    this.fetchData('resources', 'resources');
-                    this.fetchData('live_classes', 'liveClasses');
-                    this.fetchData('achievers', 'achievers');
-                    this.fetchData('attendance', 'attendanceLogs');
-                    this.fetchData('test_scores', 'testScores');
-                    this.cleanupOldNotifications();
-                    console.log('Data fetching initiated');
-                },
-
-                fetchData(collection, target) {
-                    window.db.collection(collection).onSnapshot(snap => {
-                        this[target] = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    });
-                },
-
-                cleanupOldNotifications() {
-                    // Delete notifications older than 48 hours to keep DB clean
-                    const cutoffDate = new Date(Date.now() - 48 * 60 * 60 * 1000);
-                    console.log('Cleaning up notifications older than:', cutoffDate);
-                    window.db.collection('notifications').where('timestamp', '<', cutoffDate).get().then(snap => {
-                        console.log(`Found ${snap.docs.length} old notifications to delete`);
-                        const batch = window.db.batch();
-                        snap.docs.forEach(doc => batch.delete(doc.ref));
-                        if (!snap.empty) {
-                            batch.commit().then(() => {
-                                console.log('Old notifications deleted successfully');
-                            });
-                        }
-                    }).catch(err => {
-                        console.error('Error cleaning up notifications:', err);
-                    });
-                },
-
-                showAlert(title, message) {
-                    this.modal.title = title;
-                    this.modal.message = message;
-                    this.modal.open = true;
-                },
-
-                async uploadResource() {
-                    if (!this.newResource.title) {
-                        return this.showAlert('Missing Title', 'Please enter a title for this resource.');
-                    }
-
-                    this.isUploading = true;
-
-                    if (this.newResource.type === 'pdf_upload') {
-                        const input = document.createElement('input');
-                        input.type = 'file';
-                        input.accept = 'application/pdf';
-                        input.onchange = async (e) => {
-                            const file = e.target.files[0];
-                            if (!file || file.type !== 'application/pdf') return this.showToast('Please select a valid PDF file.', 'error');
-                            const storageRef = firebase.storage().ref(`resources/${Date.now()}_${file.name}`);
-                            try {
-                                this.showToast('Uploading PDF... Please wait.', 'info');
-                                const snapshot = await storageRef.put(file);
-                                const url = await snapshot.ref.getDownloadURL();
-                                this.newResource.link = url;
-                                this.saveResourceToDb();
-                            } catch (err) {
-                                console.error(err);
-                                this.showAlert('Upload Failed', 'There was an error uploading the PDF.');
-                                this.isUploading = false;
-                            }
-                        };
-                        input.click();
-                    } else {
-                        // For videos or PDF links, we just need the link input
-                        if (!this.newResource.link) {
-                            return this.showAlert('Missing URL', 'A URL is required for this resource type.');
-                        }
-                        this.saveResourceToDb();
-                    }
-                },
-
-                saveResourceToDb() {
-                    let resourceType = 'video'; // Default for recorded videos
-                    let notifTitle = 'New Video Uploaded! 🎥';
-                    let notifBody = `We've just added "${this.newResource.title}". Check it out in your dashboard!`;
-
-                    if (this.newResource.type.includes('pdf') || this.newResource.type === 'pdf_upload') {
-                        resourceType = 'pdf';
-                        notifTitle = 'New Study Material 📚';
-                    } else if (this.newResource.type === 'online_test') {
-                        resourceType = 'test';
-                        notifTitle = 'New Practice Test Uploaded! 📝';
-                    } else if (this.newResource.type === 'youtube') {
-                        resourceType = 'youtube';
-                    }
-
-                    const resourceToSave = {
-                        title: String(this.newResource.title),
-                        link: String(this.newResource.link),
-                        type: resourceType,
-                        classGrade: this.newResource.classGrade || 'All',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-                    window.db.collection('resources').add(resourceToSave).then(() => {
-                        console.log('Resource saved successfully:', resourceToSave);
-                        // Automatically send notification to students
-                        window.db.collection('notifications').add({
-                            title: String(notifTitle),
-                            body: String(notifBody),
-                            target: String(this.newResource.classGrade || 'All'),
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        }).then(() => {
-                            console.log('Resource notification sent');
-                        }).catch(err => {
-                            console.error('Error sending resource notification:', err);
-                        });
-
-                        this.showToast('Resource saved & Students notified!');
-                        this.newResource = { title: '', link: '', type: 'pdf_upload', classGrade: 'All' };
-                        this.isUploading = false;
-                    }).catch(err => {
-                        console.error('Error saving resource:', err);
-                        this.showAlert('Save Failed', 'Failed to save resource. Please try again.');
-                        this.isUploading = false;
-                    });
-                },
-
-                scheduleLiveClass() {
-                    if (!this.newLiveClass.url || !this.newLiveClass.time) {
-                        return this.showAlert('Missing Fields', 'All fields are required to schedule a live class.');
-                    }
-                    
-                    this.isSchedulingLive = true;
-                    
-                    window.db.collection('live_classes').add(this.newLiveClass).then(() => {
-                        this.showAlert('Success', 'Live class scheduled successfully!');
-                        this.newLiveClass = { url: '', time: '' };
-                        this.isSchedulingLive = false;
-                    }).catch(err => {
-                        console.error('Error scheduling live class:', err);
-                        this.showAlert('Error', 'Failed to schedule live class.');
-                        this.isSchedulingLive = false;
-                    });
-                },
-
-                markManualAttendance(student) {
-                    const session = prompt(`Enter session/topic to mark ${student.name} present for:`, "Regular Class");
-                    if (!session) return;
-
-                    // Use clean object to avoid Alpine.js Proxy errors
-                    const attendanceData = {
-                        studentEmail: String(student.email || ''),
-                        studentName: String(student.name || ''),
-                        resourceTitle: String(session),
-                        type: 'Manual',
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    window.db.collection('attendance').add(attendanceData).then(() => {
-                        this.showToast(`Attendance marked for ${student.name}`);
-                    }).catch(err => {
-                        console.error("Attendance Error:", err);
-                        this.showToast("Failed to mark attendance", "error");
-                    });
-                },
-
-                openAddScoreModal(student) {
-                    this.newTestScore = { 
-                        studentEmail: student.email, 
-                        testName: '', 
-                        score: '', 
-                        total: '', 
-                        classGrade: student.studentClass ? student.studentClass.replace('Class ', '') : '',
-                        resultImage: '' 
-                    };
-                    this.scoreModal.open = true;
-                },
-
-                async uploadScoreImage(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-                    
-                    // Check file size (limit to 5MB)
-                    if (file.size > 5 * 1024 * 1024) {
-                        this.showToast('File too large. Please select an image under 5MB.', 'error');
-                        return;
-                    }
-                    
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('upload_preset', this.cloudinaryUploadPreset);
-
-                    try {
-                        this.showToast('Uploading result image...', 'info');
-                        const response = await fetch(`https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        if (!response.ok) {
-                            const errorData = await response.json().catch(() => ({}));
-                            throw new Error(errorData.error?.message || `Upload failed: ${response.status}`);
-                        }
-                        
-                        const data = await response.json();
-                        if (data.secure_url) {
-                            this.newTestScore.resultImage = data.secure_url;
-                            this.showToast('Result image uploaded successfully!');
-                        } else {
-                            throw new Error('No image URL received from Cloudinary');
-                        }
-                    } catch (err) {
-                        console.error('Cloudinary upload error:', err);
-                        this.showToast(`Upload failed: ${err.message}`, 'error');
-                    }
-                },
-
-                async uploadAchieverImage(event) {
-                    const file = event.target.files[0];
-                    if (!file) return;
-
-                    // Check file size (limit to 5MB)
-                    if (file.size > 5 * 1024 * 1024) {
-                        this.showAlert('File Too Large', 'Please select an image under 5MB.');
-                        return;
-                    }
-
-                    const formData = new FormData();
-                    formData.append('file', file);
-                    formData.append('upload_preset', this.cloudinaryUploadPreset);
-
-                    try {
-                        this.showToast('Uploading to Cloudinary...', 'info');
-                        const response = await fetch(`https://api.cloudinary.com/v1_1/${this.cloudinaryCloudName}/image/upload`, {
-                            method: 'POST',
-                            body: formData
-                        });
-                        
-                        if (!response.ok) {
-                            let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
-                            try {
-                                const errorData = await response.json();
-                                errorMessage = errorData.error?.message || errorMessage;
-                            } catch (e) {
-                                // Response body is not JSON or empty
-                            }
-                            throw new Error(errorMessage);
-                        }
-
-                        const data = await response.json();
-
-                        if (data.secure_url) {
-                            this.newAchiever.image = data.secure_url;
-                            this.showToast('Image uploaded successfully!');
-                        } else {
-                            throw new Error('No secure_url found in response');
-                        }
-                    } catch (error) {
-                        console.error('Cloudinary upload error:', error);
-                        this.showAlert('Upload Failed', `Image upload failed: ${error.message}`);
-                    }
-                },
-
-                startEditAchiever(achiever) {
-                    this.isEditingAchiever = true;
-                    this.currentAchieverId = achiever.id;
-                    // Deep copy to avoid reactive changes on the list while typing
-                    this.newAchiever = { name: achiever.name, achievement: achiever.achievement, details: achiever.details, image: achiever.image || '' };
-                    // Scroll to the form
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                },
-
-                cancelEditAchiever() {
-                    this.isEditingAchiever = false;
-                    this.currentAchieverId = null;
-                    this.newAchiever = { name: '', achievement: '', details: '', image: '' };
-                },
-
-                saveAchiever() {
-                    if (!this.newAchiever.name || !this.newAchiever.achievement) {
-                        this.showToast('Name and Achievement are required.', 'error');
-                        return;
-                    }
-                    const achieverData = {
-                        name: this.newAchiever.name,
-                        achievement: this.newAchiever.achievement,
-                        details: this.newAchiever.details,
-                        image: this.newAchiever.image,
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    if (this.isEditingAchiever) {
-                        window.db.collection('achievers').doc(this.currentAchieverId).update(achieverData).then(() => {
-                            this.showToast('Achiever updated successfully!');
-                            this.cancelEditAchiever();
-                        });
-                    } else {
-                        window.db.collection('achievers').add(achieverData).then(() => {
-                            this.showToast('New achiever added!');
-                            this.newAchiever = { name: '', achievement: '', details: '', image: '' };
-                        });
-                    }
-                },
-
-                deleteItem(collection, id) {
-                    if (confirm('Are you sure?')) {
-                        window.db.collection(collection).doc(id).delete();
-                    }
-                },
-
-                toggleStatus(student) {
-                    const newStatus = student.status === 'Confirmed' ? 'Pending' : 'Confirmed';
-                    window.db.collection('admissions').doc(student.id).update({ status: newStatus });
-                },
-
-                exportCSV() {
-                    const data = this.filteredAdmissions;
-                    if (!data || data.length === 0) {
-                        this.showToast("No student data to export.", "error");
-                        return;
-                    }
-
-                    // CSV Header
-                    let csvContent = "Name,Email,School,Status,Date Joined\n";
-
-                    // Map data to CSV rows
-                    data.forEach(student => {
-                        const name = (student.name || '').replace(/,/g, ' '); // Sanitize commas
-                        const email = (student.email || '').replace(/,/g, ' ');
-                        const school = (student.schoolName || '').replace(/,/g, ' ');
-                        const status = (student.status || 'Pending');
-                        let date = '';
-                        if (student.createdAt && student.createdAt.toDate) {
-                            date = student.createdAt.toDate().toLocaleDateString('en-GB');
-                        }
-                        csvContent += `${name},${email},${school},${status},${date}\n`;
-                    });
-
-                    // Create Blob and Download
-                    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement("a");
-                    link.setAttribute("href", url);
-                    link.setAttribute("download", `Student_List_${new Date().toISOString().slice(0,10)}.csv`);
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                },
-
-                formatDate(timestamp) {
-                    if (!timestamp) return 'Just now';
-                    const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
-                    return date.toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-                },
-
-                addTestScore() {
-                    if (!this.newTestScore.studentEmail || !this.newTestScore.testName || this.newTestScore.score === '' || this.newTestScore.total === '' || !this.newTestScore.classGrade) {
-                        this.showToast('Please fill all required fields.', 'error');
-                        return;
-                    }
-
-                    const score = parseFloat(this.newTestScore.score);
-                    const total = parseFloat(this.newTestScore.total);
-                  
-                    if (isNaN(score) || isNaN(total) || score < 0 || total <= 0 || score > total) {
-                        this.showToast('Invalid scores. Score must be between 0 and total marks.', 'error');
-                        return;
-                    }
-
-                    const testScoreData = {
-                        studentEmail: String(this.newTestScore.studentEmail),
-                        testName: String(this.newTestScore.testName),
-                        score: score,
-                        total: total,
-                        classGrade: String(this.newTestScore.classGrade),
-                        resultImage: String(this.newTestScore.resultImage || ''),
-                        percentage: Math.round((score / total) * 100),
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    window.db.collection('test_scores').add(testScoreData).then(() => {
-                        console.log('Test score added successfully:', testScoreData);
-                        this.showToast('Test score added successfully!', 'success');
-                        this.scoreModal.open = false;
-                        this.newTestScore = { studentEmail: '', testName: '', score: '', total: '', classGrade: '', resultImage: '' };
-                    }).catch(err => {
-                        console.error('Error adding test score:', err);
-                        this.showToast('Failed to add test score.', 'error');
-                    });
-                },
-
-                deleteTestScore(id) {
-                    if (confirm('Are you sure you want to delete this test score?')) {
-                        window.db.collection('test_scores').doc(id).delete().then(() => {
-                            this.showToast('Test score deleted successfully!', 'success');
-                        }).catch(err => {
-                            console.error('Error deleting test score:', err);
-                            this.showToast('Failed to delete test score.', 'error');
-                        });
-                    }
-                },
-
-                sendNotification() {
-                    if(!this.notification.title || !this.notification.body) {
-                        this.showToast("Title and body are required.", "error");
-                        return;
-                    }
-                    
-                    this.isSendingNotification = true;
-                    
-                    const payload = {
-                        title: String(this.notification.title),
-                        body: String(this.notification.body),
-                        target: String(this.notification.target || 'All'),
-                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                    };
-
-                    window.db.collection('notifications').add(payload).then(() => {
-                        console.log('Notification saved successfully:', payload);
-                        this.showToast("Notification sent to student portal!");
-                        this.notification = { title: '', body: '', target: 'All' };
-                        this.isSendingNotification = false;
-                    }).catch(err => {
-                        console.error("Error sending notification:", err);
-                        this.showToast("Failed to send notification.", "error");
-                        this.isSendingNotification = false;
-                    });
-                },
-
-                showToast(message, type = 'success') {
-                    this.toast.message = message;
-                    this.toast.type = type;
-                    this.toast.show = true;
-                    setTimeout(() => { this.toast.show = false; }, 4000);
-                },
-
-                logout() {
-                    localStorage.removeItem('isStaffLoggedIn');
-                    window.location.href = 'index.html';
-                }
-            }
-        }
-    </script>
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

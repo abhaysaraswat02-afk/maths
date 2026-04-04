@@ -138,12 +138,16 @@ app.post('/api/send-otp', async (req, res) => {
     return res.status(400).json({ error: 'Invalid email address.' });
   }
 
-  // Generate 6-digit OTP
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
-  const token = createVerificationToken(email, otp, expiry);
-
   try {
+    // Check if user already exists (server-side, no security rule issues)
+    const existingUser = await db.collection('admissions').where('email', '==', email).get();
+    const isExistingUser = !existingUser.empty;
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiry = Date.now() + 5 * 60 * 1000; // 5 minutes
+    const token = createVerificationToken(email, otp, expiry);
+
     // Send Email
     await transporter.sendMail({
       from: `"Era of MathAntics" <${process.env.GMAIL_USER}>`,
@@ -161,6 +165,7 @@ app.post('/api/send-otp', async (req, res) => {
     res.status(200).json({ 
       success: true, 
       message: 'OTP sent to email.',
+      isExistingUser: isExistingUser,
       verificationToken: `${token}.${expiry}` // Send token and expiry to client
     });
   } catch (error) {

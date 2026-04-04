@@ -768,34 +768,8 @@
                      }
 
                     this.isSubmitting = true;
-                    this.isExistingUser = false; // Reset on each submission
 
-                    try {
-                        const snap = await window.db.collection("admissions")
-                                             .where("email", "==", this.applicationForm.email)
-                                             .get();
-
-                        if (!snap.empty) {
-                            this.isExistingUser = true;
-                            if (!this.isLoginMode) {
-                                this.showAlert("Account Found", "You already have an account with this email. Switching to Login mode.");
-                                this.isLoginMode = true;
-                            }
-                        }
-                    } catch (dbError) {
-                        console.error("User check failed:", dbError);
-                        this.showAlert("Access Denied", "Database Error: " + dbError.message + ". Please check your Firebase Security Rules.");
-                        this.isSubmitting = false;
-                        return;
-                    }
-
-                    if (this.isLoginMode && !this.isExistingUser) {
-                        this.showAlert("Account Not Found", "No account found with this email. Please switch to 'New Admission' to register.");
-                        this.isSubmitting = false;
-                        return;
-                    }
-
-                    // 2. Send OTP
+                    // Send OTP (backend now handles user existence check)
                     try {
                         const response = await fetch('/api/send-otp', {
                             method: 'POST',
@@ -815,6 +789,18 @@
                         const data = await response.json();
                         
                         if (data.success) {
+                             // Check if user already exists (from backend response)
+                             this.isExistingUser = data.isExistingUser || false;
+                             
+                             if (this.isExistingUser && !this.isLoginMode) {
+                                this.showAlert("Account Found", "You already have an account with this email. Switching to Login mode.");
+                                this.isLoginMode = true;
+                             } else if (this.isLoginMode && !this.isExistingUser) {
+                                this.showAlert("Account Not Found", "No account found with this email. Please switch to 'New Admission' to register.");
+                                this.isSubmitting = false;
+                                return;
+                             }
+                             
                              this.applicationStep = 'otp';
                              this.verificationToken = data.verificationToken; // Store the signature
                              this.isSubmitting = false;
@@ -823,8 +809,8 @@
                             throw new Error(data.error || 'Failed to send OTP');
                         }
                     } catch (error) {
-                        console.error("General error:", error);
-                        this.showAlert('Error', 'An unexpected error occurred: ' + error.message);
+                        console.error("OTP sending error:", error);
+                        this.showAlert('Error', 'Failed to send OTP: ' + error.message);
                         this.isSubmitting = false;
                     }
                 },

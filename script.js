@@ -5,12 +5,13 @@
 
 // Firebase Configuration (Placeholders)
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "maths-main.firebaseapp.com",
-    projectId: "maths-main",
-    storageBucket: "maths-main.appspot.com",
-    messagingSenderId: "YOUR_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",
+    authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
+    projectId: "era-of-mathantics-8b6d1",
+    storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
+    messagingSenderId: "521238168559",
+    appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
+    measurementId: "G-QDT3QZQFFQ"
 };
 
 // Initialize Firebase
@@ -94,15 +95,29 @@ function staffPortal() {
 
         async verifyPayment(id) {
             this.loading = true;
-            await db.collection('payments').doc(id).update({ verified: true });
+            const payRef = db.collection('payments').doc(id);
+            const payDoc = await payRef.get();
+            
+            if (payDoc.exists) {
+                const payData = payDoc.data();
+                await payRef.update({ verified: true });
+                
+                // Automatically update student's paid balance in admissions
+                const studentSnap = await db.collection('admissions').where('email', '==', payData.email).get();
+                if (!studentSnap.empty) {
+                    const studentRef = studentSnap.docs[0].ref;
+                    const currentPaid = studentSnap.docs[0].data().feePaid || 0;
+                    await studentRef.update({ feePaid: currentPaid + Number(payData.amount) });
+                }
+            }
             this.loading = false;
         },
 
         async postNews() {
             this.loading = true;
-            await db.collection('news').add({
+            await db.collection('notifications').add({
                 ...this.newsForm,
-                date: new Date().toISOString()
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
             });
             this.newsForm = { title: '', content: '' };
             alert('News posted successfully!');
@@ -111,7 +126,13 @@ function staffPortal() {
 
         async addDoc() {
             this.loading = true;
-            await db.collection('resources').add(this.docForm);
+            await db.collection('resources').add({
+                title: this.docForm.name,
+                link: this.docForm.url,
+                type: 'pdf',
+                classGrade: 'All',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
             this.docForm = { name: '', url: '' };
             this.loading = false;
         },
@@ -131,6 +152,7 @@ function staffPortal() {
 
         exportData() {
             const data = this.activeTab === 'admissions' ? this.admissions : this.payments;
+            if (data.length === 0) return alert("No data available to export.");
             const csvContent = "data:text/csv;charset=utf-8," 
                 + Object.keys(data[0]).join(",") + "\n"
                 + data.map(row => Object.values(row).join(",")).join("\n");

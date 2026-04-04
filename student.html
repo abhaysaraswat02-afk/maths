@@ -38,6 +38,8 @@
         </div>
         <nav class="mt-6 px-4 space-y-2">
             <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
+            <button @click="tab = 'notices'; mobileMenu = false" :class="tab === 'notices' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🔔 Notices</button>
+            <button @click="tab = 'fees'; mobileMenu = false" :class="tab === 'fees' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">💳 Fees & Payments</button>
             <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
             <button @click="tab = 'test-scores'; mobileMenu = false" :class="tab === 'test-scores' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📊 Test Scores</button>
             <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
@@ -138,6 +140,78 @@
                         </div>
                     </template>
                 </div>
+            </div>
+        </div>
+
+        <!-- Notices Tab -->
+        <div x-show="tab === 'notices'" class="space-y-6" x-cloak>
+            <h3 class="text-2xl font-black">College Notices</h3>
+            <div class="grid gap-4">
+                <template x-for="note in notifications" :key="note.id">
+                    <div class="p-6 bg-white border rounded-2xl shadow-sm">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                            <h4 class="font-bold text-slate-900" x-text="note.title"></h4>
+                        </div>
+                        <p class="text-slate-600 text-sm leading-relaxed" x-text="note.content"></p>
+                        <p class="text-[10px] text-slate-400 font-bold mt-4 uppercase" x-text="formatDate(note.timestamp)"></p>
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <!-- Fees Tab -->
+        <div x-show="tab === 'fees'" class="space-y-6" x-cloak>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-xl shadow-blue-200">
+                    <p class="text-xs font-bold uppercase opacity-80">Total Fee</p>
+                    <h4 class="text-3xl font-black mt-1" x-text="'₹' + (studentData.feeTotal || 0)"></h4>
+                </div>
+                <div class="bg-white border p-6 rounded-3xl">
+                    <p class="text-xs font-bold uppercase text-slate-400">Amount Paid</p>
+                    <h4 class="text-3xl font-black text-green-600 mt-1" x-text="'₹' + (studentData.feePaid || 0)"></h4>
+                </div>
+                <div class="bg-white border p-6 rounded-3xl">
+                    <p class="text-xs font-bold uppercase text-slate-400">Balance Due</p>
+                    <h4 class="text-3xl font-black text-red-600 mt-1" x-text="'₹' + ((studentData.feeTotal || 0) - (studentData.feePaid || 0))"></h4>
+                </div>
+            </div>
+
+            <div class="bg-white p-8 rounded-3xl border shadow-sm">
+                <h4 class="font-bold mb-6">Submit New Payment Receipt</h4>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="text-xs font-black uppercase text-slate-400">Amount Paid (₹)</label>
+                        <input type="number" x-model="payForm.amount" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none font-bold">
+                    </div>
+                    <div class="flex items-end">
+                        <button @click="submitPayment()" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-blue-600 transition">Log Payment</button>
+                    </div>
+                </div>
+            </div>
+
+            <h4 class="font-bold">Transaction History</h4>
+            <div class="bg-white border rounded-2xl overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-slate-50 border-b">
+                        <tr>
+                            <th class="p-4">Date</th>
+                            <th class="p-4">Amount</th>
+                            <th class="p-4">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y">
+                        <template x-for="p in myPayments" :key="p.id">
+                            <tr>
+                                <td class="p-4" x-text="formatDate(p.timestamp)"></td>
+                                <td class="p-4 font-bold" x-text="'₹' + p.amount"></td>
+                                <td class="p-4">
+                                    <span :class="p.verified ? 'text-green-600' : 'text-amber-600'" class="font-bold" x-text="p.verified ? 'Verified' : 'Pending Verification'"></span>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -473,10 +547,13 @@
                 showIdCard: false,
                 resources: [],
                 testScores: [],
+                notifications: [],
+                myPayments: [],
                 liveClasses: [],
                 pageLoadTimestamp: null,
                 videoModal: { open: false, videoId: '' },
                 welcomeModal: { open: false },
+                payForm: { amount: '' },
                 pomodoro: {
                     timeLeft: 1500,
                     isActive: false,
@@ -577,18 +654,14 @@
                                 window.db.collection('test_scores').where('studentEmail', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
                                     this.testScores = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
+                                window.db.collection('notifications').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                                    this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                                });
+                                window.db.collection('payments').where('email', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
+                                    this.myPayments = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                                });
 
                                 // Real-time Notification Listener (Popup Alert)
-                                window.db.collection('notifications')
-                                    .where('timestamp', '>', this.pageLoadTimestamp)
-                                    .onSnapshot(snapshot => {
-                                        snapshot.docChanges().forEach(change => {
-                                            if (change.type === 'added') {
-                                                const data = change.doc.data();
-                                                
-                                        });
-                                    });
-
                                 if (localStorage.getItem('showIdCardWelcome') === 'true') {
                                     this.welcomeModal.open = true;
                                     localStorage.removeItem('showIdCardWelcome');

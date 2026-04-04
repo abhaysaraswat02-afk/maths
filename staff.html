@@ -83,7 +83,7 @@
                             <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
                                 <tr>
                                     <th class="px-6 py-4">Student Name</th>
-                                    <th class="px-6 py-4">Course</th>
+                                    <th class="px-6 py-4">Class</th>
                                     <th class="px-6 py-4">Date</th>
                                     <th class="px-6 py-4">Status</th>
                                     <th class="px-6 py-4">Action</th>
@@ -92,8 +92,8 @@
                             <tbody class="divide-y">
                                 <template x-for="item in admissions" :key="item.id">
                                     <tr class="hover:bg-blue-50/50 transition-colors">
-                                        <td class="px-6 py-4 font-medium" x-text="item.name"></td>
-                                        <td class="px-6 py-4 text-gray-600" x-text="item.course"></td>
+                                        <td class="px-6 py-4 font-medium" x-text="item.name || 'Unnamed'"></td>
+                                        <td class="px-6 py-4 text-gray-600" x-text="item.studentClass || 'N/A'"></td>
                                         <td class="px-6 py-4 text-gray-500 text-sm" x-text="formatDate(item.createdAt)"></td>
                                         <td class="px-6 py-4">
                                             <span :class="item.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" 
@@ -123,10 +123,10 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y">
-                                <template x-for="pay in payments" :key="item.id">
+                                <template x-for="pay in payments" :key="pay.id">
                                     <tr class="hover:bg-blue-50/50 transition-colors">
                                         <td class="px-6 py-4 font-mono text-sm" x-text="pay.id.substring(0,8)"></td>
-                                        <td class="px-6 py-4" x-text="pay.studentPhone"></td>
+                                        <td class="px-6 py-4" x-text="pay.email"></td>
                                         <td class="px-6 py-4 font-bold text-gray-800" x-text="'₹' + pay.amount"></td>
                                         <td class="px-6 py-4">
                                             <span :class="pay.verified ? 'text-green-600' : 'text-red-600'" class="text-sm flex items-center">

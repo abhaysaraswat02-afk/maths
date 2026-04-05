@@ -287,6 +287,55 @@ app.post('/api/verify-otp', async (req, res) => {
   res.status(200).json({ success: true, message: 'OTP Verified' });
 });
 
+app.post('/api/save-student-profile', async (req, res) => {
+  if (!db) {
+    return res.status(500).json({ error: 'Server database error.' });
+  }
+
+  let { studentEmail, name, fatherName, studentClass, dob, schoolName, photoURL } = req.body;
+  studentEmail = studentEmail ? studentEmail.trim().toLowerCase() : '';
+
+  if (!studentEmail) {
+    return res.status(400).json({ error: 'Missing student email.' });
+  }
+
+  try {
+    const snap = await db.collection('admissions').where('email', '==', studentEmail).get();
+    const updateData = {};
+
+    if (name !== undefined) updateData.name = name;
+    if (fatherName !== undefined) updateData.fatherName = fatherName;
+    if (studentClass !== undefined) updateData.studentClass = studentClass;
+    if (dob !== undefined) updateData.dob = dob;
+    if (schoolName !== undefined) updateData.schoolName = schoolName;
+    if (photoURL !== undefined) updateData.photoURL = photoURL;
+    updateData.lastUpdated = admin.firestore.FieldValue.serverTimestamp();
+
+    if (snap.empty) {
+      const docRef = await db.collection('admissions').add({
+        name: name || '',
+        email: studentEmail,
+        fatherName: fatherName || '',
+        studentClass: studentClass || '',
+        dob: dob || '',
+        schoolName: schoolName || '',
+        photoURL: photoURL || '',
+        status: 'Pending',
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+      });
+      return res.status(200).json({ success: true, id: docRef.id });
+    }
+
+    const docRef = snap.docs[0].ref;
+    await docRef.update(updateData);
+    res.status(200).json({ success: true, id: docRef.id });
+  } catch (error) {
+    console.error('Save student profile error:', error);
+    res.status(500).json({ error: 'Failed to save student profile.' });
+  }
+});
+
 app.get('/api/admissions', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   try {

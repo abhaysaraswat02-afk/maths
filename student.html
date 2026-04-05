@@ -735,51 +735,39 @@
                     }
                 },
 
-                saveProfile() {
-                    if (!this.studentEmail) return;
-                    
-                    firebase.firestore().collection('admissions').where('email', '==', this.studentEmail).get().then(existingUser => {
-                        if (existingUser.empty) {
-                            // Add new
-                            firebase.firestore().collection('admissions').add({
+                async saveProfile() {
+                    if (!this.studentEmail) {
+                        this.showAlert('Error', 'Student email is missing. Please log in again.');
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch('/api/save-student-profile', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                studentEmail: this.studentEmail.trim().toLowerCase(),
                                 name: this.studentName,
-                                email: this.studentEmail,
                                 fatherName: this.fatherName,
                                 studentClass: this.studentClass,
                                 dob: this.dob,
                                 schoolName: this.schoolName,
-                                photoURL: this.profilePic,
-                                status: 'Pending',
-                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                            }).then((docRef) => {
-                                this.studentId = docRef.id;
-                                this.showAlert('Success', 'Profile created successfully!');
-                                this.generateQRCode();
-                            }).catch(err => {
-                                this.showAlert('Error', 'Failed to create profile: ' + err.message);
-                            });
-                        } else {
-                            // Update existing
-                            const docId = existingUser.docs[0].id;
-                            firebase.firestore().collection('admissions').doc(docId).update({
-                                name: this.studentName,
-                                fatherName: this.fatherName,
-                                studentClass: this.studentClass,
-                                dob: this.dob,
-                                schoolName: this.schoolName
-                            }).then(() => {
-                                this.studentId = docId;
-                                this.showAlert('Success', 'Profile updated successfully!');
-                                this.generateQRCode();
-                            }).catch(error => {
-                                console.error("Error updating profile: ", error);
-                                this.showAlert('Error', 'Failed to update profile. Please try again.');
-                            });
+                                photoURL: this.profilePic
+                            })
+                        });
+                        const result = await response.json();
+
+                        if (!response.ok || !result.success) {
+                            throw new Error(result.error || response.statusText || 'Unknown error');
                         }
-                    }).catch(error => {
-                        console.error("Error fetching profile: ", error);
+
+                        this.studentId = result.id;
+                        this.showAlert('Success', 'Profile saved successfully!');
+                        this.generateQRCode();
+                    } catch (error) {
+                        console.error('Error saving profile:', error);
                         this.showAlert('Error', 'Failed to save profile: ' + error.message);
-                    });
+                    }
                 },
 
                 formatDate(timestamp) {
@@ -850,11 +838,26 @@
                         if (data.secure_url) {
                             this.profilePic = data.secure_url;
                             
-                            // Save DP to Firestore (Persistence)
-                            if (this.studentId) {
-                                await firebase.firestore().collection('admissions').doc(this.studentId).update({
-                                    photoURL: data.secure_url
+                            // Save DP via backend so client permissions are not required.
+                            if (this.studentEmail) {
+                                const response = await fetch('/api/save-student-profile', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        studentEmail: this.studentEmail.trim().toLowerCase(),
+                                        name: this.studentName,
+                                        fatherName: this.fatherName,
+                                        studentClass: this.studentClass,
+                                        dob: this.dob,
+                                        schoolName: this.schoolName,
+                                        photoURL: data.secure_url
+                                    })
                                 });
+                                const result = await response.json();
+                                if (!response.ok || !result.success) {
+                                    throw new Error(result.error || response.statusText || 'Unable to save profile picture');
+                                }
+                                this.studentId = result.id;
                             }
                             this.showAlert('Success', 'Profile picture updated successfully!');
                         } else {

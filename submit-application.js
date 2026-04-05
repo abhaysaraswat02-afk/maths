@@ -402,13 +402,13 @@ app.get('/api/resources', async (req, res) => {
 
 app.post('/api/submit-test-score', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
-  const { studentEmail, testName, score, total, percentage, date, staffEmail } = req.body;
+  const { studentEmail, testName, classGrade, score, total, percentage, date, staffEmail } = req.body;
   
   if (!isAuthorizedStaff(staffEmail)) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   
-  if (!studentEmail || !testName || score === undefined || !total || percentage === undefined || !date) {
+  if (!studentEmail || !testName || !classGrade || score === undefined || !total || percentage === undefined || !date) {
     return res.status(400).json({ error: 'Missing required fields.' });
   }
 
@@ -416,6 +416,7 @@ app.post('/api/submit-test-score', async (req, res) => {
     await db.collection('test_scores').add({
       studentEmail: studentEmail.toLowerCase(),
       testName: testName.trim(),
+      classGrade: classGrade,
       score: parseFloat(score),
       total: parseFloat(total),
       percentage: parseInt(percentage),

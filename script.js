@@ -34,7 +34,7 @@ function staffPortal() {
         resourceSearch: '',
         scoreSearch: '',
         classFilter: 'All',
-        testScoreForm: { studentEmail: '', testName: '', score: '', total: 100, percentage: 0, date: '' },
+        testScoreForm: { studentEmail: '', testName: '', classGrade: 'All', score: '', total: 100, percentage: 0, date: '' },
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
 
         init() {
@@ -83,9 +83,11 @@ function staffPortal() {
         get filteredScores() {
             return this.recentScores.filter(s => {
                 const query = this.scoreSearch.toLowerCase();
-                return !query || 
+                const matchesSearch = !query || 
                        s.studentEmail.toLowerCase().includes(query) || 
                        s.testName.toLowerCase().includes(query);
+                const matchesClass = this.classFilter === 'All' || s.classGrade === this.classFilter;
+                return matchesSearch && matchesClass;
             });
         },
 
@@ -334,6 +336,7 @@ function staffPortal() {
                     body: JSON.stringify({
                         studentEmail: this.testScoreForm.studentEmail.trim().toLowerCase(),
                         testName: this.testScoreForm.testName.trim(),
+                        classGrade: this.testScoreForm.classGrade,
                         score: parseFloat(this.testScoreForm.score),
                         total: parseFloat(this.testScoreForm.total),
                         percentage: percentage,
@@ -346,7 +349,7 @@ function staffPortal() {
                     throw new Error(errData.error || response.statusText);
                 }
                 alert('Test score submitted successfully!');
-                this.testScoreForm = { studentEmail: '', testName: '', score: '', total: 100, percentage: 0, date: '' };
+                this.testScoreForm = { studentEmail: '', testName: '', classGrade: 'All', score: '', total: 100, percentage: 0, date: '' };
                 this.loadData();
             } catch (err) {
                 console.error('Submit score error:', err);

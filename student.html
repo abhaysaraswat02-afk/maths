@@ -587,31 +587,32 @@
                             console.error('Error loading profile:', error);
                         }
 
-                        // Fetch Auto-sync Videos from YouTube
-                        this.fetchYouTubeVideos();
+                        try {
+                            // Fetch Auto-sync Videos from YouTube
+                            this.fetchYouTubeVideos();
 
-                        // Fetch Global Resources
-                        window.db.collection('resources').orderBy('timestamp', 'desc').onSnapshot(snap => {
-                            this.resources = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                        });
-                        // Note: live_classes requires authentication, so commented out for now
-                        // window.db.collection('live_classes').where('time', '>', new Date().toISOString()).onSnapshot(snap => {
-                        //     this.liveClasses = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                        // });
-                                window.db.collection('test_scores').where('studentEmail', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                    this.testScores = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
-                                window.db.collection('notifications').orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                    this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
+                            // Fetch Global Resources
+                            window.db.collection('resources').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                                this.resources = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                            });
 
-                                // Real-time Notification Listener (Popup Alert)
-                                if (localStorage.getItem('showIdCardWelcome') === 'true') {
-                                    this.welcomeModal.open = true;
-                                    localStorage.removeItem('showIdCardWelcome');
-                                }
+                            // Fetch Test Scores
+                            window.db.collection('test_scores').where('studentEmail', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
+                                this.testScores = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                            });
+
+                            // Fetch Notifications
+                            window.db.collection('notifications').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                                this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                            });
+
+                            // Real-time Notification Listener (Popup Alert)
+                            if (localStorage.getItem('showIdCardWelcome') === 'true') {
+                                this.welcomeModal.open = true;
+                                localStorage.removeItem('showIdCardWelcome');
+                            }
                         } catch (e) {
-                            console.error("Error fetching profile", e);
+                            console.error("Error fetching collections:", e);
                         }
                     }
                 },

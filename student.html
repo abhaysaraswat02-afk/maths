@@ -895,7 +895,7 @@
                         const name = this.studentName || 'Unknown';
                         const email = this.studentEmail || 'no-email';
                         const displayId = this.studentId ? 'EMA-' + this.studentId.substring(0, 6).toUpperCase() : 'EMA-PENDING';
-                        const info = `Name: ${name}\nID: ${displayId}\nClass: ${this.studentClass || '-'}\nFather: ${this.fatherName || '-'}\nDOB: ${this.dob || '-'}\nSchool: ${this.schoolName || '-'}\nEmail: ${email}\nStatus: Active Student\nVerified: Yes`;
+                        const info = `Name: ${name.substring(0,20)}\nID: ${displayId}\nClass: ${this.studentClass || '-'}\nFather: ${(this.fatherName || '').substring(0,20)}\nDOB: ${this.dob || '-'}\nSchool: ${(this.schoolName || '').substring(0,30)}\nEmail: ${email}`;
                         
                         new QRCode(container, {
                             text: info,

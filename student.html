@@ -9,7 +9,7 @@
         if (localStorage.getItem('isStudentLoggedIn') !== 'true') {
             window.location.href = 'index.html';
         }
-        const email = localStorage.getItem('student_email');
+        const email = (localStorage.getItem('student_email') || '').trim().toLowerCase();
         if (!email || staffEmails.includes(email)) {
             window.location.href = 'index.html';
         }
@@ -573,10 +573,14 @@
                     this.academicYear = `${startYear}-${(startYear + 1).toString().slice(-2)}`;
                     // Load saved student data
                     this.studentEmail = (localStorage.getItem('student_email') || '').trim().toLowerCase();
-                    
-                    if (this.studentEmail) {
-                        // Load student profile via API
-                        try {
+                    if (!this.studentEmail) {
+                        localStorage.clear();
+                        window.location.href = 'index.html';
+                        return;
+                    }
+
+                    // Load student profile via API
+                    try {
                             const response = await fetch(`/api/get-student-profile?email=${encodeURIComponent(this.studentEmail)}`);
                             const result = await response.json();
                             if (response.ok) {
@@ -634,8 +638,7 @@
                         } catch (e) {
                             console.error("Error fetching collections:", e);
                         }
-                    }
-                },
+                    },
 
                 async fetchYouTubeVideos() {
                     if (!this.youtubeApiKey || this.youtubeApiKey.includes('YOUR_API')) {

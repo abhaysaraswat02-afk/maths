@@ -476,13 +476,15 @@ app.get('/api/get-student-test-scores', async (req, res) => {
   try {
     const snapshot = await db.collection('test_scores')
       .where('studentEmail', '==', studentEmail)
-      .orderBy('timestamp', 'desc')
       .get();
     
-    const scores = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    const scores = snapshot.docs
+      .map(doc => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => {
+        const aTime = a.timestamp && a.timestamp.toDate ? a.timestamp.toDate().getTime() : new Date(a.timestamp || 0).getTime();
+        const bTime = b.timestamp && b.timestamp.toDate ? b.timestamp.toDate().getTime() : new Date(b.timestamp || 0).getTime();
+        return bTime - aTime;
+      });
 
     res.status(200).json(scores);
   } catch (error) {

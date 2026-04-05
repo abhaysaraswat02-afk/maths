@@ -116,14 +116,23 @@ transporter.verify((error, success) => {
 app.use(cors({ origin: true }));
 
 // Basic rate-limiting to prevent spam and abuse.
-// Allows 10 requests per IP address per minute.
-const limiter = rateLimit({
+// Global limit for all endpoints and a stricter limit for OTP requests.
+const globalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 minute
-  max: 10,
+  max: 100,
   message: { error: 'Too many requests. Please wait a minute and try again.' },
   headers: true,
 });
-app.use(limiter);
+
+const otpLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10,
+  message: { error: 'Too many OTP requests. Please wait a minute and try again.' },
+  headers: true,
+});
+
+app.use(globalLimiter);
+app.use('/api/send-otp', otpLimiter);
 
 // Middleware to parse JSON request bodies
 app.use(express.json());

@@ -169,7 +169,8 @@ app.post('/api/send-otp', async (req, res) => {
     console.error("DB not initialized");
     return res.status(500).json({ error: 'Firebase Admin not initialized. Check your FIREBASE_ env variables.' });
   }
-  const { email } = req.body;
+  let { email } = req.body;
+  email = email ? email.trim().toLowerCase() : '';
 
   if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
     console.error("SMTP config missing");
@@ -228,7 +229,8 @@ app.post('/api/verify-otp', async (req, res) => {
   if (!db) {
     return res.status(500).json({ error: 'Server database error.' });
   }
-  const { email, code, verificationToken, isExistingUser, applicationForm } = req.body;
+  let { email, code, verificationToken, isExistingUser, applicationForm } = req.body;
+  email = email ? email.trim().toLowerCase() : '';
   
   if (!verificationToken) return res.status(400).json({ error: 'Missing verification session.' });
 

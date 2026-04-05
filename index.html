@@ -735,6 +735,12 @@
 
                     this.isSubmitting = true;
 
+                    // Normalize email before sending OTP.
+                    this.applicationForm.email = this.applicationForm.email.trim().toLowerCase();
+
+                    // Normalize email before sending OTP.
+                    this.applicationForm.email = this.applicationForm.email.trim().toLowerCase();
+
                     // Send OTP (backend now handles user existence check)
                     try {
                         const response = await fetch('/api/send-otp', {
@@ -789,6 +795,9 @@
                     const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout is better for UX
 
                     try {
+                        // Normalize email before verification.
+                        this.applicationForm.email = this.applicationForm.email.trim().toLowerCase();
+
                         // Verify via Backend
                         const res = await fetch('/api/verify-otp', {
                             method: 'POST',

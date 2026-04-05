@@ -10,42 +10,17 @@
  * - Handles high-concurrency loads automatically.
  */
 
+const path = require('path');
 require('dotenv').config({ path: path.join(__dirname, '.env') }); // Load environment variables from the current script folder
 const express = require('express');
 const admin = require('firebase-admin');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
-const path = require('path');
 const crypto = require('crypto');
 const twilio = require('twilio');
 
-// --- Firebase Admin SDK Initialization ---
-// IMPORTANT: In production, use Vercel Environment Variables for this!
-// DO NOT hardcode your credentials.
 
-// FIRESTORE SECURITY RULES NEEDED:
-// Add the following to your Firestore Rules for backend operations to work:
-// rules_version = '2';
-// service cloud.firestore {
-//   match /databases/{database}/documents {
-//     // Required for both client-side and server-side verification
-//     match /admissions/{document=**} {
-//       allow read, write: if request.auth != null;
-//     }
-//     match /notifications/{document=**} {
-//       allow read: if true;
-//       allow write: if request.auth != null;
-//     }
-//     match /payments/{document=**} {
-//       allow read, write: if request.auth != null;
-//     }
-//     match /resources/{document=**} {
-//       allow read: if true;
-//       allow write: if request.auth != null;
-//     }
-//   }
-// }
 let db;
 try {
   const stripQuotes = value => {
@@ -293,6 +268,7 @@ app.post('/api/save-student-profile', async (req, res) => {
   }
 
   let { studentEmail, name, fatherName, studentClass, dob, schoolName, photoURL } = req.body;
+  console.log('Received data:', { studentEmail, name, fatherName, studentClass, dob, schoolName, photoURL: photoURL ? photoURL.substring(0, 50) + '...' : null });
   studentEmail = studentEmail ? studentEmail.trim().toLowerCase() : '';
 
   if (!studentEmail) {
@@ -332,7 +308,7 @@ app.post('/api/save-student-profile', async (req, res) => {
     res.status(200).json({ success: true, id: docRef.id });
   } catch (error) {
     console.error('Save student profile error:', error);
-    res.status(500).json({ error: 'Failed to save student profile.' });
+    res.status(500).json({ error: error.message || 'Failed to save student profile.' });
   }
 });
 

@@ -167,7 +167,11 @@
         <div x-show="tab === 'test-scores'" class="space-y-6" x-cloak>
             <h3 class="text-2xl font-black">Test Scores</h3>
             <p class="text-slate-500 text-sm">Track your performance in mathematics tests and assessments.</p>
-            
+                                <template x-if="testScoresError">
+                                    <div class="mt-4 p-4 bg-rose-50 text-rose-700 border border-rose-100 rounded-xl text-sm">
+                                        <strong>Error:</strong> <span x-text="testScoresError"></span>
+                                    </div>
+                                </template>
             <div x-show="testScores.length === 0" class="text-slate-500 italic py-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200" x-cloak>
                 <i class="fas fa-chart-line text-3xl mb-3 opacity-20"></i>
                 <p>No test scores available yet.</p>
@@ -180,7 +184,7 @@
                             <div class="flex-1">
                                 <h4 class="font-bold text-lg text-slate-800" x-text="score.testName"></h4>
                                 <p class="text-slate-600 mt-1" x-text="'Score: ' + score.score + '/' + score.total"></p>
-                                <p class="text-xs text-slate-400 mt-2" x-text="formatDate(score.timestamp)"></p>
+                                <p class="text-xs text-slate-400 mt-2" x-text="formatDate(score.date || score.timestamp)"></p>
                                 <template x-if="score.resultImage">
                                     <a :href="score.resultImage" target="_blank" class="mt-2 inline-flex items-center text-[10px] font-bold text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg transition">
                                         <i class="fas fa-image mr-1"></i> View Result Paper
@@ -492,6 +496,8 @@
                 youtubeApiKey: 'AIzaSyC9USpCxutEV2MhDeOB-A0uzoLHY7edhkI',
                 youtubeChannelId: 'UCo0fI2O0ITf8sAJlckVROiA',
                 modal: { open: false, title: '', message: '' },
+                testScores: [],
+                testScoresError: '',
                 academicYear: '',
                 showIdCard: false,
                 resources: [],
@@ -604,11 +610,15 @@
                                 this.resources = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                             });
 
-                            // Fetch Test Scores via API
+                            // Load student test scores via API
                             const scoresRes = await fetch(`/api/get-student-test-scores?email=${encodeURIComponent(this.studentEmail)}`);
                             const scoresData = await scoresRes.json();
                             if (scoresRes.ok) {
                                 this.testScores = scoresData;
+                                this.testScoresError = '';
+                            } else {
+                                this.testScores = [];
+                                this.testScoresError = scoresData.error || 'Could not load test scores.';
                             }
 
                             // Fetch Notifications
@@ -784,6 +794,7 @@
                 formatDate(timestamp) {
                     if (!timestamp) return '';
                     const date = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+                    if (isNaN(date.getTime())) return '';
                     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
                 },
 

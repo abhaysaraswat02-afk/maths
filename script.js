@@ -17,7 +17,6 @@ const firebaseConfig = {
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
-const auth = firebase.auth();
 
 function staffPortal() {
     return {
@@ -26,10 +25,10 @@ function staffPortal() {
         activeTab: 'admissions',
         loading: false,
         admissions: [],
-        payments: [],
         resources: [],
         newsForm: { title: '', content: '' },
         docForm: { name: '', url: '' },
+        staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
 
         init() {
             // Security check: ensure staff is logged in via OTP on the main site
@@ -37,35 +36,40 @@ function staffPortal() {
                 window.location.href = 'index.html';
                 return;
             }
+            const email = localStorage.getItem('student_email');
+            if (!email || !this.staffEmails.includes(email)) {
+                window.location.href = 'index.html';
+                return;
+            }
 
-            // Listen for authentication state changes
-            auth.onAuthStateChanged(user => {
-                this.isLoggedIn = !!user;
-                if (user) {
-                    this.loadData();
-                } else {
-                    // Auto-sign in anonymously if local storage says we're staff
-                    auth.signInAnonymously().catch(err => {
-                        this.error = 'Session Error: ' + err.message;
-                    });
-                }
-            });
+            this.isLoggedIn = true;
+            if (!db) {
+                this.error = 'Database unavailable. Please contact the administrator.';
+                return;
+            }
+            this.loadData();
         },
 
         logout() {
-            auth.signOut().then(() => {
-                localStorage.removeItem('isStaffLoggedIn');
-                localStorage.removeItem('student_email');
-                window.location.href = 'index.html';
-            }).catch(err => {
-                console.error('Logout error:', err);
-            });
+            // If Firebase auth is available and a user is signed in, sign them out.
+            if (firebase && firebase.auth) {
+                try {
+                    const currentAuth = firebase.auth();
+                    if (currentAuth.currentUser) {
+                        currentAuth.signOut().catch(err => console.warn('Firebase sign-out error:', err));
+                    }
+                } catch (err) {
+                    console.warn('Firebase auth sign-out not available:', err);
+                }
+            }
+            localStorage.removeItem('isStaffLoggedIn');
+            localStorage.removeItem('student_email');
+            window.location.href = 'index.html';
         },
 
         tabTitle() {
             const titles = {
                 'admissions': 'Manage Student Admissions',
-                'payments': 'Fee Payment Verification',
                 'news': 'Broadcast College News',
                 'docs': 'Resource Library Management'
             };
@@ -78,10 +82,6 @@ function staffPortal() {
                 // Real-time listeners for all sections
                 db.collection('admissions').orderBy('createdAt', 'desc').onSnapshot(snap => {
                     this.admissions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                });
-
-                db.collection('payments').orderBy('timestamp', 'desc').onSnapshot(snap => {
-                    this.payments = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 });
 
                 db.collection('resources').onSnapshot(snap => {
@@ -102,34 +102,6 @@ function staffPortal() {
             } catch (err) {
                 console.error("Approval error:", err);
                 alert('Failed to approve admission: ' + err.message);
-            } finally {
-                this.loading = false;
-            }
-        },
-
-        async verifyPayment(id) {
-            this.loading = true;
-            try {
-                const payRef = db.collection('payments').doc(id);
-                const payDoc = await payRef.get();
-                
-                if (payDoc.exists) {
-                    const payData = payDoc.data();
-                    await payRef.update({ verified: true });
-                    
-                    // Automatically update student's paid balance in admissions
-                    const studentSnap = await db.collection('admissions').where('email', '==', payData.email).get();
-                    if (!studentSnap.empty) {
-                        const studentRef = studentSnap.docs[0].ref;
-                        const currentPaid = studentSnap.docs[0].data().feePaid || 0;
-                        const amount = Number(payData.amount) || 0;
-                        await studentRef.update({ feePaid: currentPaid + amount });
-                    }
-                    alert('Payment verified and student balance updated!');
-                }
-            } catch (err) {
-                console.error("Payment verification error:", err);
-                alert('Failed to verify payment: ' + err.message);
             } finally {
                 this.loading = false;
             }
@@ -199,7 +171,7 @@ function staffPortal() {
         },
 
         exportData() {
-            const data = this.activeTab === 'admissions' ? this.admissions : this.payments;
+            const data = this.admissions;
             if (data.length === 0) return alert("No data available to export.");
             const csvContent = "data:text/csv;charset=utf-8," 
                 + Object.keys(data[0]).join(",") + "\n"

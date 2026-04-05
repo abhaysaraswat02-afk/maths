@@ -35,9 +35,6 @@
                     <button @click="activeTab = 'admissions'" :class="activeTab === 'admissions' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-user-graduate w-6"></i> Admissions
                     </button>
-                    <button @click="activeTab = 'payments'" :class="activeTab === 'payments' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
-                        <i class="fas fa-file-invoice-dollar w-6"></i> Payments
-                    </button>
                     <button @click="activeTab = 'news'" :class="activeTab === 'news' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-newspaper w-6"></i> Post News
                     </button>
@@ -86,41 +83,6 @@
                                         </td>
                                         <td class="px-6 py-4">
                                             <button @click="approveAdmission(item.id)" x-show="item.status !== 'Approved'" class="text-blue-600 hover:underline font-semibold text-sm">Approve</button>
-                                        </td>
-                                    </tr>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Payments Section -->
-                <div x-show="activeTab === 'payments'" class="space-y-6">
-                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
-                                <tr>
-                                    <th class="px-6 py-4">Transaction ID</th>
-                                    <th class="px-6 py-4">Student</th>
-                                    <th class="px-6 py-4">Amount</th>
-                                    <th class="px-6 py-4">Verification</th>
-                                    <th class="px-6 py-4">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y">
-                                <template x-for="pay in payments" :key="pay.id">
-                                    <tr class="hover:bg-blue-50/50 transition-colors">
-                                        <td class="px-6 py-4 font-mono text-sm" x-text="pay.id.substring(0,8)"></td>
-                                        <td class="px-6 py-4" x-text="pay.email"></td>
-                                        <td class="px-6 py-4 font-bold text-gray-800" x-text="'₹' + pay.amount"></td>
-                                        <td class="px-6 py-4">
-                                            <span :class="pay.verified ? 'text-green-600' : 'text-red-600'" class="text-sm flex items-center">
-                                                <i :class="pay.verified ? 'fa-circle-check' : 'fa-circle-xmark'" class="fa-solid mr-2"></i>
-                                                <span x-text="pay.verified ? 'Verified' : 'Pending'"></span>
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 text-sm">
-                                            <button @click="verifyPayment(pay.id)" class="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-all">Verify</button>
                                         </td>
                                     </tr>
                                 </template>

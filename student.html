@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
         // Security Check: If a user is not logged in, redirect them to the homepage.
+        const staffEmails = ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'];
         if (localStorage.getItem('isStudentLoggedIn') !== 'true') {
+            window.location.href = 'index.html';
+        }
+        const email = localStorage.getItem('student_email');
+        if (!email || staffEmails.includes(email)) {
             window.location.href = 'index.html';
         }
     </script>
@@ -39,7 +44,6 @@
         <nav class="mt-6 px-4 space-y-2">
             <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
             <button @click="tab = 'notices'; mobileMenu = false" :class="tab === 'notices' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🔔 Notices</button>
-            <button @click="tab = 'fees'; mobileMenu = false" :class="tab === 'fees' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">💳 Fees & Payments</button>
             <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
             <button @click="tab = 'test-scores'; mobileMenu = false" :class="tab === 'test-scores' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📊 Test Scores</button>
             <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
@@ -157,61 +161,6 @@
                         <p class="text-[10px] text-slate-400 font-bold mt-4 uppercase" x-text="formatDate(note.timestamp)"></p>
                     </div>
                 </template>
-            </div>
-        </div>
-
-        <!-- Fees Tab -->
-        <div x-show="tab === 'fees'" class="space-y-6" x-cloak>
-            <div class="grid md:grid-cols-3 gap-6">
-                <div class="bg-blue-600 text-white p-6 rounded-3xl shadow-xl shadow-blue-200">
-                    <p class="text-xs font-bold uppercase opacity-80">Total Fee</p>
-                    <h4 class="text-3xl font-black mt-1" x-text="'₹' + (studentData.feeTotal || 0)"></h4>
-                </div>
-                <div class="bg-white border p-6 rounded-3xl">
-                    <p class="text-xs font-bold uppercase text-slate-400">Amount Paid</p>
-                    <h4 class="text-3xl font-black text-green-600 mt-1" x-text="'₹' + (studentData.feePaid || 0)"></h4>
-                </div>
-                <div class="bg-white border p-6 rounded-3xl">
-                    <p class="text-xs font-bold uppercase text-slate-400">Balance Due</p>
-                    <h4 class="text-3xl font-black text-red-600 mt-1" x-text="'₹' + ((studentData.feeTotal || 0) - (studentData.feePaid || 0))"></h4>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-3xl border shadow-sm">
-                <h4 class="font-bold mb-6">Submit New Payment Receipt</h4>
-                <div class="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="text-xs font-black uppercase text-slate-400">Amount Paid (₹)</label>
-                        <input type="number" x-model="payForm.amount" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none font-bold">
-                    </div>
-                    <div class="flex items-end">
-                        <button @click="submitPayment()" class="w-full bg-slate-900 text-white py-3.5 rounded-xl font-bold hover:bg-blue-600 transition">Log Payment</button>
-                    </div>
-                </div>
-            </div>
-
-            <h4 class="font-bold">Transaction History</h4>
-            <div class="bg-white border rounded-2xl overflow-hidden">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-50 border-b">
-                        <tr>
-                            <th class="p-4">Date</th>
-                            <th class="p-4">Amount</th>
-                            <th class="p-4">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        <template x-for="p in myPayments" :key="p.id">
-                            <tr>
-                                <td class="p-4" x-text="formatDate(p.timestamp)"></td>
-                                <td class="p-4 font-bold" x-text="'₹' + p.amount"></td>
-                                <td class="p-4">
-                                    <span :class="p.verified ? 'text-green-600' : 'text-amber-600'" class="font-bold" x-text="p.verified ? 'Verified' : 'Pending Verification'"></span>
-                                </td>
-                            </tr>
-                        </template>
-                    </tbody>
-                </table>
             </div>
         </div>
 
@@ -548,12 +497,10 @@
                 resources: [],
                 testScores: [],
                 notifications: [],
-                myPayments: [],
                 liveClasses: [],
                 pageLoadTimestamp: null,
                 videoModal: { open: false, videoId: '' },
                 welcomeModal: { open: false },
-                payForm: { amount: '' },
                 pomodoro: {
                     timeLeft: 1500,
                     isActive: false,
@@ -656,9 +603,6 @@
                                 });
                                 window.db.collection('notifications').orderBy('timestamp', 'desc').onSnapshot(snap => {
                                     this.notifications = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
-                                window.db.collection('payments').where('email', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                    this.myPayments = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });
 
                                 // Real-time Notification Listener (Popup Alert)
@@ -792,42 +736,49 @@
                 },
 
                 saveProfile() {
-                    if (!this.studentId) {
-                        // If no DB record exists for the user, create one now.
-                        if (!this.studentEmail) return;
-                        
-                        firebase.firestore().collection('admissions').add({
-                            name: this.studentName,
-                            email: this.studentEmail,
-                            fatherName: this.fatherName,
-                            studentClass: this.studentClass,
-                            dob: this.dob,
-                            schoolName: this.schoolName,
-                            photoURL: this.profilePic,
-                            status: 'Pending',
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        }).then((docRef) => {
-                            this.studentId = docRef.id;
-                            this.showAlert('Success', 'Profile created successfully!');
-                            this.generateQRCode();
-                        }).catch(err => {
-                             this.showAlert('Error', 'Failed to create profile: ' + err.message);
-                        });
-                        return;
-                    }
+                    if (!this.studentEmail) return;
                     
-                    firebase.firestore().collection('admissions').doc(this.studentId).update({
-                        name: this.studentName,
-                        fatherName: this.fatherName,
-                        studentClass: this.studentClass,
-                        dob: this.dob,
-                        schoolName: this.schoolName
-                    }).then(() => {
-                        this.showAlert('Success', 'Profile updated successfully!');
-                        this.generateQRCode(); // Refresh QR code with new info
+                    firebase.firestore().collection('admissions').where('email', '==', this.studentEmail).get().then(existingUser => {
+                        if (existingUser.empty) {
+                            // Add new
+                            firebase.firestore().collection('admissions').add({
+                                name: this.studentName,
+                                email: this.studentEmail,
+                                fatherName: this.fatherName,
+                                studentClass: this.studentClass,
+                                dob: this.dob,
+                                schoolName: this.schoolName,
+                                photoURL: this.profilePic,
+                                status: 'Pending',
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            }).then((docRef) => {
+                                this.studentId = docRef.id;
+                                this.showAlert('Success', 'Profile created successfully!');
+                                this.generateQRCode();
+                            }).catch(err => {
+                                this.showAlert('Error', 'Failed to create profile: ' + err.message);
+                            });
+                        } else {
+                            // Update existing
+                            const docId = existingUser.docs[0].id;
+                            firebase.firestore().collection('admissions').doc(docId).update({
+                                name: this.studentName,
+                                fatherName: this.fatherName,
+                                studentClass: this.studentClass,
+                                dob: this.dob,
+                                schoolName: this.schoolName
+                            }).then(() => {
+                                this.studentId = docId;
+                                this.showAlert('Success', 'Profile updated successfully!');
+                                this.generateQRCode();
+                            }).catch(error => {
+                                console.error("Error updating profile: ", error);
+                                this.showAlert('Error', 'Failed to update profile. Please try again.');
+                            });
+                        }
                     }).catch(error => {
-                        console.error("Error updating profile: ", error);
-                        this.showAlert('Error', 'Failed to update profile. Please try again.');
+                        console.error("Error fetching profile: ", error);
+                        this.showAlert('Error', 'Failed to save profile: ' + error.message);
                     });
                 },
 
@@ -968,23 +919,6 @@
                     html2pdf().set(opt).from(element).save().then(() => {
                         console.log('PDF downloaded');
                     }).catch(err => console.error(err));
-                },
-
-                async submitPayment() {
-                    if (!this.payForm.amount || this.payForm.amount <= 0) return this.showAlert('Invalid Amount', 'Please enter a valid amount.');
-                    
-                    try {
-                        await window.db.collection('payments').add({
-                            email: this.studentEmail,
-                            amount: Number(this.payForm.amount),
-                            verified: false,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        this.payForm.amount = '';
-                        this.showAlert('Success', 'Payment record submitted for verification.');
-                    } catch (err) {
-                        this.showAlert('Error', 'Failed to submit payment: ' + err.message);
-                    }
                 },
 
                 logout() {

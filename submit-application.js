@@ -261,9 +261,6 @@ app.post('/api/verify-otp', async (req, res) => {
           dob: applicationForm.dob || '',
           schoolName: applicationForm.schoolName || '',
           status: 'Pending',
-          feeTotal: 5000,
-          feePaid: 0,
-          feeBalance: 5000,
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           lastLogin: admin.firestore.FieldValue.serverTimestamp()
         });

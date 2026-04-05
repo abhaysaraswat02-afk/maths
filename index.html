@@ -73,7 +73,7 @@
                 <a href="#apply" class="hover:text-blue-600 transition">Admissions</a>
                 <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
                     <i class="fas" :class="isLoggedIn || isStaffLoggedIn ? 'fa-th-large' : 'fa-user-circle'"></i> 
-                    <span x-text="isLoggedIn || isStaffLoggedIn ? 'Dashboard' : 'Login'"></span>
+                    <span x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Login')"></span>
                 </a>
             </div>
 
@@ -88,7 +88,7 @@
         <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t p-6 space-y-4 absolute w-full shadow-xl">
             <a @click="mobileMenu = false" href="#home" class="block font-medium">Home</a>
             <a @click="mobileMenu = false" href="#about" class="block font-medium">About</a>
-            <a @click="mobileMenu = false" :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="block text-blue-600 font-bold" x-text="isLoggedIn || isStaffLoggedIn ? 'Dashboard' : 'Student Portal'"></a>
+            <a @click="mobileMenu = false" :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="block text-blue-600 font-bold" x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Student Portal')"></a>
         </div>
     </nav>
 
@@ -109,7 +109,7 @@
                 </p>
                 <div class="flex flex-wrap gap-4">
                     <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-blue-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-blue-700 shadow-xl shadow-blue-500/30 transition-all hover:-translate-y-1 flex items-center gap-2 text-center">
-                        <span x-text="isLoggedIn || isStaffLoggedIn ? 'GO TO MY DASHBOARD' : 'LOGIN // REGISTER AS A NEW STUDENT'"></span>
+                        <span x-text="isLoggedIn || isStaffLoggedIn ? (isStaffLoggedIn ? 'GO TO STAFF PORTAL' : 'GO TO STUDENT DASHBOARD') : 'LOGIN // REGISTER AS A NEW STUDENT'"></span>
                         <i class="fas fa-arrow-right"></i>
                     </a>
                     <a href="#demos" class="bg-white text-slate-900 border-2 border-slate-200 px-8 py-4 rounded-xl font-bold hover:border-blue-600 hover:text-blue-600 transition-all flex items-center gap-2">
@@ -182,44 +182,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Fees Structure -->
-    <section id="fees" class="py-16 bg-white">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <h2 class="text-3xl font-black text-slate-900 mb-4">Fees <span class="text-gradient">Structure</span></h2>
-            <p class="text-slate-500 font-bold mb-12">Affordable pricing for quality mathematics education</p>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-8 rounded-3xl border border-blue-200 shadow-sm hover:shadow-lg transition-all">
-                    <div class="text-4xl font-black text-blue-600 mb-2">₹600</div>
-                    <div class="text-lg font-bold text-slate-800 mb-1">Class 9th</div>
-                    <div class="text-sm text-slate-600">Foundation Mathematics</div>
-                </div>
-                <div class="bg-gradient-to-br from-green-50 to-green-100 p-8 rounded-3xl border border-green-200 shadow-sm hover:shadow-lg transition-all">
-                    <div class="text-4xl font-black text-green-600 mb-2">₹700</div>
-                    <div class="text-lg font-bold text-slate-800 mb-1">Class 10th</div>
-                    <div class="text-sm text-slate-600">Board Preparation</div>
-                </div>
-                <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-8 rounded-3xl border border-purple-200 shadow-sm hover:shadow-lg transition-all">
-                    <div class="text-4xl font-black text-purple-600 mb-2">₹800</div>
-                    <div class="text-lg font-bold text-slate-800 mb-1">Class 11th</div>
-                    <div class="text-sm text-slate-600">JEE Foundation</div>
-                </div>
-                <div class="bg-gradient-to-br from-red-50 to-red-100 p-8 rounded-3xl border border-red-200 shadow-sm hover:shadow-lg transition-all">
-                    <div class="text-4xl font-black text-red-600 mb-2">₹900</div>
-                    <div class="text-lg font-bold text-slate-800 mb-1">Class 12th</div>
-                    <div class="text-sm text-slate-600">JEE Advanced</div>
-                </div>
-            </div>
-            
-            <div class="mt-12 p-6 bg-slate-50 rounded-2xl border border-slate-200">
-                <p class="text-slate-600 font-medium">
-                    <i class="fas fa-info-circle text-blue-500 mr-2"></i>
-                    All fees include access to live classes, recorded videos, study materials, and test assessments.
-                </p>
-            </div>
-        </div>
-    </section>
 
     <!-- Results / Hall of Fame -->
     <section id="results" class="py-16 bg-blue-50 overflow-hidden">
@@ -595,8 +557,11 @@
                     this.fetchStaffVideos();
                     this.fetchAchievers();
 
-                    // Initialize anonymous auth to satisfy security rules that require "request.auth != null"
-                    window.auth.signInAnonymously().catch(err => console.warn("Firebase Auth:", err.message));
+                    // Anonymous auth is optional. If the Firebase project blocks this API,
+                    // the site can still load if Firestore rules allow unauthenticated reads.
+                    if (window.auth && window.auth.signInAnonymously) {
+                        window.auth.signInAnonymously().catch(err => console.warn("Firebase Auth:", err.message));
+                    }
 
                     this.isLoggedIn = localStorage.getItem('isStudentLoggedIn') === 'true';
                     this.isStaffLoggedIn = localStorage.getItem('isStaffLoggedIn') === 'true';

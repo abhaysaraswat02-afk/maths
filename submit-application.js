@@ -272,7 +272,7 @@ app.post('/api/verify-otp', async (req, res) => {
       console.error('OTP completion database error:', dbError);
       let errorMessage = dbError.message;
       if (dbError.code === 7 || errorMessage.includes('PERMISSION_DENIED')) {
-        errorMessage = `PERMISSION_DENIED: The Service Account (${serviceAccount.clientEmail}) does not have the 'Firebase Admin' or 'Cloud Datastore User' role in the Google Cloud IAM Console.`;
+        errorMessage = `PERMISSION_DENIED: The Service Account (${process.env.FIREBASE_CLIENT_EMAIL}) does not have the 'Firebase Admin' or 'Cloud Datastore User' role in the Google Cloud IAM Console. Check your IAM settings.`;
       } else if (errorMessage.includes('NOT_FOUND')) {
         errorMessage = "Cloud Firestore API has not been enabled for this project, or the database hasn't been created.";
       }

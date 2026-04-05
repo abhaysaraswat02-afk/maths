@@ -737,6 +737,7 @@
                     .then(data => {
                             if(!data.success) throw new Error(data.error);
                             this.showAlert('OTP Sent', 'A new verification code has been sent to your phone.');
+                            this.verificationToken = data.verificationToken; // Fixed: Update token on resend
                             this.startResendTimer();
                             this.isSubmitting = false;
                         }).catch((error) => {
@@ -819,11 +820,15 @@
                     if (!this.enteredOtp) return this.showAlert("Missing OTP", "Please enter the 6-digit verification code.");
                     this.isSubmitting = true;
 
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout is better for UX
+
                     try {
                         // Verify via Backend
                         const res = await fetch('/api/verify-otp', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
+                            signal: controller.signal,
                             body: JSON.stringify({ 
                                 email: this.applicationForm.email, 
                                 code: this.enteredOtp,
@@ -851,10 +856,11 @@
 
                         const data = await res.json();
                         
-                        if (!data.success) throw new Error(data.error);
+                        if (!data.success) throw new Error(data.error || 'OTP verification failed.');
 
                         // 1. Check if the user is a Staff Member or Owner
                         if (this.staffEmails.includes(this.applicationForm.email)) {
+                            this.isSubmitting = false; // Reset state before showing blocking confirm dialog
                             // Allow owner to choose portal
                             if (confirm("Staff Access Detected.\n\nPress OK to enter Staff Dashboard.\nPress Cancel to login as a Student.")) {
                                 localStorage.setItem('isStaffLoggedIn', 'true');
@@ -874,8 +880,14 @@
                         this.applicationStep = 'success';
                         setTimeout(() => { window.location.href = 'student.html'; }, 3000);
                     } catch (error) {
-                        console.error("Verification failed:", error);
-                        this.showAlert("Verification Failed", error.message || "Invalid OTP. Please check the code and try again.");
+                        if (error.name === 'AbortError') {
+                            this.showAlert('Verification Timeout', 'The server did not respond. Please try again.');
+                        } else {
+                            console.error("Verification failed:", error);
+                            this.showAlert("Verification Failed", error.message || "Invalid OTP. Please check the code and try again.");
+                        }
+                    } finally {
+                        clearTimeout(timeoutId);
                         this.isSubmitting = false;
                     }
                 },

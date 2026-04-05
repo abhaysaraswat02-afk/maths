@@ -26,8 +26,10 @@ function staffPortal() {
         admissions: [],
         resources: [],
         newsList: [],
+        recentScores: [],
         newsForm: { title: '', content: '' },
         docForm: { name: '', url: '' },
+        testScoreForm: { studentEmail: '', testName: '', score: '', total: 100, percentage: 0, date: '' },
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
 
         init() {
@@ -71,7 +73,8 @@ function staffPortal() {
             const titles = {
                 'admissions': 'Manage Student Admissions',
                 'news': 'Broadcast College News',
-                'docs': 'Resource Library Management'
+                'docs': 'Resource Library Management',
+                'scores': 'Manage Offline Test Scores'
             };
             return titles[this.activeTab];
         },
@@ -79,10 +82,11 @@ function staffPortal() {
         async loadData() {
             this.loading = true;
             try {
-                const [admissionRes, resourceRes, newsRes] = await Promise.all([
+                const [admissionRes, resourceRes, newsRes, scoresRes] = await Promise.all([
                     fetch('/api/admissions'),
                     fetch('/api/resources'),
-                    fetch('/api/get-news')
+                    fetch('/api/get-news'),
+                    fetch('/api/get-test-scores')
                 ]);
 
                 if (!admissionRes.ok) {
@@ -94,10 +98,14 @@ function staffPortal() {
                 if (!newsRes.ok) {
                     throw new Error('Failed to load news: ' + newsRes.statusText);
                 }
+                if (!scoresRes.ok) {
+                    throw new Error('Failed to load test scores: ' + scoresRes.statusText);
+                }
 
                 this.admissions = await admissionRes.json();
                 this.resources = await resourceRes.json();
                 this.newsList = await newsRes.json();
+                this.recentScores = await scoresRes.json();
             } catch (err) {
                 console.error('Data load error:', err);
                 this.error = err.message;
@@ -258,6 +266,73 @@ function staffPortal() {
             } catch (err) {
                 console.error('Delete news error:', err);
                 alert('Failed to delete news: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async submitTestScore() {
+            if (!this.testScoreForm.studentEmail || !this.testScoreForm.testName || !this.testScoreForm.score || !this.testScoreForm.date) {
+                alert('Please fill in all fields.');
+                return;
+            }
+            
+            if (this.testScoreForm.score > this.testScoreForm.total) {
+                alert('Score cannot be greater than total marks.');
+                return;
+            }
+
+            this.loading = true;
+            try {
+                const staffEmail = this.getStaffEmail();
+                const percentage = Math.round((this.testScoreForm.score / this.testScoreForm.total) * 100);
+                const response = await fetch('/api/submit-test-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        studentEmail: this.testScoreForm.studentEmail.trim().toLowerCase(),
+                        testName: this.testScoreForm.testName.trim(),
+                        score: parseFloat(this.testScoreForm.score),
+                        total: parseFloat(this.testScoreForm.total),
+                        percentage: percentage,
+                        date: this.testScoreForm.date,
+                        staffEmail
+                    })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
+                alert('Test score submitted successfully!');
+                this.testScoreForm = { studentEmail: '', testName: '', score: '', total: 100, percentage: 0, date: '' };
+                this.loadData();
+            } catch (err) {
+                console.error('Submit score error:', err);
+                alert('Failed to submit test score: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteScore(id) {
+            if (!confirm('Delete this test score?')) return;
+            this.loading = true;
+            try {
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/delete-test-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, staffEmail })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
+                alert('Test score deleted.');
+                this.loadData();
+            } catch (err) {
+                console.error('Delete score error:', err);
+                alert('Failed to delete score: ' + err.message);
             } finally {
                 this.loading = false;
             }

@@ -604,10 +604,12 @@
                                 this.resources = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                             });
 
-                            // Fetch Test Scores
-                            window.db.collection('test_scores').where('studentEmail', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                this.testScores = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                            });
+                            // Fetch Test Scores via API
+                            const scoresRes = await fetch(`/api/get-student-test-scores?email=${encodeURIComponent(this.studentEmail)}`);
+                            const scoresData = await scoresRes.json();
+                            if (scoresRes.ok) {
+                                this.testScores = scoresData;
+                            }
 
                             // Fetch Notifications
                             window.db.collection('notifications').orderBy('timestamp', 'desc').onSnapshot(snap => {

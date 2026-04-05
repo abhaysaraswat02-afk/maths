@@ -388,6 +388,97 @@ app.get('/api/resources', async (req, res) => {
   }
 });
 
+app.post('/api/submit-test-score', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { studentEmail, testName, score, total, percentage, date, staffEmail } = req.body;
+  
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  
+  if (!studentEmail || !testName || score === undefined || !total || percentage === undefined || !date) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  try {
+    await db.collection('test_scores').add({
+      studentEmail: studentEmail.toLowerCase(),
+      testName: testName.trim(),
+      score: parseFloat(score),
+      total: parseFloat(total),
+      percentage: parseInt(percentage),
+      date: date,
+      submittedBy: staffEmail,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.status(200).json({ success: true, message: 'Test score submitted successfully.' });
+  } catch (error) {
+    console.error('Submit test score error:', error);
+    res.status(500).json({ error: 'Failed to submit test score.' });
+  }
+});
+
+app.get('/api/get-test-scores', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  try {
+    const snapshot = await db.collection('test_scores').orderBy('timestamp', 'desc').limit(50).get();
+    const scores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json(scores);
+  } catch (error) {
+    console.error('Get test scores error:', error);
+    res.status(500).json({ error: 'Failed to get test scores.' });
+  }
+});
+
+app.post('/api/delete-test-score', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { id, staffEmail } = req.body;
+  
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  
+  if (!id) {
+    return res.status(400).json({ error: 'Missing score ID.' });
+  }
+
+  try {
+    await db.collection('test_scores').doc(id).delete();
+    res.status(200).json({ success: true, message: 'Test score deleted successfully.' });
+  } catch (error) {
+    console.error('Delete test score error:', error);
+    res.status(500).json({ error: 'Failed to delete test score.' });
+  }
+});
+
+app.get('/api/get-student-test-scores', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { email } = req.query;
+
+  if (!email) {
+    return res.status(400).json({ error: 'Student email is required.' });
+  }
+
+  const studentEmail = email.trim().toLowerCase();
+
+  try {
+    const snapshot = await db.collection('test_scores')
+      .where('studentEmail', '==', studentEmail)
+      .orderBy('timestamp', 'desc')
+      .get();
+    
+    const scores = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+
+    res.status(200).json(scores);
+  } catch (error) {
+    console.error('Get student test scores error:', error);
+    res.status(500).json({ error: 'Failed to get test scores.' });
+  }
+});
+
 app.post('/api/post-news', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { title, content, staffEmail } = req.body;

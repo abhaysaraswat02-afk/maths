@@ -41,6 +41,9 @@
                     <button @click="activeTab = 'docs'" :class="activeTab === 'docs' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-folder-open w-6"></i> Resources
                     </button>
+                    <button @click="activeTab = 'scores'" :class="activeTab === 'scores' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
+                        <i class="fas fa-chart-bar w-6"></i> Test Scores
+                    </button>
                 </nav>
                 <div class="absolute bottom-0 w-64 p-6">
                     <button @click="logout" class="text-slate-400 hover:text-white flex items-center transition-colors">
@@ -172,6 +175,73 @@
                                 </button>
                             </div>
                         </template>
+                    </div>
+                </div>
+
+                <!-- Test Scores Section -->
+                <div x-show="activeTab === 'scores'" class="space-y-8">
+                    <!-- Enter Test Scores Form -->
+                    <div class="max-w-3xl bg-white p-8 rounded-xl shadow-sm border">
+                        <h3 class="text-lg font-bold mb-6">Enter Offline Test Score</h3>
+                        <form @submit.prevent="submitTestScore">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Student Email</label>
+                                    <input type="email" x-model="testScoreForm.studentEmail" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="student@example.com" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Test Name</label>
+                                    <input type="text" x-model="testScoreForm.testName" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Chapter 5 Test" required>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Score Obtained</label>
+                                    <input type="number" x-model.number="testScoreForm.score" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" min="0" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Total Marks</label>
+                                    <input type="number" x-model.number="testScoreForm.total" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" min="1" value="100" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Percentage</label>
+                                    <input type="number" x-model.number="testScoreForm.percentage" class="w-full px-4 py-2 border rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500" readonly :value="testScoreForm.total && testScoreForm.score ? Math.round((testScoreForm.score / testScoreForm.total) * 100) : 0">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold mb-2">Date of Test</label>
+                                <input type="date" x-model="testScoreForm.date" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <button type="submit" class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 shadow-md transition-all">Submit Test Score</button>
+                        </form>
+                    </div>
+
+                    <!-- Recent Submissions -->
+                    <div class="bg-white p-8 rounded-xl shadow-sm border">
+                        <h3 class="text-lg font-bold mb-6">Recent Score Submissions</h3>
+                        <div x-show="recentScores.length === 0" class="text-center py-12 text-gray-500">
+                            <p class="text-sm">No scores submitted yet.</p>
+                        </div>
+                        <div class="space-y-3">
+                            <template x-for="score in recentScores" :key="score.id">
+                                <div class="p-4 bg-slate-50 rounded-lg border hover:bg-slate-100 transition-colors">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <h4 class="font-bold text-gray-800" x-text="score.studentEmail"></h4>
+                                            <p class="text-sm text-gray-600 mt-1" x-text="score.testName"></p>
+                                            <div class="flex items-center gap-4 mt-3">
+                                                <span class="text-sm font-semibold text-blue-600" x-text="'Score: ' + score.score + '/' + score.total"></span>
+                                                <span class="text-sm font-semibold" :class="score.percentage >= 80 ? 'text-green-600' : score.percentage >= 60 ? 'text-yellow-600' : 'text-red-600'" x-text="score.percentage + '%'"></span>
+                                            </div>
+                                            <p class="text-xs text-gray-400 mt-2" x-text="'Submitted: ' + formatDate(score.timestamp)"></p>
+                                        </div>
+                                        <button @click="deleteScore(score.id)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex-shrink-0">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
                     </div>
                 </div>
 

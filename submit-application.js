@@ -548,7 +548,7 @@ app.post('/api/delete-news', async (req, res) => {
 
 app.post('/api/add-resource', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
-  const { title, link, staffEmail } = req.body;
+  const { title, link, classGrade, staffEmail } = req.body;
   if (!isAuthorizedStaff(staffEmail)) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
@@ -560,7 +560,7 @@ app.post('/api/add-resource', async (req, res) => {
       title: title.trim(),
       link: link.trim(),
       type: 'pdf',
-      classGrade: 'All',
+      classGrade: classGrade || 'All',
       author: staffEmail,
       timestamp: admin.firestore.FieldValue.serverTimestamp()
     });

@@ -275,12 +275,27 @@
         </div>
 
         <div x-show="tab === 'notes'" class="space-y-6" x-cloak>
-            <h3 class="text-xl font-black">Study Resources & Notes</h3>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h3 class="text-2xl font-black text-slate-900">Study Resources & Notes</h3>
+                <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
+                    <select x-model="selectedClass" class="w-full md:w-44 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition shadow-sm font-bold text-slate-700 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%207L10%2010L13%207%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[position:right_1rem_center] bg-no-repeat">
+                        <option value="All">All Classes</option>
+                        <option value="Class 9">Class 9</option>
+                        <option value="Class 10">Class 10</option>
+                        <option value="Class 11">Class 11</option>
+                        <option value="Class 12">Class 12</option>
+                    </select>
+                    <div class="relative w-full md:w-72">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
+                        <input type="text" x-model.debounce.300ms="resourceSearchQuery" placeholder="Search resources..." class="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm focus:border-blue-500 outline-none transition shadow-sm font-medium">
+                    </div>
+                </div>
+            </div>
             <p class="text-slate-500 text-sm">Download PDFs and assignments shared by your teachers. No payment required.</p>
             
             <div x-show="studyResources.length === 0" class="text-slate-500 text-sm italic py-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200" x-cloak>
                 <i class="fas fa-file-alt text-3xl mb-3 opacity-20"></i>
-                <p>No resources available for the selected class.</p>
+                <p x-text="resourceSearchQuery ? 'No resources found matching your search.' : 'No resources available for the selected class.'"></p>
             </div>
             
             <div class="grid grid-cols-1 gap-3">
@@ -481,6 +496,7 @@
                 mobileMenu: false,
                 tab: 'videos',
                 videoSearchQuery: '',
+                resourceSearchQuery: '',
                 selectedClass: 'All',
                 studentName: 'Student Name',
                 studentEmail: '',
@@ -542,10 +558,13 @@
                     });
                 },
                 get studyResources() { 
-                    return this.resources.filter(r => 
-                        (r.type === 'pdf' || r.type === 'test') && 
-                        (this.selectedClass === 'All' || r.classGrade === this.selectedClass || r.classGrade === 'All')
-                    );
+                    return this.resources.filter(r => {
+                        const isTypeMatch = (r.type === 'pdf' || r.type === 'test');
+                        const isClassMatch = (this.selectedClass === 'All' || r.classGrade === this.selectedClass || r.classGrade === 'All');
+                        const query = this.resourceSearchQuery ? this.resourceSearchQuery.trim().toLowerCase() : '';
+                        const isSearchMatch = !query || r.title.toLowerCase().includes(query);
+                        return isTypeMatch && isClassMatch && isSearchMatch;
+                    });
                 },
                 
                 async init() {

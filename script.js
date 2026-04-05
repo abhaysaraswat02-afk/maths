@@ -28,7 +28,12 @@ function staffPortal() {
         newsList: [],
         recentScores: [],
         newsForm: { title: '', content: '' },
-        docForm: { name: '', url: '' },
+        docForm: { name: '', url: '', classGrade: 'All' },
+        admissionSearch: '',
+        newsSearch: '',
+        resourceSearch: '',
+        scoreSearch: '',
+        classFilter: 'All',
         testScoreForm: { studentEmail: '', testName: '', score: '', total: 100, percentage: 0, date: '' },
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
 
@@ -46,6 +51,42 @@ function staffPortal() {
 
             this.isLoggedIn = true;
             this.loadData();
+        },
+
+        get filteredAdmissions() {
+            return this.admissions.filter(a => {
+                const query = this.admissionSearch.toLowerCase();
+                const matchesSearch = !query || (a.name || '').toLowerCase().includes(query) || (a.email || '').toLowerCase().includes(query);
+                const matchesClass = this.classFilter === 'All' || a.studentClass === this.classFilter;
+                return matchesSearch && matchesClass;
+            });
+        },
+
+        get filteredNews() {
+            return this.newsList.filter(n => {
+                const query = this.newsSearch.toLowerCase();
+                return !query || n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query);
+            });
+        },
+
+        get filteredResources() {
+            return this.resources.filter(r => {
+                const query = this.resourceSearch.toLowerCase();
+                // Backend resources often use 'name' or 'title'
+                const title = r.title || r.name || '';
+                const matchesSearch = !query || title.toLowerCase().includes(query);
+                const matchesClass = this.classFilter === 'All' || r.classGrade === this.classFilter || r.classGrade === 'All';
+                return matchesSearch && matchesClass;
+            });
+        },
+
+        get filteredScores() {
+            return this.recentScores.filter(s => {
+                const query = this.scoreSearch.toLowerCase();
+                return !query || 
+                       s.studentEmail.toLowerCase().includes(query) || 
+                       s.testName.toLowerCase().includes(query);
+            });
         },
 
         getStaffEmail() {
@@ -205,6 +246,7 @@ function staffPortal() {
                     body: JSON.stringify({
                         title: this.docForm.name,
                         link: this.docForm.url,
+                        classGrade: this.docForm.classGrade,
                         staffEmail
                     })
                 });
@@ -212,7 +254,7 @@ function staffPortal() {
                     const errData = await response.json().catch(() => ({}));
                     throw new Error(errData.error || response.statusText);
                 }
-                this.docForm = { name: '', url: '' };
+                this.docForm = { name: '', url: '', classGrade: 'All' };
                 alert('Resource added successfully!');
                 this.loadData();
             } catch (err) {

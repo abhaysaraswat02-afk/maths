@@ -25,6 +25,7 @@ function staffPortal() {
         loading: false,
         admissions: [],
         resources: [],
+        newsList: [],
         newsForm: { title: '', content: '' },
         docForm: { name: '', url: '' },
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
@@ -78,9 +79,10 @@ function staffPortal() {
         async loadData() {
             this.loading = true;
             try {
-                const [admissionRes, resourceRes] = await Promise.all([
+                const [admissionRes, resourceRes, newsRes] = await Promise.all([
                     fetch('/api/admissions'),
-                    fetch('/api/resources')
+                    fetch('/api/resources'),
+                    fetch('/api/get-news')
                 ]);
 
                 if (!admissionRes.ok) {
@@ -89,9 +91,13 @@ function staffPortal() {
                 if (!resourceRes.ok) {
                     throw new Error('Failed to load resources: ' + resourceRes.statusText);
                 }
+                if (!newsRes.ok) {
+                    throw new Error('Failed to load news: ' + newsRes.statusText);
+                }
 
                 this.admissions = await admissionRes.json();
                 this.resources = await resourceRes.json();
+                this.newsList = await newsRes.json();
             } catch (err) {
                 console.error('Data load error:', err);
                 this.error = err.message;
@@ -197,6 +203,30 @@ function staffPortal() {
             } catch (err) {
                 console.error('Delete error:', err);
                 alert('Failed to delete: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteNews(id) {
+            if (!confirm('Delete this news? This action cannot be undone.')) return;
+            this.loading = true;
+            try {
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/delete-news', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, staffEmail })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
+                alert('News deleted successfully.');
+                this.loadData();
+            } catch (err) {
+                console.error('Delete news error:', err);
+                alert('Failed to delete news: ' + err.message);
             } finally {
                 this.loading = false;
             }

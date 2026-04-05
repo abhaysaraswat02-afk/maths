@@ -382,6 +382,36 @@ app.post('/api/post-news', async (req, res) => {
   }
 });
 
+app.get('/api/get-news', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  try {
+    const snapshot = await db.collection('notifications').orderBy('timestamp', 'desc').get();
+    const news = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json(news);
+  } catch (error) {
+    console.error('Get news error:', error);
+    res.status(500).json({ error: 'Failed to fetch news.' });
+  }
+});
+
+app.post('/api/delete-news', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { id, staffEmail } = req.body;
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  if (!id) {
+    return res.status(400).json({ error: 'Missing news ID.' });
+  }
+  try {
+    await db.collection('notifications').doc(id).delete();
+    res.status(200).json({ success: true, message: 'News deleted successfully.' });
+  } catch (error) {
+    console.error('Delete news error:', error);
+    res.status(500).json({ error: 'Failed to delete news.' });
+  }
+});
+
 app.post('/api/add-resource', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { title, link, staffEmail } = req.body;

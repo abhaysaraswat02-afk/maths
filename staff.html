@@ -92,18 +92,44 @@
                 </div>
 
                 <!-- Post News Section -->
-                <div x-show="activeTab === 'news'" class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
-                    <form @submit.prevent="postNews">
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold mb-2">Headline</label>
-                            <input type="text" x-model="newsForm.title" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
+                <div x-show="activeTab === 'news'" class="space-y-8">
+                    <!-- Post News Form -->
+                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
+                        <h3 class="text-lg font-bold mb-6">Post New Update</h3>
+                        <form @submit.prevent="postNews">
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold mb-2">Headline</label>
+                                <input type="text" x-model="newsForm.title" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold mb-2">Content</label>
+                                <textarea x-model="newsForm.content" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-32" required></textarea>
+                            </div>
+                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md">Publish Update</button>
+                        </form>
+                    </div>
+
+                    <!-- News List -->
+                    <div class="bg-white p-8 rounded-xl shadow-sm border">
+                        <h3 class="text-lg font-bold mb-6">Previous News</h3>
+                        <div x-show="newsList.length === 0" class="text-center py-12 text-gray-500">
+                            <p class="text-sm">No news posted yet.</p>
                         </div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-semibold mb-2">Content</label>
-                            <textarea x-model="newsForm.content" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-32" required></textarea>
+                        <div class="space-y-3">
+                            <template x-for="news in newsList" :key="news.id">
+                                <div class="p-4 bg-slate-50 rounded-lg border flex items-start justify-between hover:bg-slate-100 transition-colors">
+                                    <div class="flex-1">
+                                        <h4 class="font-bold text-gray-800" x-text="news.title"></h4>
+                                        <p class="text-sm text-gray-600 mt-1 line-clamp-2" x-text="news.content"></p>
+                                        <p class="text-xs text-gray-400 mt-2" x-text="formatDate(news.timestamp)"></p>
+                                    </div>
+                                    <button @click="deleteNews(news.id)" class="ml-4 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex-shrink-0">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </template>
                         </div>
-                        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md">Publish Update</button>
-                    </form>
+                    </div>
                 </div>
 
                 <!-- Documents Section -->

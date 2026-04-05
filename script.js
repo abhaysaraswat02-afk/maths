@@ -16,7 +16,6 @@ const firebaseConfig = {
 
 // Initialize Firebase
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
 function staffPortal() {
     return {
@@ -43,11 +42,11 @@ function staffPortal() {
             }
 
             this.isLoggedIn = true;
-            if (!db) {
-                this.error = 'Database unavailable. Please contact the administrator.';
-                return;
-            }
             this.loadData();
+        },
+
+        getStaffEmail() {
+            return localStorage.getItem('student_email');
         },
 
         logout() {
@@ -79,16 +78,23 @@ function staffPortal() {
         async loadData() {
             this.loading = true;
             try {
-                // Real-time listeners for all sections
-                db.collection('admissions').orderBy('createdAt', 'desc').onSnapshot(snap => {
-                    this.admissions = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                });
+                const [admissionRes, resourceRes] = await Promise.all([
+                    fetch('/api/admissions'),
+                    fetch('/api/resources')
+                ]);
 
-                db.collection('resources').onSnapshot(snap => {
-                    this.resources = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                });
+                if (!admissionRes.ok) {
+                    throw new Error('Failed to load admissions: ' + admissionRes.statusText);
+                }
+                if (!resourceRes.ok) {
+                    throw new Error('Failed to load resources: ' + resourceRes.statusText);
+                }
+
+                this.admissions = await admissionRes.json();
+                this.resources = await resourceRes.json();
             } catch (err) {
-                console.error("Data load error:", err);
+                console.error('Data load error:', err);
+                this.error = err.message;
             } finally {
                 this.loading = false;
             }
@@ -97,10 +103,20 @@ function staffPortal() {
         async approveAdmission(id) {
             this.loading = true;
             try {
-                await db.collection('admissions').doc(id).update({ status: 'Approved' });
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/approve-admission', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, staffEmail })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
                 alert('Admission approved successfully!');
+                this.loadData();
             } catch (err) {
-                console.error("Approval error:", err);
+                console.error('Approval error:', err);
                 alert('Failed to approve admission: ' + err.message);
             } finally {
                 this.loading = false;
@@ -110,14 +126,24 @@ function staffPortal() {
         async postNews() {
             this.loading = true;
             try {
-                await db.collection('notifications').add({
-                    ...this.newsForm,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/post-news', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: this.newsForm.title,
+                        content: this.newsForm.content,
+                        staffEmail
+                    })
                 });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
                 this.newsForm = { title: '', content: '' };
                 alert('News posted successfully!');
             } catch (err) {
-                console.error("Post news error:", err);
+                console.error('Post news error:', err);
                 alert('Failed to post news: ' + err.message);
             } finally {
                 this.loading = false;
@@ -127,17 +153,25 @@ function staffPortal() {
         async addDoc() {
             this.loading = true;
             try {
-                await db.collection('resources').add({
-                    title: this.docForm.name,
-                    link: this.docForm.url,
-                    type: 'pdf',
-                    classGrade: 'All',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/add-resource', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: this.docForm.name,
+                        link: this.docForm.url,
+                        staffEmail
+                    })
                 });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
                 this.docForm = { name: '', url: '' };
                 alert('Resource added successfully!');
+                this.loadData();
             } catch (err) {
-                console.error("Add resource error:", err);
+                console.error('Add resource error:', err);
                 alert('Failed to add resource: ' + err.message);
             } finally {
                 this.loading = false;
@@ -148,10 +182,20 @@ function staffPortal() {
             if (!confirm('Delete this resource?')) return;
             this.loading = true;
             try {
-                await db.collection('resources').doc(id).delete();
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/delete-resource', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, staffEmail })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
                 alert('Resource deleted.');
+                this.loadData();
             } catch (err) {
-                console.error("Delete error:", err);
+                console.error('Delete error:', err);
                 alert('Failed to delete: ' + err.message);
             } finally {
                 this.loading = false;

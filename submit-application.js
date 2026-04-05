@@ -105,6 +105,11 @@ try {
 
 const app = express();
 
+const staffEmails = ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'];
+function isAuthorizedStaff(email) {
+  return email && staffEmails.includes(email);
+}
+
 // Serve static files (HTML, CSS, JS) from the current folder
 app.use(express.static(__dirname));
 
@@ -278,6 +283,114 @@ app.post('/api/verify-otp', async (req, res) => {
   }
 
   res.status(200).json({ success: true, message: 'OTP Verified' });
+});
+
+app.get('/api/admissions', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  try {
+    const snapshot = await db.collection('admissions').orderBy('createdAt', 'desc').get();
+    const admissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json(admissions);
+  } catch (error) {
+    console.error('Admissions fetch failed:', error);
+    res.status(500).json({ error: 'Failed to load admissions.' });
+  }
+});
+
+app.get('/api/resources', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  try {
+    const snapshot = await db.collection('resources').orderBy('timestamp', 'desc').get();
+    const resources = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json(resources);
+  } catch (error) {
+    console.error('Resources fetch failed:', error);
+    res.status(500).json({ error: 'Failed to load resources.' });
+  }
+});
+
+app.post('/api/post-news', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { title, content, staffEmail } = req.body;
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  if (!title || !content) {
+    return res.status(400).json({ error: 'Missing title or content.' });
+  }
+  try {
+    await db.collection('notifications').add({
+      title: title.trim(),
+      content: content.trim(),
+      author: staffEmail,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Post news error:', error);
+    res.status(500).json({ error: 'Failed to post news.' });
+  }
+});
+
+app.post('/api/add-resource', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { title, link, staffEmail } = req.body;
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  if (!title || !link) {
+    return res.status(400).json({ error: 'Missing title or link.' });
+  }
+  try {
+    await db.collection('resources').add({
+      title: title.trim(),
+      link: link.trim(),
+      type: 'pdf',
+      classGrade: 'All',
+      author: staffEmail,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Add resource error:', error);
+    res.status(500).json({ error: 'Failed to add resource.' });
+  }
+});
+
+app.post('/api/delete-resource', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { id, staffEmail } = req.body;
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  if (!id) {
+    return res.status(400).json({ error: 'Missing resource id.' });
+  }
+  try {
+    await db.collection('resources').doc(id).delete();
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Delete resource error:', error);
+    res.status(500).json({ error: 'Failed to delete resource.' });
+  }
+});
+
+app.post('/api/approve-admission', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { id, staffEmail } = req.body;
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  if (!id) {
+    return res.status(400).json({ error: 'Missing admission id.' });
+  }
+  try {
+    await db.collection('admissions').doc(id).update({ status: 'Approved' });
+    res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Approve admission error:', error);
+    res.status(500).json({ error: 'Failed to approve admission.' });
+  }
 });
 
 app.post('/api/submit-application', async (req, res) => {

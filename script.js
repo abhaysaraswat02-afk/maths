@@ -129,6 +129,37 @@ function staffPortal() {
             }
         },
 
+        async toggleBlockStudent(id, email, isCurrentlyBlocked) {
+            const action = isCurrentlyBlocked ? 'unblock' : 'block';
+            if (!confirm(`Are you sure you want to ${action} this student?\n\nEmail: ${email}`)) return;
+            
+            this.loading = true;
+            try {
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/toggle-block-student', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        studentId: id, 
+                        studentEmail: email,
+                        staffEmail,
+                        block: !isCurrentlyBlocked
+                    })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
+                alert(`Student ${action}ed successfully!`);
+                this.loadData();
+            } catch (err) {
+                console.error('Block/Unblock error:', err);
+                alert(`Failed to ${action} student: ` + err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async postNews() {
             this.loading = true;
             try {

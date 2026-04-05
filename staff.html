@@ -65,24 +65,32 @@
                             <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
                                 <tr>
                                     <th class="px-6 py-4">Student Name</th>
+                                    <th class="px-6 py-4">Email</th>
                                     <th class="px-6 py-4">Class</th>
                                     <th class="px-6 py-4">Date</th>
-                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">Admission</th>
+                                    <th class="px-6 py-4">Access</th>
                                     <th class="px-6 py-4">Action</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y">
                                 <template x-for="item in admissions" :key="item.id">
-                                    <tr class="hover:bg-blue-50/50 transition-colors">
+                                    <tr :class="item.isBlocked ? 'bg-red-50 opacity-75' : 'hover:bg-blue-50/50'" class="transition-colors">
                                         <td class="px-6 py-4 font-medium" x-text="item.name || 'Unnamed'"></td>
+                                        <td class="px-6 py-4 text-gray-600 text-sm font-mono" x-text="item.email || 'N/A'"></td>
                                         <td class="px-6 py-4 text-gray-600" x-text="item.studentClass || 'N/A'"></td>
-                                        <td class="px-6 py-4 text-gray-500 text-sm" x-text="formatDate(item.createdAt)"></td>
+                                        <td class="px-6 py-4 text-gray-500 text-sm" x-text="formatDate(item.timestamp || item.createdAt)"></td>
                                         <td class="px-6 py-4">
                                             <span :class="item.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" 
                                                 class="px-2 py-1 rounded-full text-xs font-semibold" x-text="item.status"></span>
                                         </td>
                                         <td class="px-6 py-4">
+                                            <span :class="item.isBlocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" 
+                                                class="px-2 py-1 rounded-full text-xs font-semibold" x-text="item.isBlocked ? 'Blocked' : 'Active'"></span>
+                                        </td>
+                                        <td class="px-6 py-4 space-x-2 flex">
                                             <button @click="approveAdmission(item.id)" x-show="item.status !== 'Approved'" class="text-blue-600 hover:underline font-semibold text-sm">Approve</button>
+                                            <button @click="toggleBlockStudent(item.id, item.email, item.isBlocked)" :class="item.isBlocked ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'" class="font-semibold text-sm transition-colors" x-text="item.isBlocked ? 'Unblock' : 'Block'"></button>
                                         </td>
                                     </tr>
                                 </template>

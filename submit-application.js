@@ -338,12 +338,41 @@ app.get('/api/get-student-profile', async (req, res) => {
 app.get('/api/admissions', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   try {
-    const snapshot = await db.collection('admissions').orderBy('createdAt', 'desc').get();
-    const admissions = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const snapshot = await db.collection('admissions').orderBy('timestamp', 'desc').get();
+    const admissions = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+      createdAt: doc.data().timestamp
+    }));
     res.status(200).json(admissions);
   } catch (error) {
     console.error('Admissions fetch failed:', error);
     res.status(500).json({ error: 'Failed to load admissions.' });
+  }
+});
+
+app.post('/api/toggle-block-student', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { studentId, studentEmail, staffEmail, block } = req.body;
+  
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  if (!studentId || !studentEmail) {
+    return res.status(400).json({ error: 'Missing student ID or email.' });
+  }
+  
+  try {
+    const docRef = db.collection('admissions').doc(studentId);
+    await docRef.update({
+      isBlocked: block,
+      blockedAt: block ? admin.firestore.FieldValue.serverTimestamp() : null,
+      blockedBy: block ? staffEmail : null
+    });
+    res.status(200).json({ success: true, message: block ? 'Student blocked successfully.' : 'Student unblocked successfully.' });
+  } catch (error) {
+    console.error('Toggle block student error:', error);
+    res.status(500).json({ error: 'Failed to toggle student block status.' });
   }
 });
 

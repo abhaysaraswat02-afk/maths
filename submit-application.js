@@ -312,6 +312,29 @@ app.post('/api/save-student-profile', async (req, res) => {
   }
 });
 
+app.get('/api/get-student-profile', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+
+  const { email } = req.query;
+  if (!email) return res.status(400).json({ error: 'Email required.' });
+
+  const studentEmail = email.trim().toLowerCase();
+
+  try {
+    const snap = await db.collection('admissions').where('email', '==', studentEmail).get();
+    if (snap.empty) {
+      return res.status(404).json({ error: 'Student not found.' });
+    }
+
+    const doc = snap.docs[0];
+    const data = doc.data();
+    res.status(200).json({ id: doc.id, ...data });
+  } catch (error) {
+    console.error('Get student profile error:', error);
+    res.status(500).json({ error: 'Failed to get student profile.' });
+  }
+});
+
 app.get('/api/admissions', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   try {

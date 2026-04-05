@@ -569,35 +569,35 @@
                     this.studentEmail = (localStorage.getItem('student_email') || '').trim().toLowerCase();
                     
                     if (this.studentEmail) {
-                        // Real-time listener for student profile and fee updates
+                        // Load student profile via API
                         try {
-                            window.db.collection('admissions')
-                                .where('email', '==', this.studentEmail)
-                                .onSnapshot(snapshot => {
-                                    if (!snapshot.empty) {
-                                        const doc = snapshot.docs[0];
-                                        const data = doc.data();
-                                        this.studentName = data.name;
-                                        this.fatherName = data.fatherName || '';
-                                        this.studentClass = data.studentClass || '';
-                                        this.dob = data.dob || '';
-                                        this.schoolName = data.schoolName || '';
-                                        this.studentData = data;
-                                        this.studentId = doc.id;
-                                        this.profilePic = data.photoURL || '';
-                                    }
-                                });
+                            const response = await fetch(`/api/get-student-profile?email=${encodeURIComponent(this.studentEmail)}`);
+                            const result = await response.json();
+                            if (response.ok) {
+                                this.studentName = result.name;
+                                this.fatherName = result.fatherName || '';
+                                this.studentClass = result.studentClass || '';
+                                this.dob = result.dob || '';
+                                this.schoolName = result.schoolName || '';
+                                this.studentData = result;
+                                this.studentId = result.id;
+                                this.profilePic = result.photoURL || '';
+                            }
+                        } catch (error) {
+                            console.error('Error loading profile:', error);
+                        }
 
-                                // Fetch Auto-sync Videos from YouTube
-                                this.fetchYouTubeVideos();
+                        // Fetch Auto-sync Videos from YouTube
+                        this.fetchYouTubeVideos();
 
-                                // Fetch Global Resources
-                                window.db.collection('resources').orderBy('timestamp', 'desc').onSnapshot(snap => {
-                                    this.resources = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
-                                window.db.collection('live_classes').where('time', '>', new Date().toISOString()).onSnapshot(snap => {
-                                    this.liveClasses = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
-                                });
+                        // Fetch Global Resources
+                        window.db.collection('resources').orderBy('timestamp', 'desc').onSnapshot(snap => {
+                            this.resources = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                        });
+                        // Note: live_classes requires authentication, so commented out for now
+                        // window.db.collection('live_classes').where('time', '>', new Date().toISOString()).onSnapshot(snap => {
+                        //     this.liveClasses = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                        // });
                                 window.db.collection('test_scores').where('studentEmail', '==', this.studentEmail).orderBy('timestamp', 'desc').onSnapshot(snap => {
                                     this.testScores = snap.docs.map(doc => ({id: doc.id, ...doc.data()}));
                                 });

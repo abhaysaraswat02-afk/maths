@@ -10,7 +10,7 @@
  * - Handles high-concurrency loads automatically.
  */
 
-require('dotenv').config(); // Load environment variables first
+require('dotenv').config({ path: path.join(__dirname, '.env') }); // Load environment variables from the current script folder
 const express = require('express');
 const admin = require('firebase-admin');
 const rateLimit = require('express-rate-limit');

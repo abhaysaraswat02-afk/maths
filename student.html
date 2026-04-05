@@ -566,7 +566,7 @@
                     const startYear = this.pageLoadTimestamp.getMonth() < 3 ? this.pageLoadTimestamp.getFullYear() - 1 : this.pageLoadTimestamp.getFullYear();
                     this.academicYear = `${startYear}-${(startYear + 1).toString().slice(-2)}`;
                     // Load saved student data
-                    this.studentEmail = localStorage.getItem('student_email');
+                    this.studentEmail = (localStorage.getItem('student_email') || '').trim().toLowerCase();
                     
                     if (this.studentEmail) {
                         // Real-time listener for student profile and fee updates

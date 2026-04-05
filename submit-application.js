@@ -243,6 +243,7 @@ app.post('/api/verify-otp', async (req, res) => {
           return res.status(400).json({ success: false, error: 'Existing user record not found.' });
         }
       } else {
+        const timestamp = admin.firestore.FieldValue.serverTimestamp();
         await db.collection('admissions').add({
           name: applicationForm.name || '',
           email: email,
@@ -252,8 +253,9 @@ app.post('/api/verify-otp', async (req, res) => {
           dob: applicationForm.dob || '',
           schoolName: applicationForm.schoolName || '',
           status: 'Pending',
-          createdAt: admin.firestore.FieldValue.serverTimestamp(),
-          lastLogin: admin.firestore.FieldValue.serverTimestamp()
+          createdAt: timestamp,
+          timestamp: timestamp,
+          lastLogin: timestamp
         });
       }
     } catch (dbError) {
@@ -307,6 +309,7 @@ app.post('/api/save-student-profile', async (req, res) => {
         photoURL: photoURL || '',
         status: 'Pending',
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
         lastUpdated: admin.firestore.FieldValue.serverTimestamp()
       });
       return res.status(200).json({ success: true, id: docRef.id });
@@ -347,11 +350,11 @@ app.get('/api/get-student-profile', async (req, res) => {
 app.get('/api/admissions', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   try {
-    const snapshot = await db.collection('admissions').orderBy('timestamp', 'desc').get();
+    const snapshot = await db.collection('admissions').orderBy('createdAt', 'desc').get();
     const admissions = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
-      createdAt: doc.data().timestamp
+      createdAt: doc.data().createdAt || doc.data().timestamp
     }));
     res.status(200).json(admissions);
   } catch (error) {

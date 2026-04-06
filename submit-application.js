@@ -608,6 +608,24 @@ app.post('/api/approve-admission', async (req, res) => {
   }
 });
 
+app.post('/api/delete-student', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const { id, staffEmail } = req.body;
+  if (!isAuthorizedStaff(staffEmail)) {
+    return res.status(403).json({ error: 'Unauthorized staff user.' });
+  }
+  if (!id) {
+    return res.status(400).json({ error: 'Missing student id.' });
+  }
+  try {
+    await db.collection('admissions').doc(id).delete();
+    res.status(200).json({ success: true, message: 'Student record deleted successfully.' });
+  } catch (error) {
+    console.error('Delete student error:', error);
+    res.status(500).json({ error: 'Failed to delete student record.' });
+  }
+});
+
 app.post('/api/submit-application', async (req, res) => {
   if (!db) {
     return res.status(500).json({ error: 'Server database error.' });

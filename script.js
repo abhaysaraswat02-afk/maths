@@ -180,6 +180,30 @@ function staffPortal() {
             }
         },
 
+        async deleteStudent(id) {
+            if (!confirm('Are you sure you want to delete this student? They will need to register as a new student next time.')) return;
+            this.loading = true;
+            try {
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/delete-student', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, staffEmail })
+                });
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.error || response.statusText);
+                }
+                alert('Student record deleted successfully.');
+                this.loadData();
+            } catch (err) {
+                console.error('Delete student error:', err);
+                alert('Failed to delete student: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         async toggleBlockStudent(id, email, isCurrentlyBlocked) {
             const action = isCurrentlyBlocked ? 'unblock' : 'block';
             if (!confirm(`Are you sure you want to ${action} this student?\n\nEmail: ${email}`)) return;

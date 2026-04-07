@@ -83,6 +83,7 @@ const app = express();
 // List of emails with super-admin privileges (Hardcoded fallback + included jay83856@gmail.com)
 const superAdmins = [
   'admin@mathantics.com',
+  'teacher@mathantics.com',
   'jay83856@gmail.com',
   'crackamubyabhay@gmail.com'
 ];
@@ -190,6 +191,11 @@ app.post('/api/send-otp', async (req, res) => {
     try {
       const existingUser = await db.collection('admissions').where('email', '==', email).get();
       isExistingUser = !existingUser.empty;
+
+      // Treat staff as existing users so they can log into the student portal without re-registering
+      if (!isExistingUser) {
+        isExistingUser = await isAuthorizedStaff(email);
+      }
     } catch (dbError) {
       console.warn('Could not check user existence:', dbError.message);
       // Continue anyway - user will verify via OTP
@@ -245,32 +251,35 @@ app.post('/api/verify-otp', async (req, res) => {
     return res.status(400).json({ success: false, error: 'Invalid or expired OTP.' });
   }
 
+  const isStaff = await isAuthorizedStaff(email);
+
   if (applicationForm) {
     try {
-      if (isExistingUser) {
-        const existingUserSnap = await db.collection('admissions').where('email', '==', email).get();
-        if (!existingUserSnap.empty) {
-          await existingUserSnap.docs[0].ref.update({
-            lastLogin: admin.firestore.FieldValue.serverTimestamp()
-          });
-        } else {
-          return res.status(400).json({ success: false, error: 'Existing user record not found.' });
-        }
-      } else {
-        const timestamp = admin.firestore.FieldValue.serverTimestamp();
+      const existingUserSnap = await db.collection('admissions').where('email', '==', email).get();
+      const timestamp = admin.firestore.FieldValue.serverTimestamp();
+
+      if (!existingUserSnap.empty) {
+        // User exists in admissions, update last login
+        await existingUserSnap.docs[0].ref.update({
+          lastLogin: timestamp
+        });
+      } else if (isStaff || !isExistingUser) {
+        // Create a student profile for staff members or new students
         await db.collection('admissions').add({
-          name: applicationForm.name || '',
+          name: applicationForm.name || (isStaff ? 'Staff Account' : 'New Student'),
           email: email,
           phone: applicationForm.phone || 'Not Provided',
           fatherName: applicationForm.fatherName || '',
-          studentClass: applicationForm.studentClass || '',
+          studentClass: applicationForm.studentClass || (isStaff ? 'Staff' : ''),
           dob: applicationForm.dob || '',
-          schoolName: applicationForm.schoolName || '',
-          status: 'Pending',
+          schoolName: applicationForm.schoolName || (isStaff ? 'Era of MathAntics' : ''),
+          status: isStaff ? 'Approved' : 'Pending', // Staff student access is pre-approved
           createdAt: timestamp,
           timestamp: timestamp,
           lastLogin: timestamp
         });
+      } else {
+        return res.status(400).json({ success: false, error: 'Student record not found.' });
       }
     } catch (dbError) {
       console.error('OTP completion database error:', dbError);
@@ -284,7 +293,6 @@ app.post('/api/verify-otp', async (req, res) => {
     }
   }
 
-  const isStaff = await isAuthorizedStaff(email);
   res.status(200).json({ success: true, message: 'OTP Verified', isStaff });
 });
 

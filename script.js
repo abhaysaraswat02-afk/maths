@@ -38,15 +38,14 @@ function staffPortal() {
         staffSearch: '',
         classFilter: 'All',
         testScoreForm: { studentEmail: '', testName: '', classGrade: 'All', score: '', total: 100, percentage: 0, date: '' },
-        staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
+        staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'],
 
         async init() {
             // Security check: ensure staff is logged in via OTP on the main site
             if (localStorage.getItem('isStaffLoggedIn') !== 'true') {
                 window.location.href = 'index.html';
                 return;
-            }
-            
+            }              
             this.loading = true;
             const email = (localStorage.getItem('student_email') || '').toLowerCase();
             

@@ -556,7 +556,7 @@
                 // New properties for application form
                 contactForm: { name: '', email: '', message: '' },
                 applicationForm: { name: '', email: '', phone: '', fatherName: '', studentClass: '', dob: '', schoolName: '', course: '', batchId: '' },
-                staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'], // Add Owner/Staff emails here
+                staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'], // Add Owner/Staff emails here
                 applicationStep: 'form', // 'form', 'otp', 'success'
                 enteredOtp: '',
                 verificationToken: '', // Token for stateless verification
@@ -865,7 +865,7 @@
                         if (!data.success) throw new Error(data.error || 'OTP verification failed.');
 
                         // 1. Check if the user is a Staff Member or Owner
-                        if (this.staffEmails.includes(this.applicationForm.email)) {
+                        if (data.isStaff) {
                             this.isSubmitting = false; // Reset state before showing blocking confirm dialog
                             // Allow owner to choose portal
                             if (confirm("Staff Access Detected.\n\nPress OK to enter Staff Dashboard.\nPress Cancel to login as a Student.")) {

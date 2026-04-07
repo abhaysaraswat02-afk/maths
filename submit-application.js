@@ -80,9 +80,17 @@ try {
 
 const app = express();
 
-const staffEmails = ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'];
-function isAuthorizedStaff(email) {
-  return email && staffEmails.includes(email);
+const superAdmins = ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'];
+async function isAuthorizedStaff(email) {
+  if (!email) return false;
+  if (superAdmins.includes(email.toLowerCase())) return true;
+  
+  try {
+    const snap = await db.collection('staff').where('email', '==', email.toLowerCase()).get();
+    return !snap.empty;
+  } catch (e) {
+    return false;
+  }
 }
 
 // Serve static files (HTML, CSS, JS) from the current folder
@@ -367,7 +375,7 @@ app.post('/api/toggle-block-student', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { studentId, studentEmail, staffEmail, block } = req.body;
   
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   if (!studentId || !studentEmail) {
@@ -404,7 +412,7 @@ app.post('/api/submit-test-score', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { studentEmail, testName, classGrade, score, total, percentage, date, staffEmail } = req.body;
   
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   
@@ -447,7 +455,7 @@ app.post('/api/delete-test-score', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { id, staffEmail } = req.body;
   
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   
@@ -497,7 +505,7 @@ app.get('/api/get-student-test-scores', async (req, res) => {
 app.post('/api/post-news', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { title, content, staffEmail } = req.body;
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   if (!title || !content) {
@@ -532,7 +540,7 @@ app.get('/api/get-news', async (req, res) => {
 app.post('/api/delete-news', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { id, staffEmail } = req.body;
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   if (!id) {
@@ -550,7 +558,7 @@ app.post('/api/delete-news', async (req, res) => {
 app.post('/api/add-resource', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { title, link, classGrade, staffEmail } = req.body;
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   if (!title || !link) {
@@ -575,7 +583,7 @@ app.post('/api/add-resource', async (req, res) => {
 app.post('/api/delete-resource', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { id, staffEmail } = req.body;
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   if (!id) {
@@ -593,7 +601,7 @@ app.post('/api/delete-resource', async (req, res) => {
 app.post('/api/approve-admission', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { id, staffEmail } = req.body;
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   if (!id) {
@@ -611,7 +619,7 @@ app.post('/api/approve-admission', async (req, res) => {
 app.post('/api/delete-student', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   const { id, staffEmail } = req.body;
-  if (!isAuthorizedStaff(staffEmail)) {
+  if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff user.' });
   }
   if (!id) {
@@ -623,6 +631,70 @@ app.post('/api/delete-student', async (req, res) => {
   } catch (error) {
     console.error('Delete student error:', error);
     res.status(500).json({ error: 'Failed to delete student record.' });
+  }
+});
+
+// --- Staff Management APIs ---
+
+app.get('/api/get-staff', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  try {
+    const snap = await db.collection('staff').orderBy('timestamp', 'desc').get();
+    const staff = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json(staff);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/add-staff', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const { name, email, role, staffEmail } = req.body;
+
+  if (!(await isAuthorizedStaff(staffEmail))) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  if (!name || !email || !role) {
+    return res.status(400).json({ error: 'Missing fields' });
+  }
+
+  try {
+    const normalizedEmail = email.trim().toLowerCase();
+    // Check if already exists
+    const existing = await db.collection('staff').where('email', '==', normalizedEmail).get();
+    if (!existing.empty) return res.status(400).json({ error: 'Staff member with this email already exists.' });
+
+    await db.collection('staff').add({
+      name: name.trim(),
+      email: normalizedEmail,
+      role: role.trim(),
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.status(200).json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/delete-staff', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const { id, staffEmail } = req.body;
+
+  if (!(await isAuthorizedStaff(staffEmail))) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+  
+  // Protect super admins from being deleted if they were added to DB
+  try {
+    const doc = await db.collection('staff').doc(id).get();
+    if (doc.exists && superAdmins.includes(doc.data().email)) {
+      return res.status(400).json({ error: 'Cannot delete super-admin records.' });
+    }
+
+    await db.collection('staff').doc(id).delete();
+    res.status(200).json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 

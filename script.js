@@ -27,28 +27,41 @@ function staffPortal() {
         resources: [],
         newsList: [],
         recentScores: [],
+        staffList: [],
         newsForm: { title: '', content: '' },
         docForm: { name: '', url: '', classGrade: 'All' },
+        staffForm: { name: '', email: '', role: 'Teacher' },
         admissionSearch: '',
         newsSearch: '',
         resourceSearch: '',
         scoreSearch: '',
+        staffSearch: '',
         classFilter: 'All',
         testScoreForm: { studentEmail: '', testName: '', classGrade: 'All', score: '', total: 100, percentage: 0, date: '' },
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'],
 
-        init() {
+        async init() {
             // Security check: ensure staff is logged in via OTP on the main site
             if (localStorage.getItem('isStaffLoggedIn') !== 'true') {
                 window.location.href = 'index.html';
                 return;
             }
-            const email = localStorage.getItem('student_email');
-            if (!email || !this.staffEmails.includes(email)) {
+            
+            this.loading = true;
+            const email = (localStorage.getItem('student_email') || '').toLowerCase();
+            
+            // Refresh staff list from DB to verify current user access
+            const staffRes = await fetch('/api/get-staff');
+            const dbStaff = await staffRes.json();
+            const dbEmails = dbStaff.map(s => s.email.toLowerCase());
+
+            if (!email || (!this.staffEmails.includes(email) && !dbEmails.includes(email))) {
+                localStorage.clear();
                 window.location.href = 'index.html';
                 return;
             }
 
+            this.staffList = dbStaff;
             this.isLoggedIn = true;
             this.loadData();
         },
@@ -91,6 +104,13 @@ function staffPortal() {
             });
         },
 
+        get filteredStaff() {
+            return this.staffList.filter(s => {
+                const query = this.staffSearch.toLowerCase();
+                return !query || s.name.toLowerCase().includes(query) || s.email.toLowerCase().includes(query);
+            });
+        },
+
         getStaffEmail() {
             return localStorage.getItem('student_email');
         },
@@ -117,7 +137,8 @@ function staffPortal() {
                 'admissions': 'Manage Student Admissions',
                 'news': 'Broadcast College News',
                 'docs': 'Resource Library Management',
-                'scores': 'Manage Offline Test Scores'
+                'scores': 'Manage Offline Test Scores',
+                'manage-staff': 'Manage Team & Access'
             };
             return titles[this.activeTab];
         },
@@ -125,11 +146,12 @@ function staffPortal() {
         async loadData() {
             this.loading = true;
             try {
-                const [admissionRes, resourceRes, newsRes, scoresRes] = await Promise.all([
+                const [admissionRes, resourceRes, newsRes, scoresRes, staffRes] = await Promise.all([
                     fetch('/api/admissions'),
                     fetch('/api/resources'),
                     fetch('/api/get-news'),
-                    fetch('/api/get-test-scores')
+                    fetch('/api/get-test-scores'),
+                    fetch('/api/get-staff')
                 ]);
 
                 if (!admissionRes.ok) {
@@ -144,11 +166,15 @@ function staffPortal() {
                 if (!scoresRes.ok) {
                     throw new Error('Failed to load test scores: ' + scoresRes.statusText);
                 }
+                if (!staffRes.ok) {
+                    throw new Error('Failed to load staff list.');
+                }
 
                 this.admissions = await admissionRes.json();
                 this.resources = await resourceRes.json();
                 this.newsList = await newsRes.json();
                 this.recentScores = await scoresRes.json();
+                this.staffList = await staffRes.json();
             } catch (err) {
                 console.error('Data load error:', err);
                 this.error = err.message;
@@ -402,6 +428,54 @@ function staffPortal() {
             } catch (err) {
                 console.error('Delete score error:', err);
                 alert('Failed to delete score: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async addStaff() {
+            this.loading = true;
+            try {
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/add-staff', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...this.staffForm,
+                        staffEmail
+                    })
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Failed to add staff.');
+                }
+                this.staffForm = { name: '', email: '', role: 'Teacher' };
+                alert('Staff added! They can now login with their Gmail.');
+                this.loadData();
+            } catch (err) {
+                alert(err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteStaff(id) {
+            if (!confirm('Remove this staff member? They will lose access immediately.')) return;
+            this.loading = true;
+            try {
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/delete-staff', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, staffEmail })
+                });
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error);
+                }
+                this.loadData();
+            } catch (err) {
+                alert(err.message);
             } finally {
                 this.loading = false;
             }

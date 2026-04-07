@@ -161,6 +161,30 @@
         </div>
     </section>
 
+    <!-- Staff / Team Section -->
+    <section id="team" class="py-24 bg-white reveal">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Expert Educators</span>
+                <h2 class="text-3xl md:text-5xl font-black text-slate-900 mt-2">Meet Our <span class="text-gradient">Team</span></h2>
+                <p class="text-slate-500 font-bold mt-4 max-w-2xl mx-auto">Our mentors are dedicated to making mathematics simple, intuitive, and fun for every student.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <template x-for="member in staffList" :key="member.id">
+                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 text-center hover:shadow-xl transition-all group">
+                        <div class="w-32 h-32 mx-auto bg-white rounded-full mb-6 border-4 border-white shadow-md overflow-hidden flex items-center justify-center bg-blue-100 text-blue-600">
+                            <i class="fas fa-user-tie text-5xl"></i>
+                        </div>
+                        <h4 class="text-xl font-black text-slate-900" x-text="member.name"></h4>
+                        <p class="text-blue-600 font-bold text-sm uppercase tracking-wider mt-1" x-text="member.role"></p>
+                        <p class="text-xs text-slate-400 mt-4 font-medium italic">"Dedicated to student excellence in competitive mathematics."</p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </section>
+
     <!-- Stats Strip -->
     <div class="bg-slate-900 text-white py-12 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-800">
@@ -527,6 +551,7 @@
                 currentHeroSlide: 0,
                 starAchievers: [],
                 batches: [],
+                staffList: [],
 
                 // New properties for application form
                 contactForm: { name: '', email: '', message: '' },
@@ -556,6 +581,7 @@
                     this.fetchBatches();
                     this.fetchStaffVideos();
                     this.fetchAchievers();
+                    this.fetchStaffMembers();
 
                     // Anonymous auth is optional. If the Firebase project blocks this API,
                     // the site can still load if Firestore rules allow unauthenticated reads.
@@ -610,6 +636,12 @@
                             this.youtubeVideos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         })
                         .catch(error => console.error('Error fetching staff videos:', error));
+                },
+
+                fetchStaffMembers() {
+                    fetch('/api/get-staff').then(res => res.json()).then(data => {
+                        this.staffList = data;
+                    });
                 },
 
                 getThumbnail(url) {

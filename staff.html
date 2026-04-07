@@ -44,6 +44,9 @@
                     <button @click="activeTab = 'scores'" :class="activeTab === 'scores' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-chart-bar w-6"></i> Test Scores
                     </button>
+                    <button @click="activeTab = 'manage-staff'" :class="activeTab === 'manage-staff' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
+                        <i class="fas fa-users-cog w-6"></i> Manage Staff
+                    </button>
                 </nav>
                 <div class="absolute bottom-0 w-64 p-6">
                     <button @click="logout" class="text-slate-400 hover:text-white flex items-center transition-colors">
@@ -291,6 +294,77 @@
                                     </div>
                                 </div>
                             </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manage Staff Section -->
+                <div x-show="activeTab === 'manage-staff'" class="space-y-8">
+                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
+                        <h3 class="text-lg font-bold mb-6">Add New Staff Member</h3>
+                        <p class="text-xs text-gray-500 mb-6 italic">Adding a staff member by their Gmail grants them instant access to this portal via OTP login.</p>
+                        <form @submit.prevent="addStaff">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Full Name</label>
+                                    <input type="text" x-model="staffForm.name" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Role/Title</label>
+                                    <input type="text" x-model="staffForm.role" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Math Head" required>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-sm font-semibold mb-2">Official Gmail Address</label>
+                                <input type="email" x-model="staffForm.email" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
+                            </div>
+                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md">Add Staff Member</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-8 rounded-xl shadow-sm border">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold">Authorized Team</h3>
+                            <div class="relative w-64">
+                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+                                <input type="text" x-model="staffSearch" placeholder="Search team..." class="w-full pl-10 pr-4 py-1.5 border rounded-lg text-sm outline-none">
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-xl border overflow-hidden">
+                            <table class="w-full text-left border-collapse">
+                                <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
+                                    <tr>
+                                        <th class="px-6 py-4">Name</th>
+                                        <th class="px-6 py-4">Email</th>
+                                        <th class="px-6 py-4">Role</th>
+                                        <th class="px-6 py-4">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y">
+                                    <!-- Hardcoded Super Admins (Protected) -->
+                                    <template x-for="email in staffEmails">
+                                        <tr class="bg-blue-50/30">
+                                            <td class="px-6 py-4 font-medium italic">Super Admin</td>
+                                            <td class="px-6 py-4 text-gray-600 text-sm font-mono" x-text="email"></td>
+                                            <td class="px-6 py-4 text-blue-600 font-bold text-xs uppercase">Owner</td>
+                                            <td class="px-6 py-4 text-gray-400 text-xs italic">System Protected</td>
+                                        </tr>
+                                    </template>
+                                    <!-- Dynamic Staff -->
+                                    <template x-for="staff in filteredStaff" :key="staff.id">
+                                        <tr class="hover:bg-slate-50">
+                                            <td class="px-6 py-4 font-medium" x-text="staff.name"></td>
+                                            <td class="px-6 py-4 text-gray-600 text-sm font-mono" x-text="staff.email"></td>
+                                            <td class="px-6 py-4 text-gray-600" x-text="staff.role"></td>
+                                            <td class="px-6 py-4">
+                                                <button @click="deleteStaff(staff.id)" class="text-red-500 hover:text-red-700">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

@@ -80,7 +80,13 @@ try {
 
 const app = express();
 
-const superAdmins = ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'];
+// List of emails with super-admin privileges (Hardcoded fallback + included jay83856@gmail.com)
+const superAdmins = [
+  'admin@mathantics.com',
+  'jay83856@gmail.com',
+  'crackamubyabhay@gmail.com'
+];
+
 async function isAuthorizedStaff(email) {
   if (!email) return false;
   if (superAdmins.includes(email.toLowerCase())) return true;
@@ -278,7 +284,8 @@ app.post('/api/verify-otp', async (req, res) => {
     }
   }
 
-  res.status(200).json({ success: true, message: 'OTP Verified' });
+  const isStaff = await isAuthorizedStaff(email);
+  res.status(200).json({ success: true, message: 'OTP Verified', isStaff });
 });
 
 app.post('/api/save-student-profile', async (req, res) => {

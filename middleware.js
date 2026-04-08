@@ -24,7 +24,9 @@ export async function middleware(request) {
   }
 
   try {
-    const { payload } = await jwtVerify(sessionCookie.value, JWT_SECRET);
+    const { payload } = await jwtVerify(sessionCookie.value, JWT_SECRET, {
+      algorithms: ['HS256'],
+    });
 
     // Check if the role matches the protected path
     if (pathname.startsWith('/student.html') && payload.role !== 'student') {

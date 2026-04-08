@@ -7,6 +7,7 @@
         // Security Check: Verify session via HTTP-only cookie check on the backend.
         fetch('/api/check-auth').then(res => res.json()).then(data => {
             if (!data.authenticated || data.role !== 'student') {
+                console.warn('Auth Failed:', data);
                 window.location.href = 'index.html';
             }
         }).catch(() => window.location.href = 'index.html');

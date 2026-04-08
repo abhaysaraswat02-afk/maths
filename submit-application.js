@@ -19,6 +19,8 @@ const cors = require('cors');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const twilio = require('twilio');
+const jwt = require('jsonwebtoken');
+const { serialize } = require('cookie');
 
 
 let db;
@@ -153,7 +155,9 @@ app.use('/api/send-otp', otpLimiter);
 app.use(express.json());
 
 // --- Stateless OTP Logic ---
-const OTP_SECRET = process.env.OTP_SECRET || 'era-of-mathantics-secret-key-2025';
+const OTP_SECRET = stripQuotes(process.env.OTP_SECRET || 'era-of-mathantics-secret-key-2025');
+const JWT_SECRET = stripQuotes(process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+const COOKIE_NAME = 'session';
 
 function createVerificationToken(email, otp, expiry) {
   const data = `${email}|${otp}|${expiry}`;
@@ -293,7 +297,50 @@ app.post('/api/verify-otp', async (req, res) => {
     }
   }
 
+  // Create JWT session
+  const role = isStaff ? 'staff' : 'student';
+  const token = jwt.sign({ email, role }, JWT_SECRET, { expiresIn: '1h' });
+
+  // Set HTTP-Only Cookie
+  res.setHeader('Set-Cookie', serialize(COOKIE_NAME, token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax',
+    path: '/',
+    maxAge: 3600 // 1 hour
+  }));
+
   res.status(200).json({ success: true, message: 'OTP Verified', isStaff });
+});
+
+// --- Auth Check & Logout Endpoints ---
+
+app.get('/api/check-auth', async (req, res) => {
+  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const sessionCookie = cookies[COOKIE_NAME];
+  
+  if (!sessionCookie) return res.status(200).json({ authenticated: false });
+
+  try {
+    // Explicitly check for HS256 to align with jose/middleware
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    const isStaff = await isAuthorizedStaff(decoded.email);
+    res.status(200).json({ authenticated: true, role: isStaff ? 'staff' : 'student', email: decoded.email });
+  } catch (error) {
+    console.error('Check-auth JWT error:', error.message);
+    res.status(200).json({ authenticated: false });
+  }
+});
+
+app.post('/api/logout', (req, res) => {
+  res.setHeader('Set-Cookie', serialize(COOKIE_NAME, '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'Lax',
+    path: '/',
+    expires: new Date(0)
+  }));
+  res.status(200).json({ success: true });
 });
 
 app.post('/api/save-student-profile', async (req, res) => {

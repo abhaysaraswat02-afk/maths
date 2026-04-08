@@ -41,17 +41,19 @@ function staffPortal() {
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'],
 
         async init() {
-            // Security check: ensure staff is logged in via OTP on the main site
-            if (localStorage.getItem('isStaffLoggedIn') !== 'true') {
+            this.loading = true;
+            
+            // Verify session and get user info from the server
+            const authRes = await fetch('/api/check-auth');
+            const authData = await authRes.json();
+
+            if (!authData.authenticated || authData.role !== 'staff') {
                 window.location.href = 'index.html';
                 return;
-            }              
-            this.loading = true;
-            const email = (localStorage.getItem('student_email') || '').toLowerCase();
-            
-            // Refresh staff list from DB to verify current user access
-            const staffRes = await fetch('/api/get-staff');
-            const dbStaff = await staffRes.json();
+            }
+
+            const email = authData.email.toLowerCase();
+            const dbStaff = await (await fetch('/api/get-staff')).json();
             const dbEmails = dbStaff.map(s => s.email.toLowerCase());
 
             if (!email || (!this.staffEmails.includes(email) && !dbEmails.includes(email))) {

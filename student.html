@@ -4,15 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
-        // Security Check: If a user is not logged in, redirect them to the homepage.
-        const staffEmails = ['admin@mathantics.com', 'teacher@mathantics.com', 'crackamubyabhay@gmail.com'];
-        if (localStorage.getItem('isStudentLoggedIn') !== 'true') {
-            window.location.href = 'index.html';
-        }
-        const email = (localStorage.getItem('student_email') || '').trim().toLowerCase();
-        if (!email || staffEmails.includes(email)) {
-            window.location.href = 'index.html';
-        }
+        // Security Check: Verify session via HTTP-only cookie check on the backend.
+        fetch('/api/check-auth').then(res => res.json()).then(data => {
+            if (!data.authenticated || data.role !== 'student') {
+                window.location.href = 'index.html';
+            }
+        }).catch(() => window.location.href = 'index.html');
     </script>
     <title>Student Portal | My Online Classes</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,7 +26,7 @@
     <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
 </head>
 
-<body class="bg-gray-50 text-slate-900" x-data="studentPortal()" x-init="init()">
+<body class="bg-gray-50 text-slate-900" x-data="studentPortal()" x-init="init()" x-cloak>
 
     <!-- Mobile Overlay -->
     <div x-show="mobileMenu" x-transition.opacity class="fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm md:hidden" @click="mobileMenu = false" x-cloak></div>
@@ -590,17 +587,10 @@
                     // Academic year starts in April (Month 3). If Jan-Mar, use previous year.
                     const startYear = this.pageLoadTimestamp.getMonth() < 3 ? this.pageLoadTimestamp.getFullYear() - 1 : this.pageLoadTimestamp.getFullYear();
                     this.academicYear = `${startYear}-${(startYear + 1).toString().slice(-2)}`;
-                    // Load saved student data
-                    this.studentEmail = (localStorage.getItem('student_email') || '').trim().toLowerCase();
-                    if (!this.studentEmail) {
-                        localStorage.clear();
-                        window.location.href = 'index.html';
-                        return;
-                    }
 
-                    // Load student profile via API
+                    // Load student profile via API using the session cookie
                     try {
-                            const response = await fetch(`/api/get-student-profile?email=${encodeURIComponent(this.studentEmail)}`);
+                            const response = await fetch(`/api/get-student-profile`);
                             const result = await response.json();
                             if (response.ok) {
                                 // Check if student is blocked
@@ -612,6 +602,7 @@
                                 }
                                 
                                 this.studentName = result.name;
+                                this.studentEmail = result.email;
                                 this.fatherName = result.fatherName || '';
                                 this.studentClass = result.studentClass || '';
                                 this.dob = result.dob || '';
@@ -619,9 +610,14 @@
                                 this.studentData = result;
                                 this.studentId = result.id;
                                 this.profilePic = result.photoURL || '';
+                            } else {
+                                window.location.href = 'index.html';
+                                return;
                             }
                         } catch (error) {
                             console.error('Error loading profile:', error);
+                            window.location.href = 'index.html';
+                            return;
                         }
 
                         try {
@@ -634,7 +630,7 @@
                             });
 
                             // Load student test scores via API
-                            const scoresRes = await fetch(`/api/get-student-test-scores?email=${encodeURIComponent(this.studentEmail)}`);
+                            const scoresRes = await fetch(`/api/get-student-test-scores`);
                             const scoresData = await scoresRes.json();
                             if (scoresRes.ok) {
                                 this.testScores = scoresData;
@@ -968,7 +964,8 @@
                     }).catch(err => console.error(err));
                 },
 
-                logout() {
+                async logout() {
+                    await fetch('/api/logout', { method: 'POST' });
                     localStorage.clear();
                     window.location.href = 'index.html';
                 }

@@ -71,7 +71,7 @@
                 <a href="#home" class="hover:text-blue-600 transition">Home</a>
                 <a href="#results" class="hover:text-blue-600 transition">Selections</a>
                 <a href="#apply" class="hover:text-blue-600 transition">Admissions</a>
-                <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5">
+                <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5" x-cloak>
                     <i class="fas" :class="isLoggedIn || isStaffLoggedIn ? 'fa-th-large' : 'fa-user-circle'"></i> 
                     <span x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Login')"></span>
                 </a>
@@ -570,7 +570,7 @@
                 modal: { open: false, title: '', message: '' },
                 youtubeVideos: [],
 
-                init() {
+                async init() {
                     this.calculateAcademicYear();
                     this.startTypewriter();
                     this.initStats();
@@ -589,8 +589,16 @@
                         window.auth.signInAnonymously().catch(err => console.warn("Firebase Auth:", err.message));
                     }
 
-                    this.isLoggedIn = localStorage.getItem('isStudentLoggedIn') === 'true';
-                    this.isStaffLoggedIn = localStorage.getItem('isStaffLoggedIn') === 'true';
+                    try {
+                        const res = await fetch('/api/check-auth');
+                        const data = await res.json();
+                        if (res.ok && data.authenticated) {
+                            this.isLoggedIn = data.role === 'student';
+                            this.isStaffLoggedIn = data.role === 'staff';
+                        }
+                    } catch (e) {
+                        console.warn("Auth sync failed. Defaulting to logged out state.");
+                    }
                 },
 
                 fetchBatches() {
@@ -869,9 +877,6 @@
                             this.isSubmitting = false; // Reset state before showing blocking confirm dialog
                             // Allow owner to choose portal
                             if (confirm("Staff Access Detected.\n\nPress OK to enter Staff Dashboard.\nPress Cancel to login as a Student.")) {
-                                localStorage.setItem('isStaffLoggedIn', 'true');
-                                localStorage.removeItem('isStudentLoggedIn');
-                                localStorage.setItem('student_email', this.applicationForm.email); // Ensure email is set for staff access
                                 window.location.href = 'staff.html';
                                 return;
                             }
@@ -881,8 +886,6 @@
                         localStorage.setItem('showIdCardWelcome', 'true');
 
                         // Common logic for both new and existing users
-                        localStorage.setItem('isStudentLoggedIn', 'true');
-                        localStorage.setItem('student_email', this.applicationForm.email);
                         this.applicationStep = 'success';
                         setTimeout(() => { window.location.href = 'student.html'; }, 3000);
                     } catch (error) {

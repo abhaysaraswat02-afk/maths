@@ -8,7 +8,7 @@ import jwt from 'jsonwebtoken';
 // }
 // const db = admin.firestore();
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const JWT_SECRET = process.env.JWT_SECRET || 'a99f2e1a8b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {

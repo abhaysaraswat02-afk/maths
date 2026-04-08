@@ -155,8 +155,8 @@ app.use('/api/send-otp', otpLimiter);
 app.use(express.json());
 
 // --- Stateless OTP Logic ---
-const OTP_SECRET = stripQuotes(process.env.OTP_SECRET || 'era-of-mathantics-secret-key-2025');
-const JWT_SECRET = stripQuotes(process.env.JWT_SECRET || 'your-super-secret-jwt-key');
+const OTP_SECRET = stripQuotes(process.env.OTP_SECRET || 'k9j8h7g6f5e4dll3b1a0z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8');
+const JWT_SECRET = stripQuotes(process.env.JWT_SECRET || 'a99f2e1a8b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c');
 const COOKIE_NAME = 'session';
 
 function createVerificationToken(email, otp, expiry) {

@@ -39,6 +39,7 @@ function staffPortal() {
         classFilter: 'All',
         testScoreForm: { studentEmail: '', testName: '', classGrade: 'All', score: '', total: 100, percentage: 0, date: '' },
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'],
+        userEmail: '',
 
         async init() {
             this.loading = true;
@@ -52,11 +53,11 @@ function staffPortal() {
                 return;
             }
 
-            const email = authData.email.toLowerCase();
+            this.userEmail = authData.email.toLowerCase();
             const dbStaff = await (await fetch('/api/get-staff')).json();
             const dbEmails = dbStaff.map(s => s.email.toLowerCase());
 
-            if (!email || (!this.staffEmails.includes(email) && !dbEmails.includes(email))) {
+            if (!this.userEmail || (!this.staffEmails.includes(this.userEmail) && !dbEmails.includes(this.userEmail))) {
                 localStorage.clear();
                 window.location.href = 'index.html';
                 return;
@@ -113,10 +114,11 @@ function staffPortal() {
         },
 
         getStaffEmail() {
-            return localStorage.getItem('student_email');
+            return this.userEmail;
         },
 
-        logout() {
+        async logout() {
+            await fetch('/api/logout', { method: 'POST' });
             // If Firebase auth is available and a user is signed in, sign them out.
             if (firebase && firebase.auth) {
                 try {

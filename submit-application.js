@@ -230,8 +230,9 @@ app.post('/api/send-otp', async (req, res) => {
       verificationToken: `${token}.${expiry}` // Send token and expiry to client
     });
   } catch (error) {
-    console.error('Email error:', error);
-    res.status(500).json({ error: `Failed to send OTP: ${error.message}` });
+    console.error('Email sending failed:', error);
+    console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+    res.status(500).json({ error: `Failed to send OTP: ${error.message || 'Unknown email service error. Check server logs for details.'}` });
   }
 });
 

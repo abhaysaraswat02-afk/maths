@@ -24,7 +24,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>body { font-family: 'Plus Jakarta Sans', sans-serif; }</style>
+    <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .card-3d {
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            transform-style: preserve-3d;
+        }
+        .card-3d:hover {
+            transform: perspective(1000px) rotateX(2deg) rotateY(2deg) translateY(-8px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+        [x-cloak] { display: none !important; }
+    </style>
 </head>
 
 <body class="bg-gray-50 text-slate-900" x-data="studentPortal()" x-init="init()" x-cloak>
@@ -118,7 +129,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="rec in recordedVideos" :key="rec.id">
-                        <div @click="openVideo(rec.link, rec.title)" class="group bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col">
+                        <div @click="openVideo(rec.link, rec.title)" class="group bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col card-3d">
                             <div class="aspect-video bg-slate-900 relative overflow-hidden">
                                 <template x-if="extractYouTubeID(rec.link)">
                                      <img :src="'https://img.youtube.com/vi/' + extractYouTubeID(rec.link) + '/mqdefault.jpg'" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500">
@@ -150,7 +161,7 @@
             <h3 class="text-2xl font-black">College Notices</h3>
             <div class="grid gap-4">
                 <template x-for="note in notifications" :key="note.id">
-                    <div class="p-6 bg-white border rounded-2xl shadow-sm">
+                    <div class="p-6 bg-white border rounded-2xl shadow-sm card-3d">
                         <div class="flex items-center gap-3 mb-3">
                             <span class="w-2 h-2 rounded-full bg-blue-600"></span>
                             <h4 class="font-bold text-slate-900" x-text="note.title"></h4>
@@ -177,7 +188,7 @@
             
             <div class="grid gap-4">
                 <template x-for="score in testScores" :key="score.id">
-                    <div class="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition">
+                    <div class="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition card-3d">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
                                 <h4 class="font-bold text-lg text-slate-800" x-text="score.testName"></h4>

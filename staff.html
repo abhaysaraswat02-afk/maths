@@ -15,6 +15,16 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
+    <style>
+        .hover-3d {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+        }
+        .hover-3d:hover {
+            transform: perspective(1000px) rotateX(3deg) translateY(-5px);
+            box-shadow: 0 15px 30px -10px rgba(0,0,0,0.1);
+        }
+    </style>
 </head>
 <body class="bg-slate-50 font-['Inter']" x-data="staffPortal()" x-init="init()">
 
@@ -129,7 +139,7 @@
                 <!-- Post News Section -->
                 <div x-show="activeTab === 'news'" class="space-y-8">
                     <!-- Post News Form -->
-                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
+                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
                         <h3 class="text-lg font-bold mb-6">Post New Update</h3>
                         <form @submit.prevent="postNews">
                             <div class="mb-4">
@@ -174,7 +184,7 @@
                 </div>
 
                 <!-- Documents Section -->
-                <div x-show="activeTab === 'docs'" class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
+                <div x-show="activeTab === 'docs'" class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
                     <div class="mb-8">
                         <h3 class="font-bold mb-4 border-b pb-2">Add New Resource</h3>
                         <form @submit.prevent="addDoc">
@@ -236,7 +246,7 @@
                 <!-- Test Scores Section -->
                 <div x-show="activeTab === 'scores'" class="space-y-8">
                     <!-- Enter Test Scores Form -->
-                    <div class="max-w-3xl bg-white p-8 rounded-xl shadow-sm border">
+                    <div class="max-w-3xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
                         <h3 class="text-lg font-bold mb-6">Enter Offline Test Score</h3>
                         <form @submit.prevent="submitTestScore">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -308,7 +318,7 @@
 
                 <!-- Manage Staff Section -->
                 <div x-show="activeTab === 'manage-staff'" class="space-y-8">
-                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border">
+                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
                         <h3 class="text-lg font-bold mb-6">Add New Staff Member</h3>
                         <p class="text-xs text-gray-500 mb-6 italic">Adding a staff member by their Gmail grants them instant access to this portal via OTP login.</p>
                         <form @submit.prevent="addStaff">

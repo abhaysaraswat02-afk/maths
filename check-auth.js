@@ -27,7 +27,7 @@ try {
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         projectId: serviceAccount.projectId,
-        databaseURL: process.env.FIREBASE_DATABASE_URL,
+        databaseURL: stripQuotes(process.env.FIREBASE_DATABASE_URL),
       });
     } else {
       console.warn("Firebase credentials missing or malformed in .env for check-auth. Staff role check via Firestore will be limited.");

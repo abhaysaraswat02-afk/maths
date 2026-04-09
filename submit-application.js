@@ -107,11 +107,14 @@ app.use(express.static(__dirname));
 
 // --- Nodemailer Transporter ---
 
+const GMAIL_USER = stripQuotes(process.env.GMAIL_USER || '');
+const GMAIL_PASS = stripQuotes(process.env.GMAIL_PASS || '');
+
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.GMAIL_USER, // Remove hardcoded credentials
-    pass: process.env.GMAIL_PASS, 
+    user: GMAIL_USER,
+    pass: GMAIL_PASS, 
   },
   tls: {
     rejectUnauthorized: false,
@@ -175,7 +178,7 @@ app.post('/api/send-otp', async (req, res) => {
   let { email } = req.body;
   email = email ? email.trim().toLowerCase() : '';
 
-  if (!process.env.GMAIL_USER || !process.env.GMAIL_PASS) {
+  if (!GMAIL_USER || !GMAIL_PASS) {
     console.error("SMTP config missing");
     return res.status(500).json({ error: 'Email service not configured (GMAIL_USER/PASS missing in .env).' });
   }
@@ -208,7 +211,7 @@ app.post('/api/send-otp', async (req, res) => {
 
     // Send Email
     await transporter.sendMail({
-      from: `"Era of MathAntics" <${process.env.GMAIL_USER}>`,
+      from: `"Era of MathAntics" <${GMAIL_USER}>`,
       to: email,
       subject: 'Your Login Verification Code',
       text: `Your verification code is: ${otp}. It is valid for 5 minutes.`,

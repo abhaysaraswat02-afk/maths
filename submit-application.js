@@ -400,11 +400,23 @@ app.post('/api/save-student-profile', async (req, res) => {
 
 app.get('/api/get-student-profile', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
+  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const sessionCookie = cookies[COOKIE_NAME];
+  if (!sessionCookie) {
+    return res.status(401).json({ error: 'Unauthorized: No session found.' });
+  }
 
-  const { email } = req.query;
-  if (!email) return res.status(400).json({ error: 'Email required.' });
-
-  const studentEmail = email.trim().toLowerCase();
+  let studentEmail = '';
+  try {
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    if (!decoded?.email || (decoded.role !== 'student' && decoded.role !== 'staff')) {
+      return res.status(403).json({ error: 'Forbidden: Invalid session role.' });
+    }
+    studentEmail = decoded.email.trim().toLowerCase();
+  } catch (error) {
+    console.error('Get student profile JWT error:', error.message);
+    return res.status(401).json({ error: 'Unauthorized: Invalid session.' });
+  }
 
   try {
     const snap = await db.collection('admissions').where('email', '==', studentEmail).get();
@@ -540,13 +552,23 @@ app.post('/api/delete-test-score', async (req, res) => {
 
 app.get('/api/get-student-test-scores', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
-  const { email } = req.query;
-
-  if (!email) {
-    return res.status(400).json({ error: 'Student email is required.' });
+  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const sessionCookie = cookies[COOKIE_NAME];
+  if (!sessionCookie) {
+    return res.status(401).json({ error: 'Unauthorized: No session found.' });
   }
 
-  const studentEmail = email.trim().toLowerCase();
+  let studentEmail = '';
+  try {
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    if (!decoded?.email || (decoded.role !== 'student' && decoded.role !== 'staff')) {
+      return res.status(403).json({ error: 'Forbidden: Invalid session role.' });
+    }
+    studentEmail = decoded.email.trim().toLowerCase();
+  } catch (error) {
+    console.error('Get student test scores JWT error:', error.message);
+    return res.status(401).json({ error: 'Unauthorized: Invalid session.' });
+  }
 
   try {
     const snapshot = await db.collection('test_scores')

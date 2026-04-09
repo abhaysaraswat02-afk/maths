@@ -6,7 +6,7 @@
     <script>
         // Security Check: Verify session via HTTP-only cookie check on the backend.
         fetch('/api/check-auth').then(res => res.json()).then(data => {
-            if (!data.authenticated || data.role !== 'student') {
+            if (!data.authenticated || (data.role !== 'student' && data.role !== 'staff')) {
                 console.warn('Auth Failed:', data);
                 window.location.href = 'index.html';
             }

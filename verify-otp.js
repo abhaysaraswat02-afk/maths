@@ -2,24 +2,49 @@ import jwt from 'jsonwebtoken';
 import { serialize } from 'cookie';
 import crypto from 'crypto';
 // Assuming you have Firebase Admin SDK initialized for Firestore access
-// import admin from 'firebase-admin';
-// if (!admin.apps.length) {
-//   admin.initializeApp({
-//     credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_KEY)),
-//   });
-// }
-// const db = admin.firestore();
+import admin from 'firebase-admin';
 
 const stripQuotes = value => {
   if (!value) return '';
-  if (value.startsWith('"') && value.endsWith('"')) {
+  if (typeof value === 'string' && value.startsWith('"') && value.endsWith('"')) {
     return value.slice(1, -1);
   }
   return value;
 };
 
-const JWT_SECRET = stripQuotes(process.env.JWT_SECRET || 'a99f2e1a8b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c');
-const OTP_SECRET = stripQuotes(process.env.OTP_SECRET || 'k9j8h7g6f5e4dll3b1a0z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8');
+// Firebase Admin SDK Initialization
+let db;
+try {
+  const projectId = stripQuotes(process.env.FIREBASE_PROJECT_ID || '');
+  const clientEmail = stripQuotes(process.env.FIREBASE_CLIENT_EMAIL || '');
+  const privateKey = stripQuotes((process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'));
+
+  const serviceAccount = {
+    projectId,
+    privateKey,
+    clientEmail,
+  };
+
+  if (!admin.apps.length) {
+    if (serviceAccount.privateKey && serviceAccount.clientEmail && serviceAccount.projectId) {
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.projectId,
+        databaseURL: process.env.FIREBASE_DATABASE_URL,
+      });
+    } else {
+      console.warn("Firebase credentials missing or malformed in .env for verify-otp. Staff role check via Firestore will be limited.");
+    }
+  }
+  if (admin.apps.length) {
+    db = admin.firestore();
+  }
+} catch (error) {
+  console.error("Error initializing Firebase in verify-otp:", error.message);
+}
+
+const JWT_SECRET = stripQuotes(process.env.JWT_SECRET || 'a99f2e1a8b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c'); // Ensure consistent stripping
+const OTP_SECRET = stripQuotes(process.env.OTP_SECRET || 'k9j8h7g6f5e4dll3b1a0z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8'); // Ensure consistent stripping
 
 function verifyTokenSignature(email, otp, expiry, hash) {
   const data = `${email}|${otp}|${expiry}`;
@@ -27,8 +52,21 @@ function verifyTokenSignature(email, otp, expiry, hash) {
   return hash === expectedHash;
 }
 
-// This list should ideally be managed in a database or a more secure configuration.
-const STAFF_EMAILS = ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'];
+// List of emails with super-admin privileges (Hardcoded fallback)
+const superAdmins = ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'];
+
+async function isAuthorizedStaff(email) {
+  if (!email) return false;
+  if (superAdmins.includes(email.toLowerCase())) return true;
+  if (!db) return false; // Cannot check Firestore if DB not initialized
+  try {
+    const snap = await db.collection('staff').where('email', '==', email.toLowerCase()).get();
+    return !snap.empty;
+  } catch (e) {
+    console.error('Error checking staff in Firestore (verify-otp):', e.message);
+    return false;
+  }
+}
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -52,24 +90,28 @@ export default async function handler(req, res) {
     return res.status(401).json({ success: false, error: isExpired ? 'OTP has expired.' : 'Invalid OTP code.' });
   }
 
+  if (!db) {
+    console.error("Firestore DB not initialized in verify-otp. Cannot save new student or check staff roles from DB.");
+    return res.status(500).json({ success: false, error: 'Server database error during OTP verification.' });
+  }
+
   try {
     // Determine role
-    const role = STAFF_EMAILS.includes(email) ? 'staff' : 'student';
+    const role = await isAuthorizedStaff(email) ? 'staff' : 'student';
 
     // If it's a new student registration, save their details
     if (!isExistingUser && role === 'student') {
-      // Example: Save to Firestore
-      // await db.collection('students').doc(email).set({
-      //   name: applicationForm.name,
-      //   phone: applicationForm.phone,
-      //   fatherName: applicationForm.fatherName,
-      //   studentClass: applicationForm.studentClass,
-      //   dob: applicationForm.dob,
-      //   schoolName: applicationForm.schoolName,
-      //   email: email,
-      //   createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      //   isBlocked: false,
-      // });
+      await db.collection('admissions').add({ // Assuming 'admissions' is where new students are saved
+        name: applicationForm.name,
+        phone: applicationForm.phone,
+        fatherName: applicationForm.fatherName,
+        studentClass: applicationForm.studentClass,
+        dob: applicationForm.dob,
+        schoolName: applicationForm.schoolName,
+        email: email,
+        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+        isBlocked: false,
+      });
     }
 
     // Create JWT payload

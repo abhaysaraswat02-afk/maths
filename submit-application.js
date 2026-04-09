@@ -22,12 +22,20 @@ const twilio = require('twilio');
 const jwt = require('jsonwebtoken');
 const { serialize } = require('cookie');
 
+const stripQuotes = value => {
+  if (!value) return '';
+  if (typeof value === 'string' && value.startsWith('"') && value.endsWith('"')) {
+    return value.slice(1, -1);
+  }
+  return value;
+};
+
 
 let db;
 try {
-  const projectId = process.env.FIREBASE_PROJECT_ID || '';
-  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL || '';
-  const privateKey = (process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n');
+  const projectId = stripQuotes(process.env.FIREBASE_PROJECT_ID || '');
+  const clientEmail = stripQuotes(process.env.FIREBASE_CLIENT_EMAIL || '');
+  const privateKey = stripQuotes((process.env.FIREBASE_PRIVATE_KEY || '').replace(/\\n/g, '\n'));
 
   const serviceAccount = {
     projectId,
@@ -99,8 +107,8 @@ app.use(express.static(__dirname));
 
 // --- Nodemailer Transporter ---
 
-const GMAIL_USER = process.env.GMAIL_USER || '';
-const GMAIL_PASS = process.env.GMAIL_PASS || '';
+const GMAIL_USER = stripQuotes(process.env.GMAIL_USER || '');
+const GMAIL_PASS = stripQuotes(process.env.GMAIL_PASS || '');
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -150,8 +158,8 @@ app.use('/api/send-otp', otpLimiter);
 app.use(express.json());
 
 // --- Stateless OTP Logic ---
-const OTP_SECRET = process.env.OTP_SECRET || 'k9j8h7g6f5e4dll3b1a0z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8';
-const JWT_SECRET = process.env.JWT_SECRET || 'a99f2e1a8b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c';
+const OTP_SECRET = stripQuotes(process.env.OTP_SECRET || 'k9j8h7g6f5e4dll3b1a0z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8');
+const JWT_SECRET = stripQuotes(process.env.JWT_SECRET || 'a99f2e1a8b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z7a8b9c');
 const COOKIE_NAME = 'session';
 
 function createVerificationToken(email, otp, expiry) {
@@ -222,8 +230,9 @@ app.post('/api/send-otp', async (req, res) => {
       verificationToken: `${token}.${expiry}` // Send token and expiry to client
     });
   } catch (error) {
-    console.error('Email sending failed:', error);
-    res.status(500).json({ error: 'Failed to send OTP: HTTP 500:' });
+    console.error('Email sending failed:', error); // Log the actual error for debugging
+    console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2)); // Log full error object
+    res.status(500).json({ error: 'Failed to send OTP: HTTP 500:' }); // Return generic message as requested
   }
 });
 

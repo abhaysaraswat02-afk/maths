@@ -56,6 +56,25 @@
         .floating-logo { animation: logo-3d 6s infinite ease-in-out; transform-style: preserve-3d; }
         @keyframes logo-3d { 0%, 100% { transform: rotateY(0deg); } 50% { transform: rotateY(15deg) rotateX(10deg); } }
         [x-cloak] { display: none !important; }
+        
+        /* Enhanced Spinner Animations */
+        .fa-spin {
+            animation: spinSmooth 1.5s linear infinite !important;
+        }
+        @keyframes spinSmooth {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Beautiful Loading/Processing Spinner with Glow */
+        .spinner-glow {
+            animation: spinWithGlow 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.5));
+        }
+        @keyframes spinWithGlow {
+            0%, 100% { transform: rotate(0deg); filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.5)); }
+            50% { filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8)); }
+        }
     </style>
 </head>
 
@@ -385,7 +404,7 @@
                 </div>
 
                 <button type="submit" :disabled="isSubmitting" class="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-blue-600 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
-                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
+                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin spinner-glow mr-2"></i>
                     <span x-text="isSubmitting ? 'Sending OTP...' : (isLoginMode ? 'Get Login OTP' : 'Get OTP to Register')"></span>
                 </button>
             </form>
@@ -398,7 +417,7 @@
                     <input type="text" x-model="enteredOtp" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="w-full max-w-xs mx-auto bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-[0.75rem] font-bold">
                 </div>
                 <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl hover:bg-blue-700 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
-                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
+                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin spinner-glow mr-2"></i>
                     <span x-text="isSubmitting ? 'Verifying...' : 'Verify & Complete Registration'"></span>
                 </button>
                 <button type="button" @click="applicationStep = 'form'" class="text-sm text-slate-500 hover:text-blue-600">Change email address</button>
@@ -419,7 +438,7 @@
                 <h3 class="text-2xl font-black text-slate-900 mb-2">Registration Successful!</h3>
                 <p class="text-slate-600 mb-8">Welcome, <strong x-text="applicationForm.name"></strong>! You are being automatically redirected to the Student Portal to complete your enrollment.</p>
                 <div class="flex items-center justify-center gap-2 font-bold text-slate-500">
-                    <i class="fas fa-spinner fa-spin"></i>
+                    <i class="fas fa-spinner fa-spin spinner-glow"></i>
                     <span>Redirecting...</span>
                 </div>
             </div>

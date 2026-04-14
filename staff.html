@@ -46,15 +46,47 @@
             box-shadow: 0 2px 0px rgba(0, 0, 0, 0.15);
         }
 
-        /* Enhanced Loading Spinner */
+        /* Beautiful Loading Spinner with Multiple Effects */
         .loading-3d-spinner {
-            animation: spin3d 1.5s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            animation: spin3d 2s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55), pulse-glow 2s infinite ease-in-out;
             transform-style: preserve-3d;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
         }
         @keyframes spin3d {
             0% { transform: rotateY(0deg) rotateX(0deg); }
             50% { transform: rotateY(180deg) rotateX(90deg); }
             100% { transform: rotateY(360deg) rotateX(180deg); }
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(37, 99, 235, 0.5), inset 0 0 5px rgba(37, 99, 235, 0.3); }
+            50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8), inset 0 0 10px rgba(59, 130, 246, 0.5); }
+        }
+        
+        /* Processing Modal Styles */
+        .processing-modal {
+            animation: fadeInStay 0.3s ease-out;
+        }
+        .processing-content {
+            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .processing-spinner {
+            animation: spinSmooth 1.5s linear infinite, scalePulse 2s ease-in-out infinite;
+        }
+        @keyframes fadeInStay {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes slideUp {
+            from { transform: translateY(20px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+        @keyframes spinSmooth {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes scalePulse {
+            0%, 100% { filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4)); }
+            50% { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.7)); }
         }
     </style>
 </head>
@@ -426,12 +458,10 @@
     </template>
 
     <!-- Shared Components / Modals -->
-    <div x-show="loading" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl flex items-center shadow-2xl">
-            <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent mr-4"></div>
-        <div class="bg-white p-6 rounded-xl flex items-center shadow-2xl" style="transform-style: preserve-3d;">
-            <div class="rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent mr-4 loading-3d-spinner"></div>
-            <span class="font-bold text-gray-700">Processing...</span>
+    <div x-show="loading" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 processing-modal">
+        <div class="bg-white p-8 rounded-2xl flex flex-col items-center shadow-2xl processing-content" style="min-width: 220px;">
+            <div class="rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4 processing-spinner"></div>
+            <span class="font-bold text-gray-700 text-center tracking-wide">Processing...</span>
         </div>
     </div>
 

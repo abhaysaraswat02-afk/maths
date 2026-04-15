@@ -51,6 +51,12 @@ const FirstVisitorCelebration = (() => {
    */
   const showWelcomeToast = () => {
     return new Promise((resolve) => {
+      // Create backdrop overlay
+      const overlayElement = document.createElement('div');
+      overlayElement.className = 'welcome-overlay';
+      overlayElement.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(overlayElement);
+
       // Create toast container
       toastElement = document.createElement('div');
       toastElement.className = 'welcome-toast';
@@ -69,20 +75,25 @@ const FirstVisitorCelebration = (() => {
       // Trigger animation
       requestAnimationFrame(() => {
         toastElement.classList.add('show');
+        overlayElement.classList.add('show');
       });
 
       // Remove after specified duration
       setTimeout(() => {
         toastElement.classList.remove('show');
+        overlayElement.classList.remove('show');
         
         // Remove from DOM after fade out animation
         setTimeout(() => {
           if (toastElement && toastElement.parentNode) {
             toastElement.parentNode.removeChild(toastElement);
           }
+          if (overlayElement && overlayElement.parentNode) {
+            overlayElement.parentNode.removeChild(overlayElement);
+          }
           toastElement = null;
           resolve();
-        }, 300); // Match CSS transition duration
+        }, 400); // Match CSS transition duration
       }, config.toastDuration);
     });
   };

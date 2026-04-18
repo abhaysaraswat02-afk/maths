@@ -1,0 +1,514 @@
+/**
+ * Era of MathAntics — Enhanced 3D Effects CSS
+ * Stunning visual upgrades: particles, glows, depth, glassmorphism
+ */
+
+/* ============================================================
+   GLOBAL 3D FOUNDATION
+   ============================================================ */
+:root {
+  --blue: #3b82f6;
+  --red: #ef4444;
+  --purple: #8b5cf6;
+  --pink: #ec4899;
+  --green: #10b981;
+  --yellow: #f59e0b;
+  --glow-blue: rgba(59,130,246,0.4);
+  --glow-red: rgba(239,68,68,0.4);
+  --glow-purple: rgba(139,92,246,0.4);
+}
+
+/* ============================================================
+   ANIMATED BACKGROUND PARTICLES
+   ============================================================ */
+#particles-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.45;
+}
+
+/* ============================================================
+   HERO SECTION — DEPTH ORBS
+   ============================================================ */
+.hero-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  pointer-events: none;
+  animation: orb-drift 8s ease-in-out infinite;
+}
+.hero-orb-1 {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(59,130,246,0.25) 0%, transparent 70%);
+  top: -150px; right: -100px;
+  animation-delay: 0s;
+}
+.hero-orb-2 {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, rgba(139,92,246,0.2) 0%, transparent 70%);
+  bottom: -100px; left: -100px;
+  animation-delay: 3s;
+}
+.hero-orb-3 {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(239,68,68,0.15) 0%, transparent 70%);
+  top: 50%; left: 40%;
+  animation-delay: 6s;
+}
+@keyframes orb-drift {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33%       { transform: translate(30px,-30px) scale(1.05); }
+  66%       { transform: translate(-20px,20px) scale(0.97); }
+}
+
+/* ============================================================
+   FLOATING MATH SYMBOLS
+   ============================================================ */
+.math-symbol {
+  position: absolute;
+  font-size: 2rem;
+  font-weight: 900;
+  opacity: 0.06;
+  pointer-events: none;
+  animation: math-float var(--dur,12s) ease-in-out infinite;
+  animation-delay: var(--del,0s);
+  color: #1e40af;
+  user-select: none;
+}
+@keyframes math-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50%       { transform: translateY(-40px) rotate(15deg); }
+}
+
+/* ============================================================
+   SECTION REVEAL — 3D ENTRANCE
+   ============================================================ */
+.reveal-3d {
+  opacity: 0;
+  transform: perspective(1200px) translateY(60px) rotateX(20deg) scale(0.95);
+  transition: opacity 0.8s cubic-bezier(0.165,0.84,0.44,1),
+              transform 0.8s cubic-bezier(0.165,0.84,0.44,1);
+}
+.reveal-3d.revealed {
+  opacity: 1;
+  transform: perspective(1200px) translateY(0) rotateX(0) scale(1);
+}
+.reveal-3d:nth-child(2) { transition-delay: 0.1s; }
+.reveal-3d:nth-child(3) { transition-delay: 0.2s; }
+.reveal-3d:nth-child(4) { transition-delay: 0.3s; }
+.reveal-3d:nth-child(5) { transition-delay: 0.4s; }
+
+/* ============================================================
+   ENHANCED TILT CARDS
+   ============================================================ */
+.tilt-card-3d {
+  transition: transform 0.4s cubic-bezier(0.23,1,0.32,1), box-shadow 0.4s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.tilt-card-3d:hover {
+  transform: perspective(1000px) rotateX(5deg) rotateY(-5deg) translateY(-8px) scale(1.02);
+}
+
+/* ============================================================
+   GLASSMORPHISM CARDS
+   ============================================================ */
+.glass-card {
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.08),
+    inset 0 1px 0 rgba(255,255,255,0.6);
+}
+.glass-card-dark {
+  background: rgba(15,23,42,0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow:
+    0 8px 32px rgba(0,0,0,0.3),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* ============================================================
+   NEON GLOW BUTTONS
+   ============================================================ */
+.btn-neon-blue {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.btn-neon-blue::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 50%);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.btn-neon-blue:hover {
+  box-shadow: 0 0 20px var(--glow-blue), 0 0 40px var(--glow-blue), 0 8px 25px rgba(59,130,246,0.3);
+  transform: translateY(-2px);
+}
+.btn-neon-blue:hover::before { opacity: 1; }
+
+/* ============================================================
+   STATS COUNTER CARDS — 3D POP
+   ============================================================ */
+.stat-3d {
+  position: relative;
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease;
+  transform-style: preserve-3d;
+}
+.stat-3d:hover {
+  transform: perspective(800px) rotateX(-5deg) rotateY(5deg) translateY(-10px) scale(1.04);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.15), 0 0 40px rgba(59,130,246,0.15);
+}
+.stat-3d .stat-glow {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  opacity: 0;
+  z-index: -1;
+  transition: opacity 0.3s;
+  filter: blur(6px);
+}
+.stat-3d:hover .stat-glow { opacity: 0.35; }
+
+/* ============================================================
+   STAFF / TEAM CARDS — DEPTH
+   ============================================================ */
+.team-card-3d {
+  transition: transform 0.5s cubic-bezier(0.23,1,0.32,1), box-shadow 0.5s ease;
+  transform-style: preserve-3d;
+  position: relative;
+}
+.team-card-3d:hover {
+  transform: perspective(1000px) rotateY(-8deg) rotateX(4deg) translateY(-12px);
+  box-shadow: 20px 20px 60px rgba(0,0,0,0.12), 0 0 30px rgba(59,130,246,0.12);
+}
+.team-card-3d .card-shine {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 60%);
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+.team-card-3d:hover .card-shine { opacity: 1; }
+
+/* ============================================================
+   INSTRUCTION STEP CARDS — FLOATING
+   ============================================================ */
+.step-card-3d {
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease;
+  transform-style: preserve-3d;
+  position: relative;
+}
+.step-card-3d:hover {
+  transform: perspective(900px) rotateX(-6deg) translateY(-12px) scale(1.03);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.2), 0 0 30px rgba(59,130,246,0.2);
+}
+.step-number-3d {
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  transform-style: preserve-3d;
+}
+.step-card-3d:hover .step-number-3d {
+  transform: perspective(600px) rotateY(360deg) scale(1.2);
+}
+
+/* ============================================================
+   VIDEO CARDS — CINEMATIC HOVER
+   ============================================================ */
+.video-card-3d {
+  transition: transform 0.5s cubic-bezier(0.23,1,0.32,1), box-shadow 0.5s ease;
+  transform-style: preserve-3d;
+  position: relative;
+}
+.video-card-3d:hover {
+  transform: perspective(1000px) rotateY(-4deg) rotateX(3deg) translateY(-10px) scale(1.03);
+  box-shadow: 0 30px 60px rgba(0,0,0,0.3), 0 0 40px rgba(59,130,246,0.15);
+}
+
+/* ============================================================
+   NAV — FROSTED GLASS + GLOW
+   ============================================================ */
+.nav-glass {
+  background: rgba(255,255,255,0.88) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,0.4);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.06);
+}
+
+/* ============================================================
+   FORM — 3D INPUT FOCUS
+   ============================================================ */
+.input-3d {
+  transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+}
+.input-3d:focus {
+  transform: perspective(400px) translateZ(4px);
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.15), 0 4px 20px rgba(59,130,246,0.12);
+}
+
+/* ============================================================
+   ACHIEVERS — CAROUSEL CARD
+   ============================================================ */
+.achiever-card-3d {
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease;
+  transform-style: preserve-3d;
+}
+.achiever-card-3d:hover {
+  transform: perspective(800px) rotateX(-6deg) rotateY(4deg) translateY(-10px) scale(1.06);
+  box-shadow: 0 25px 50px rgba(0,0,0,0.15), 0 0 30px rgba(59,130,246,0.12);
+}
+
+/* ============================================================
+   FOOTER LINKS — LIFT
+   ============================================================ */
+.footer-link-3d {
+  transition: transform 0.25s ease, color 0.25s ease;
+  display: inline-block;
+}
+.footer-link-3d:hover {
+  transform: translateX(5px) translateZ(5px);
+  color: #3b82f6 !important;
+}
+
+/* ============================================================
+   BADGE FLOATING ENTRANCE
+   ============================================================ */
+@keyframes badge-float-in {
+  from { opacity:0; transform: perspective(800px) rotateY(-90deg) scale(0.7) translateY(20px); }
+  to   { opacity:1; transform: perspective(800px) rotateY(0deg) scale(1) translateY(0); }
+}
+.badge-appear {
+  animation: badge-float-in 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+
+/* ============================================================
+   LEADERBOARD ROWS — DEPTH HOVER
+   ============================================================ */
+.leaderboard-entry {
+  transition: transform 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+}
+.leaderboard-entry:hover {
+  transform: perspective(1000px) translateX(6px) rotateY(-2deg) scale(1.01);
+  box-shadow: -4px 4px 20px rgba(59,130,246,0.12);
+}
+
+/* ============================================================
+   LEVEL-UP NOTIFICATION — 3D POP
+   ============================================================ */
+.level-up-notification {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: perspective(1200px) translate(-50%,-50%) scale(0.5) rotateX(45deg);
+  opacity: 0;
+  z-index: 9999;
+  transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  transform-style: preserve-3d;
+}
+.level-up-notification.show {
+  opacity: 1;
+  transform: perspective(1200px) translate(-50%,-50%) scale(1) rotateX(0deg);
+}
+.level-up-content {
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
+  color: white;
+  padding: 3rem 4rem;
+  border-radius: 24px;
+  text-align: center;
+  box-shadow:
+    0 30px 80px rgba(0,0,0,0.4),
+    0 0 60px rgba(59,130,246,0.4),
+    inset 0 1px 2px rgba(255,255,255,0.3);
+  border: 2px solid rgba(255,255,255,0.2);
+  backdrop-filter: blur(10px);
+}
+.level-up-content h3 { margin: 0 0 1rem; font-size: 2.5rem; font-weight: 900; }
+.level-up-content p  { margin: 0.75rem 0; font-size: 1.2rem; font-weight: 500; }
+
+/* ============================================================
+   STUDENT PORTAL — SIDEBAR GLASS
+   ============================================================ */
+.sidebar-3d {
+  background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%) !important;
+  box-shadow: 4px 0 40px rgba(0,0,0,0.3), inset -1px 0 0 rgba(255,255,255,0.05);
+}
+.sidebar-3d nav button {
+  transition: transform 0.25s cubic-bezier(0.34,1.56,0.64,1), background 0.25s ease, box-shadow 0.25s ease;
+}
+.sidebar-3d nav button:hover:not(.bg-blue-600) {
+  transform: perspective(400px) translateX(4px) rotateY(-3deg) scale(1.02);
+}
+.sidebar-3d nav button.bg-blue-600 {
+  box-shadow: 0 4px 20px rgba(59,130,246,0.35), inset 0 1px 0 rgba(255,255,255,0.15);
+  transform: perspective(400px) translateX(2px);
+}
+
+/* ============================================================
+   DASHBOARD HEADER — 3D CARD
+   ============================================================ */
+.header-card-3d {
+  background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.95) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(226,232,240,0.8);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+  transition: box-shadow 0.3s ease;
+}
+.header-card-3d:hover {
+  box-shadow: 0 8px 40px rgba(59,130,246,0.1), inset 0 1px 0 rgba(255,255,255,0.8);
+}
+
+/* ============================================================
+   RESOURCE / NOTE CARDS — LIFT EFFECT
+   ============================================================ */
+.resource-card-3d {
+  transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease;
+  transform-style: preserve-3d;
+  position: relative;
+  overflow: visible;
+}
+.resource-card-3d::after {
+  content: '';
+  position: absolute;
+  bottom: -8px; left: 8px; right: 8px;
+  height: 20px;
+  background: rgba(0,0,0,0.08);
+  filter: blur(8px);
+  border-radius: 50%;
+  transition: opacity 0.4s, transform 0.4s;
+  opacity: 0;
+  pointer-events: none;
+}
+.resource-card-3d:hover {
+  transform: perspective(800px) rotateX(-4deg) translateY(-8px) scale(1.02);
+}
+.resource-card-3d:hover::after {
+  opacity: 1;
+  transform: scaleX(1.1);
+}
+
+/* ============================================================
+   PROFILE AVATAR — GLOW RING
+   ============================================================ */
+.avatar-glow {
+  position: relative;
+}
+.avatar-glow::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  z-index: -1;
+  animation: avatar-spin 3s linear infinite;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+.avatar-glow:hover::before { opacity: 1; }
+@keyframes avatar-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   SCROLL PROGRESS BAR
+   ============================================================ */
+#scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
+  z-index: 9999;
+  width: 0%;
+  transition: width 0.1s ease;
+  box-shadow: 0 0 8px rgba(139,92,246,0.6);
+}
+
+/* ============================================================
+   FLOATING ACTION BUTTON
+   ============================================================ */
+#scroll-top-btn {
+  position: fixed;
+  bottom: 30px; right: 30px;
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #1e40af, #3b82f6);
+  color: white;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  z-index: 100;
+  opacity: 0;
+  transform: translateY(20px) scale(0.8);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 8px 25px rgba(59,130,246,0.4);
+  border: none;
+}
+#scroll-top-btn.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+#scroll-top-btn:hover {
+  transform: translateY(-3px) scale(1.1);
+  box-shadow: 0 12px 35px rgba(59,130,246,0.5);
+}
+
+/* ============================================================
+   CURSOR GLOW TRAIL
+   ============================================================ */
+.cursor-dot {
+  position: fixed;
+  width: 8px; height: 8px;
+  background: #3b82f6;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9998;
+  transform: translate(-50%,-50%);
+  transition: width 0.2s, height 0.2s, opacity 0.2s;
+  mix-blend-mode: multiply;
+}
+.cursor-ring {
+  position: fixed;
+  width: 36px; height: 36px;
+  border: 2px solid rgba(59,130,246,0.4);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9997;
+  transform: translate(-50%,-50%);
+  transition: all 0.12s ease;
+}
+
+/* ============================================================
+   RESPONSIVE — REDUCE 3D ON MOBILE
+   ============================================================ */
+@media (max-width: 768px) {
+  .tilt-card-3d:hover,
+  .team-card-3d:hover,
+  .stat-3d:hover,
+  .step-card-3d:hover,
+  .resource-card-3d:hover {
+    transform: translateY(-4px) scale(1.01);
+  }
+  .hero-orb { filter: blur(60px); }
+  #particles-canvas { opacity: 0.25; }
+  .cursor-dot, .cursor-ring { display: none; }
+}
+
+/* ============================================================
+   PREFERS REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

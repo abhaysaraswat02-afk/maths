@@ -26,6 +26,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="welcomeBackAnimation.css">
     <link rel="stylesheet" href="firstVisitorCelebration.css">
+    <link rel="stylesheet" href="gamification.css">
+    <link rel="stylesheet" href="gamification-personality.css">
+    <link rel="stylesheet" href="effects-3d-enhanced.css">
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; }
         .card-3d {
@@ -45,7 +48,7 @@
     <!-- Mobile Overlay -->
     <div x-show="mobileMenu" x-transition.opacity class="fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm md:hidden" @click="mobileMenu = false" x-cloak></div>
 
-    <aside :class="mobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed left-0 top-0 z-50 h-full w-64 bg-slate-900 text-white border-r border-slate-800 transition-transform duration-300 md:translate-x-0 shadow-2xl md:shadow-none overflow-y-auto">
+    <aside :class="mobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed left-0 top-0 z-50 h-full w-64 bg-slate-900 text-white border-r border-slate-800 transition-transform duration-300 md:translate-x-0 shadow-2xl md:shadow-none overflow-y-auto sidebar-3d">
         <div class="p-6 flex justify-between items-center">
             <h1 class="text-xl font-extrabold text-white italic tracking-tighter">Era of <span class="text-blue-500">MathAntics</span></h1>
             <button @click="mobileMenu = false" class="md:hidden text-slate-400 hover:text-white">
@@ -64,7 +67,7 @@
 
     <main class="md:ml-64 p-6 min-h-screen">
         
-        <header class="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border gap-4">
+        <header class="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border gap-4 header-card-3d">
             <div>
                 <div class="flex items-center gap-3 mb-2 md:hidden">
                     <button @click="mobileMenu = true" class="p-2 bg-slate-100 rounded-lg text-slate-800 hover:bg-blue-50 hover:text-blue-600 transition">
@@ -989,6 +992,10 @@
 
     <!-- Welcome Back Animation & First Visitor Celebration Scripts -->
     <script src="welcomeBackAnimation.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.0/dist/confetti.browser.min.js"></script>
+    <script src="gamification.js"></script>
+    <script src="gamification-component.js"></script>
+    <script src="effects-3d-enhanced.js" defer></script>
     <script src="firstVisitorCelebration.js"></script>
 
 </body>

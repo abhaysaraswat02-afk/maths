@@ -17,6 +17,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link rel="stylesheet" href="gamification.css">
+    <link rel="stylesheet" href="gamification-personality.css">
+    <link rel="stylesheet" href="effects-3d-enhanced.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -203,7 +206,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                 <template x-for="member in staffList" :key="member.id">
-                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 text-center hover:shadow-xl transition-all group tilt-card">
+                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 text-center hover:shadow-xl transition-all group tilt-card tilt-card-3d team-card-3d reveal-3d">
                         <div class="w-32 h-32 mx-auto bg-white rounded-full mb-6 border-4 border-white shadow-md overflow-hidden flex items-center justify-center bg-blue-100 text-blue-600">
                             <i class="fas fa-user-tie text-5xl"></i>
                         </div>
@@ -219,19 +222,19 @@
     <!-- Stats Strip -->
     <div class="bg-slate-900 text-white py-12 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-800">
-            <div class="text-center px-4">
+            <div class="text-center px-4 stat-3d">
                 <div class="text-3xl md:text-4xl font-black text-yellow-400 mb-1" x-text="animatedStats.students + '+'"></div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Happy Students</div>
             </div>
-            <div class="text-center px-4">
+            <div class="text-center px-4 stat-3d">
                 <div class="text-3xl md:text-4xl font-black text-blue-400 mb-1">500+</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Selections</div>
             </div>
-            <div class="text-center px-4">
+            <div class="text-center px-4 stat-3d">
                 <div class="text-3xl md:text-4xl font-black text-red-400 mb-1">4.9</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">App Rating</div>
             </div>
-            <div class="text-center px-4">
+            <div class="text-center px-4 stat-3d">
                 <div class="text-3xl md:text-4xl font-black text-green-400 mb-1">Daily</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Classes</div>
             </div>
@@ -251,7 +254,7 @@
                 <!-- Content is duplicated for seamless scroll effect -->
                 <div class="flex gap-6 px-3">
                     <template x-for="(student, index) in starAchievers" :key="index">
-                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300 tilt-card">
+                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center tilt-card achiever-card-3d">
                             <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
                                 <img :src="student.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + student.avatarSeed" alt="Student" class="w-full h-full object-cover">
                             </div>
@@ -263,7 +266,7 @@
                 </div>
                 <div class="flex gap-6 px-3" aria-hidden="true">
                     <template x-for="(student, index) in starAchievers" :key="index">
-                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300 tilt-card">
+                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center tilt-card achiever-card-3d">
                             <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
                                 <img :src="student.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + student.avatarSeed" alt="Student" class="w-full h-full object-cover">
                             </div>
@@ -284,18 +287,18 @@
                 <span class="text-yellow-400 font-bold tracking-widest uppercase text-xs">Coaching Instructions</span>
                 <h2 class="text-3xl md:text-5xl font-black mt-2 mb-6">How to Start Learning</h2>
                 <div class="grid md:grid-cols-3 gap-8 mt-12">
-                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
-                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">1</div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 step-card-3d">
+                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4 step-number-3d">1</div>
                         <h3 class="text-xl font-bold mb-2">Register Online</h3>
                         <p class="text-slate-400">Fill out the form below with your name and phone number to create your student account.</p>
                     </div>
-                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
-                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">2</div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 step-card-3d">
+                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4 step-number-3d">2</div>
                         <h3 class="text-xl font-bold mb-2">Access Portal</h3>
                         <p class="text-slate-400">Log in to the student dashboard to access free study notes, resources, and recorded videos.</p>
                     </div>
-                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
-                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">3</div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 step-card-3d">
+                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4 step-number-3d">3</div>
                         <h3 class="text-xl font-bold mb-2">Join Classes</h3>
                         <p class="text-slate-400">Check the dashboard for live class schedules and join sessions directly from your browser.</p>
                     </div>
@@ -314,19 +317,19 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/6bgs-EINbJ0?si=pzvmI5kS13ajKIZR" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/wmYJS5SVaIc?si=cV34cxxO2hMtXE0e" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/soVvWgx8pCM?si=1_4OfRts4E9O1O9K" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/6uXk2y6vxRA?si=qu-X6EUK3WTgZdfI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/OzDAMBJTZ18?si=ChHwoAgLc5odShkB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
 
@@ -364,7 +367,7 @@
                 <div class="grid md:grid-cols-2 gap-6">
                     <div x-show="!isLoginMode">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Full Name</label>
-                            <input type="text" x-model="applicationForm.name" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter student name">
+                            <input type="text" x-model="applicationForm.name" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none input-3d" placeholder="Enter student name">
                     </div>
                     <div :class="isLoginMode ? 'md:col-span-2' : ''">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Email Address</label>
@@ -507,9 +510,9 @@
             <div>
                 <h4 class="font-bold mb-6 text-white">Quick Links</h4>
                 <ul class="space-y-4 text-sm font-medium">
-                    <li><a href="#home" class="hover:text-blue-600">Home</a></li>
-                    <li><a href="#apply" class="hover:text-blue-600">Student Portal</a></li>
-                    <li><a href="#contact" class="hover:text-blue-600">Contact Us</a></li>
+                    <li><a href="#home" class="hover:text-blue-600 footer-link-3d">Home</a></li>
+                    <li><a href="#apply" class="hover:text-blue-600 footer-link-3d">Student Portal</a></li>
+                    <li><a href="#contact" class="hover:text-blue-600 footer-link-3d">Contact Us</a></li>
                 </ul>
             </div>
             <div>
@@ -947,6 +950,10 @@
     <!-- Welcome Back Animation & First Visitor Celebration Scripts -->
     <script src="welcomeBackAnimation.js"></script>
     <script src="firstVisitorCelebration.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.0/dist/confetti.browser.min.js"></script>
+    <script src="gamification.js"></script>
+    <script src="gamification-component.js"></script>
+    <script src="effects-3d-enhanced.js" defer></script>
 
 </body>
 </html>

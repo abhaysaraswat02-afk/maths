@@ -280,6 +280,63 @@
         </div>
     </section>
 
+    <!-- Math Quiz + Tip Row -->
+    <section class="py-16 bg-white">
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-10">
+          <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Interactive</span>
+          <h2 class="text-3xl md:text-5xl font-black text-slate-900 mt-2">Test Your <span class="text-gradient">Skills Now</span></h2>
+          <p class="text-slate-500 font-bold mt-3 max-w-xl mx-auto">Quick daily quiz to keep your maths sharp — no login needed!</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-8 items-start">
+          <!-- Quiz Widget -->
+          <div class="md:col-span-2" id="quiz-widget">
+            <div class="flex items-center justify-between mb-3">
+              <span class="text-xs font-bold uppercase tracking-widest opacity-70">Daily Challenge</span>
+              <span class="quiz-streak">🔥 ×0</span>
+            </div>
+            <div id="quiz-progress"><div id="quiz-progress-fill" style="width:0%"></div></div>
+            <div class="quiz-question">Loading question…</div>
+            <div class="quiz-options">
+              <button class="quiz-opt">A</button>
+              <button class="quiz-opt">B</button>
+              <button class="quiz-opt">C</button>
+              <button class="quiz-opt">D</button>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="quiz-score">Score: 0 | Best Streak: 0 🔥</div>
+              <button id="quiz-next-btn">Next →</button>
+            </div>
+          </div>
+          <!-- Tip + Countdown col -->
+          <div class="space-y-6">
+            <!-- Tip of the Day -->
+            <div id="tip-card">
+              <div class="tip-badge">💡 Tip of the Day</div>
+              <p id="tip-text">Loading tip…</p>
+              <button id="tip-refresh-btn">Next Tip →</button>
+            </div>
+            <!-- Exam Countdown -->
+            <div id="countdown-banner">
+              <div>
+                <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Board Exam Countdown</div>
+                <div class="text-sm font-bold text-white">Class 10 — March 2026</div>
+              </div>
+              <div class="countdown-units">
+                <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-label">Days</span></div>
+                <div class="countdown-divider">:</div>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-label">Hrs</span></div>
+                <div class="countdown-divider">:</div>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-mins">--</span><span class="countdown-label">Min</span></div>
+                <div class="countdown-divider">:</div>
+                <div class="countdown-unit"><span class="countdown-num" id="cd-secs">--</span><span class="countdown-label">Sec</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- Instruction Section -->
     <section class="py-20 bg-slate-900 text-white relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-6 relative z-10">
@@ -947,6 +1004,38 @@
         }
     </script>
 
+    <!-- Chat Bubble -->
+    <div id="chat-bubble">
+      <button id="chat-bubble-btn" title="Ask MathBot">💬<span class="badge-dot"></span></button>
+      <div id="chat-panel-popup">
+        <div class="chat-header">🤖 MathBot Assistant <span style="cursor:pointer;opacity:0.7" onclick="document.getElementById('chat-panel-popup').classList.remove('open')">✕</span></div>
+        <div class="chat-msgs"></div>
+        <div class="chat-input-row">
+          <input type="text" placeholder="Ask about maths…" />
+          <button>➤</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quote Toast -->
+    <div id="quote-toast">
+      <div class="quote-icon">📚</div>
+      <div class="quote-text"></div>
+      <div class="quote-author"></div>
+    </div>
+
+    <!-- Achievement Popup -->
+    <div id="achievement-popup">
+      <div class="achievement-popup-inner">
+        <div class="achievement-icon">⭐</div>
+        <div class="achievement-text">
+          <strong>Well done!</strong>
+          <span>Keep going</span>
+          <div><span class="achievement-badge-label">Nice Work</span></div>
+        </div>
+      </div>
+    </div>
+
     <!-- Welcome Back Animation & First Visitor Celebration Scripts -->
     <script src="welcomeBackAnimation.js"></script>
     <script src="firstVisitorCelebration.js"></script>
@@ -954,6 +1043,7 @@
     <script src="gamification.js"></script>
     <script src="gamification-component.js"></script>
     <script src="effects-3d-enhanced.js" defer></script>
+    <link rel="stylesheet" href="features-new.css">
 
 </body>
 </html>

@@ -18,6 +18,7 @@
     <link rel="stylesheet" href="gamification.css">
     <link rel="stylesheet" href="gamification-personality.css">
     <link rel="stylesheet" href="effects-3d-enhanced.css">
+    <link rel="stylesheet" href="features-new.css">
     <link rel="stylesheet" href="firstVisitorCelebration.css">
     <link rel="stylesheet" href="style.css">
     <style>
@@ -483,5 +484,19 @@
     <script src="gamification.js"></script>
     <script src="gamification-component.js"></script>
     <script src="effects-3d-enhanced.js" defer></script>
+    <div id="chat-bubble">
+      <button id="chat-bubble-btn" title="Ask MathBot">💬<span class="badge-dot"></span></button>
+      <div id="chat-panel-popup">
+        <div class="chat-header">🤖 MathBot Staff Help</div>
+        <div class="chat-msgs"></div>
+        <div class="chat-input-row">
+          <input type="text" placeholder="Ask about maths…" />
+          <button>➤</button>
+        </div>
+      </div>
+    </div>
+    <div id="quote-toast"><div class="quote-icon">📚</div><div class="quote-text"></div><div class="quote-author"></div></div>
+    <div id="achievement-popup"><div class="achievement-popup-inner"><div class="achievement-icon">⭐</div><div class="achievement-text"><strong>Well done!</strong><span>Keep going</span><div><span class="achievement-badge-label">Nice Work</span></div></div></div></div>
+    <script src="features-new.js" defer></script>
 </body>
 </html>

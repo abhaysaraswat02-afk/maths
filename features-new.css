@@ -1,0 +1,582 @@
+/**
+ * Era of MathAntics — New Exciting Features CSS
+ * Math Quiz Widget, AI Tip of the Day, Countdown Timer,
+ * Dark Mode, Live Chat Bubble, Confetti Burst, Skill Meter
+ */
+
+/* ══════════════════════════════════════════════
+   DARK MODE
+   ══════════════════════════════════════════════ */
+body.dark-mode {
+  background: #0f172a !important;
+  color: #e2e8f0 !important;
+}
+body.dark-mode nav,
+body.dark-mode .bg-white,
+body.dark-mode .glass-morphism {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .bg-slate-50  { background: #0f172a !important; }
+body.dark-mode .bg-slate-100 { background: #1e293b !important; }
+body.dark-mode .bg-blue-50   { background: #172554 !important; }
+body.dark-mode .text-slate-900 { color: #f1f5f9 !important; }
+body.dark-mode .text-slate-600 { color: #94a3b8 !important; }
+body.dark-mode .text-slate-500 { color: #64748b !important; }
+body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+  background: #1e293b !important;
+  color: #e2e8f0 !important;
+  border-color: #334155 !important;
+}
+body.dark-mode .border-slate-100,
+body.dark-mode .border-slate-200 { border-color: #334155 !important; }
+body.dark-mode footer { background: #020617 !important; }
+
+/* Dark mode toggle button */
+#dark-mode-toggle {
+  position: fixed;
+  top: 90px; right: 16px;
+  z-index: 200;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e40af, #7c3aed);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 4px 20px rgba(30,64,175,0.4);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+#dark-mode-toggle:hover {
+  transform: rotate(20deg) scale(1.1);
+  box-shadow: 0 6px 28px rgba(30,64,175,0.5);
+}
+
+/* ══════════════════════════════════════════════
+   MATH QUIZ WIDGET (index.html)
+   ══════════════════════════════════════════════ */
+#quiz-widget {
+  position: relative;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #2563eb 100%);
+  border-radius: 28px;
+  padding: 2.5rem;
+  color: white;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(30,64,175,0.35);
+}
+#quiz-widget::before {
+  content: '';
+  position: absolute;
+  top: -60px; right: -60px;
+  width: 220px; height: 220px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 50%;
+}
+#quiz-widget::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: -40px;
+  width: 160px; height: 160px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 50%;
+}
+.quiz-question {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin-bottom: 1.5rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  min-height: 64px;
+  transition: all 0.3s ease;
+}
+.quiz-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+.quiz-opt {
+  background: rgba(255,255,255,0.12);
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 14px;
+  padding: 0.75rem 1rem;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  color: white;
+}
+.quiz-opt:hover { background: rgba(255,255,255,0.22); transform: translateY(-2px) scale(1.03); }
+.quiz-opt.correct { background: rgba(16,185,129,0.5) !important; border-color: #10b981 !important; animation: pop-correct 0.4s; }
+.quiz-opt.wrong   { background: rgba(239,68,68,0.45)  !important; border-color: #ef4444 !important; animation: shake-wrong 0.4s; }
+@keyframes pop-correct { 0%{transform:scale(1)} 50%{transform:scale(1.08)} 100%{transform:scale(1)} }
+@keyframes shake-wrong  { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+.quiz-score {
+  font-size: 0.85rem;
+  opacity: 0.8;
+  margin-top: 0.5rem;
+}
+.quiz-streak {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+#quiz-next-btn {
+  background: white;
+  color: #1e40af;
+  border: none;
+  border-radius: 14px;
+  padding: 0.65rem 1.5rem;
+  font-weight: 800;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+  display: none;
+}
+#quiz-next-btn:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 6px 20px rgba(0,0,0,0.15); }
+#quiz-progress {
+  height: 6px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 3px;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+}
+#quiz-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg,#10b981,#34d399);
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  box-shadow: 0 0 8px rgba(16,185,129,0.6);
+}
+
+/* ══════════════════════════════════════════════
+   AI TIP OF THE DAY CARD
+   ══════════════════════════════════════════════ */
+#tip-card {
+  background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+  border: 2px solid #86efac;
+  border-radius: 20px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+body.dark-mode #tip-card { background: linear-gradient(135deg,#052e16,#14532d); border-color: #166534; }
+#tip-card::before {
+  content: '💡';
+  position: absolute;
+  top: -10px; right: -10px;
+  font-size: 4rem;
+  opacity: 0.08;
+}
+.tip-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #16a34a;
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+#tip-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #166534;
+  line-height: 1.6;
+  min-height: 48px;
+}
+body.dark-mode #tip-text { color: #86efac; }
+#tip-refresh-btn {
+  margin-top: 0.75rem;
+  background: none;
+  border: 1.5px solid #16a34a;
+  color: #16a34a;
+  border-radius: 10px;
+  padding: 5px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+#tip-refresh-btn:hover { background: #16a34a; color: white; transform: scale(1.05); }
+
+/* ══════════════════════════════════════════════
+   COUNTDOWN TO EXAM BANNER
+   ══════════════════════════════════════════════ */
+#countdown-banner {
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: white;
+  padding: 1.5rem 2rem;
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+}
+.countdown-unit {
+  text-align: center;
+  min-width: 60px;
+}
+.countdown-num {
+  font-size: 2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-variant-numeric: tabular-nums;
+  display: block;
+  line-height: 1;
+}
+.countdown-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+  font-weight: 700;
+  margin-top: 2px;
+}
+.countdown-divider { font-size: 1.5rem; font-weight: 900; color: #334155; align-self: center; }
+.countdown-units { display: flex; align-items: center; gap: 0.5rem; }
+
+/* ══════════════════════════════════════════════
+   SKILL METER BARS (student.html)
+   ══════════════════════════════════════════════ */
+.skill-meter { margin-bottom: 1rem; }
+.skill-label {
+  display: flex; justify-content: space-between;
+  font-size: 0.8rem; font-weight: 700;
+  color: #475569; margin-bottom: 6px;
+}
+body.dark-mode .skill-label { color: #94a3b8; }
+.skill-bar {
+  height: 10px;
+  background: #e2e8f0;
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+}
+body.dark-mode .skill-bar { background: #334155; }
+.skill-fill {
+  height: 100%;
+  border-radius: 5px;
+  width: 0%;
+  transition: width 1.4s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+  overflow: hidden;
+}
+.skill-fill::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 40%, rgba(255,255,255,0.4), transparent);
+  animation: shimmer-skill 2s infinite;
+}
+@keyframes shimmer-skill { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+.skill-fill.arith  { background: linear-gradient(90deg,#3b82f6,#60a5fa); }
+.skill-fill.algebra{ background: linear-gradient(90deg,#8b5cf6,#a78bfa); }
+.skill-fill.geo    { background: linear-gradient(90deg,#ec4899,#f472b6); }
+.skill-fill.calc   { background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+.skill-fill.stats  { background: linear-gradient(90deg,#10b981,#34d399); }
+
+/* ══════════════════════════════════════════════
+   LIVE CHAT BUBBLE
+   ══════════════════════════════════════════════ */
+#chat-bubble {
+  position: fixed;
+  bottom: 90px; right: 24px;
+  z-index: 300;
+}
+#chat-bubble-btn {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px;
+  box-shadow: 0 6px 30px rgba(30,64,175,0.45);
+  transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  position: relative;
+}
+#chat-bubble-btn:hover { transform: scale(1.12) rotate(-8deg); }
+#chat-bubble-btn .badge-dot {
+  position: absolute; top: 4px; right: 4px;
+  width: 12px; height: 12px;
+  background: #ef4444;
+  border-radius: 50%;
+  border: 2px solid white;
+  animation: pulse-dot 1.5s infinite;
+}
+@keyframes pulse-dot { 0%,100%{transform:scale(1)} 50%{transform:scale(1.3)} }
+
+#chat-panel-popup {
+  position: absolute;
+  bottom: 68px; right: 0;
+  width: 300px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  display: none;
+  animation: chat-slide-in 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
+body.dark-mode #chat-panel-popup { background: #1e293b; border-color: #334155; }
+@keyframes chat-slide-in {
+  from { opacity:0; transform: translateY(12px) scale(0.95); }
+  to   { opacity:1; transform: translateY(0) scale(1); }
+}
+#chat-panel-popup.open { display: block; }
+.chat-header {
+  background: linear-gradient(135deg,#1e40af,#2563eb);
+  color: white;
+  padding: 14px 18px;
+  font-weight: 800;
+  font-size: 0.9rem;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.chat-msgs {
+  height: 180px;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex; flex-direction: column; gap: 8px;
+  background: #f8fafc;
+}
+body.dark-mode .chat-msgs { background: #0f172a; }
+.chat-msg {
+  max-width: 85%;
+  padding: 8px 12px;
+  border-radius: 14px;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  animation: msg-in 0.25s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes msg-in { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.chat-msg.bot {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #1e293b;
+  align-self: flex-start;
+}
+body.dark-mode .chat-msg.bot { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+.chat-msg.user {
+  background: linear-gradient(135deg, #1e40af, #2563eb);
+  color: white;
+  align-self: flex-end;
+}
+.chat-input-row {
+  display: flex; gap: 6px;
+  padding: 10px;
+  border-top: 1px solid #e2e8f0;
+  background: white;
+}
+body.dark-mode .chat-input-row { background: #1e293b; border-color: #334155; }
+.chat-input-row input {
+  flex: 1;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 0.8rem;
+  outline: none;
+  background: #f8fafc;
+  color: #1e293b;
+}
+body.dark-mode .chat-input-row input { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+.chat-input-row button {
+  background: linear-gradient(135deg,#1e40af,#2563eb);
+  color: white; border: none;
+  border-radius: 10px;
+  padding: 7px 12px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: transform 0.2s;
+}
+.chat-input-row button:hover { transform: scale(1.08); }
+
+/* ══════════════════════════════════════════════
+   MATH FORMULA TICKER (index.html)
+   ══════════════════════════════════════════════ */
+#formula-ticker {
+  background: linear-gradient(90deg, #0f172a, #1e293b, #0f172a);
+  border-top: 1px solid #334155;
+  border-bottom: 1px solid #334155;
+  padding: 10px 0;
+  overflow: hidden;
+  position: relative;
+}
+.formula-track {
+  display: flex;
+  gap: 3rem;
+  animation: formula-scroll 30s linear infinite;
+  white-space: nowrap;
+}
+@keyframes formula-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.formula-item {
+  display: inline-flex; align-items: center; gap: 8px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.formula-item .formula-math {
+  background: rgba(59,130,246,0.15);
+  color: #60a5fa;
+  padding: 2px 10px;
+  border-radius: 6px;
+  font-family: 'Courier New', monospace;
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+
+/* ══════════════════════════════════════════════
+   MOTIVATIONAL QUOTE MODAL
+   ══════════════════════════════════════════════ */
+#quote-toast {
+  position: fixed;
+  bottom: 24px; left: 24px;
+  max-width: 320px;
+  background: white;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+  border-left: 4px solid #3b82f6;
+  z-index: 500;
+  opacity: 0; transform: translateX(-30px);
+  transition: all 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events: none;
+}
+body.dark-mode #quote-toast { background: #1e293b; border-color: #3b82f6; }
+#quote-toast.show { opacity: 1; transform: translateX(0); pointer-events: all; }
+.quote-icon { font-size: 1.5rem; margin-bottom: 6px; }
+.quote-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.5;
+  font-style: italic;
+}
+body.dark-mode .quote-text { color: #e2e8f0; }
+.quote-author { font-size: 0.75rem; color: #64748b; margin-top: 6px; font-weight: 700; }
+
+/* ══════════════════════════════════════════════
+   STUDY STREAK FIRE (student sidebar)
+   ══════════════════════════════════════════════ */
+.streak-widget {
+  background: linear-gradient(135deg, rgba(239,68,68,0.12), rgba(249,115,22,0.12));
+  border: 1px solid rgba(249,115,22,0.25);
+  border-radius: 14px;
+  padding: 12px;
+  margin: 8px 0;
+  display: flex; align-items: center; gap: 10px;
+}
+.streak-fire {
+  font-size: 1.8rem;
+  animation: fire-flicker 1s ease-in-out infinite alternate;
+}
+@keyframes fire-flicker {
+  from { transform: scale(1) rotate(-4deg); filter: brightness(1); }
+  to   { transform: scale(1.12) rotate(4deg); filter: brightness(1.2); }
+}
+.streak-info .streak-num {
+  font-size: 1.1rem;
+  font-weight: 900;
+  color: #f97316;
+}
+.streak-info .streak-lbl {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ══════════════════════════════════════════════
+   CONFETTI BURST BUTTON
+   ══════════════════════════════════════════════ */
+.confetti-btn {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* ══════════════════════════════════════════════
+   MINI LEADERBOARD WIDGET (student sidebar)
+   ══════════════════════════════════════════════ */
+.mini-leaderboard {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 12px;
+  margin: 8px 0;
+}
+.mini-leaderboard-title {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+.mini-lb-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.mini-lb-row:last-child { border-bottom: none; }
+.mini-lb-rank {
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: linear-gradient(135deg,#3b82f6,#8b5cf6);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 900;
+  color: white;
+  flex-shrink: 0;
+}
+.mini-lb-name { font-size: 0.78rem; font-weight: 600; color: #cbd5e1; flex: 1; }
+.mini-lb-pts  { font-size: 0.72rem; font-weight: 700; color: #3b82f6; }
+
+/* ══════════════════════════════════════════════
+   ACHIEVEMENT POPUP
+   ══════════════════════════════════════════════ */
+#achievement-popup {
+  position: fixed;
+  top: 80px; right: 24px;
+  z-index: 400;
+  background: white;
+  border-radius: 18px;
+  padding: 16px 20px;
+  min-width: 260px;
+  box-shadow: 0 16px 50px rgba(0,0,0,0.18);
+  border: 1px solid #e2e8f0;
+  display: none;
+  animation: achievement-slide 0.4s cubic-bezier(0.34,1.56,0.64,1);
+}
+body.dark-mode #achievement-popup { background: #1e293b; border-color: #334155; }
+@keyframes achievement-slide {
+  from { opacity:0; transform:translateX(40px) scale(0.9); }
+  to   { opacity:1; transform:translateX(0) scale(1); }
+}
+.achievement-popup-inner { display: flex; align-items: center; gap: 12px; }
+.achievement-icon { font-size: 2.5rem; }
+.achievement-text strong { display: block; font-size: 0.9rem; font-weight: 800; color: #1e293b; }
+body.dark-mode .achievement-text strong { color: #f1f5f9; }
+.achievement-text span { font-size: 0.78rem; color: #64748b; }
+.achievement-badge-label {
+  display: inline-block;
+  background: linear-gradient(135deg,#f59e0b,#d97706);
+  color: white; font-size: 0.65rem;
+  font-weight: 800; padding: 2px 8px;
+  border-radius: 20px; margin-top: 4px;
+}

@@ -15,28 +15,26 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
-  const sessionCookie = req.cookies.session;
-  if (!sessionCookie) {
-    return res.status(401).json({ error: 'Unauthorized: No session found' });
-  }
-
-  try {
-    const decoded = jwt.verify(sessionCookie, JWT_SECRET);
-    if (decoded.role !== 'staff') {
-      return res.status(403).json({ error: 'Forbidden: Not staff' });
-    }
-  } catch (error) {
-    console.error('JWT verification failed in /api/get-staff:', error);
-    return res.status(401).json({ error: 'Unauthorized: Invalid session' });
-  }
+  // Public endpoint - No authentication required for displaying team members on homepage
+  // This is public information that should be shown to all visitors
 
   // --- Placeholder for actual Firestore logic ---
   // Replace with your actual Firestore query to get staff members
-  // Example: const staffSnap = await db.collection('staff').get();
-  // const staffList = staffSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  // return res.status(200).json(staffList);
+  // Example: 
+  // try {
+  //   const staffSnap = await db.collection('staff').get();
+  //   const staffList = staffSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  //   return res.status(200).json(staffList);
+  // } catch (error) {
+  //   console.error('Error fetching staff:', error);
+  //   return res.status(500).json({ error: 'Failed to fetch staff members' });
+  // }
+
+  // Hardcoded staff members for now
   return res.status(200).json([
     { id: 'staff1', name: 'Dr. Abhay Sharma', role: 'Math Head', email: 'admin@mathantics.com' },
     { id: 'staff2', name: 'Ms. Priya Singh', role: 'Senior Teacher', email: 'teacher@mathantics.com' },
+    { id: 'staff3', name: 'Mr. Rajesh Kumar', role: 'Co-Instructor', email: 'rajesh@mathantics.com' },
+    { id: 'staff4', name: 'Ms. Neha Verma', role: 'Content Lead', email: 'neha@mathantics.com' },
   ]);
 }

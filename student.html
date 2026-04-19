@@ -31,131 +31,159 @@
     <link rel="stylesheet" href="effects-3d-enhanced.css">
     <link rel="stylesheet" href="features-new.css">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        :root {
+            --gold: #FFD700;
+            --gold2: #FFA500;
+            --deep: #0a0a1a;
+            --deep2: #0d0d2b;
+            --navy: #0a0f3d;
+            --accent: #00f5ff;
+            --accent2: #7b2fff;
+            --white: #ffffff;
+            --glass: rgba(255,255,255,0.06);
+            --glass2: rgba(255,215,0,0.08);
+            --red: #ff3a3a;
+            --green: #00e676;
+        }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: var(--deep) !important; color: var(--white) !important; cursor: none; }
+        /* Custom Cursor */
+        .cursor { width: 18px; height: 18px; border: 2px solid var(--gold); border-radius: 50%; position: fixed; top:0; left:0; pointer-events: none; z-index: 99999; transition: transform 0.15s ease; mix-blend-mode: difference; }
+        .cursor-dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; position: fixed; top:0; left:0; pointer-events: none; z-index: 99999; }
+        #particles { position:fixed; top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--deep2); }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
         .card-3d {
             transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
             transform-style: preserve-3d;
+            background: var(--glass);
+            border: 1px solid rgba(255,215,0,0.2);
         }
         .card-3d:hover {
             transform: perspective(1000px) rotateX(2deg) rotateY(2deg) translateY(-8px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 25px 50px -12px rgba(255,215,0,0.25);
         }
         [x-cloak] { display: none !important; }
     </style>
 </head>
 
-<body class="bg-gray-50 text-slate-900" x-data="studentPortal()" x-init="init()" x-cloak>
+<body class="text-white" x-data="studentPortal()" x-init="init()" x-cloak>
+    <!-- CURSOR -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+    <!-- PARTICLES -->
+    <canvas id="particles"></canvas>
 
     <!-- Mobile Overlay -->
-    <div x-show="mobileMenu" x-transition.opacity class="fixed inset-0 z-40 bg-slate-900/80 backdrop-blur-sm md:hidden" @click="mobileMenu = false" x-cloak></div>
+    <div x-show="mobileMenu" x-transition.opacity class="fixed inset-0 z-40 backdrop-blur-sm md:hidden" @click="mobileMenu = false" x-cloak style="background: rgba(5,5,15,0.92);"></div>
 
-    <aside :class="mobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed left-0 top-0 z-50 h-full w-64 bg-slate-900 text-white border-r border-slate-800 transition-transform duration-300 md:translate-x-0 shadow-2xl md:shadow-none overflow-y-auto sidebar-3d">
+    <aside :class="mobileMenu ? 'translate-x-0' : '-translate-x-full'" class="fixed left-0 top-0 z-50 h-full w-64 transition-transform duration-300 md:translate-x-0 shadow-2xl md:shadow-none overflow-y-auto sidebar-3d" style="background: var(--deep2); border-right: 1px solid rgba(255,215,0,0.2);">
         <div class="p-6 flex justify-between items-center">
-            <h1 class="text-xl font-extrabold text-white italic tracking-tighter">Era of <span class="text-blue-500">MathAntics</span></h1>
-            <button @click="mobileMenu = false" class="md:hidden text-slate-400 hover:text-white">
+            <h1 class="text-xl font-extrabold text-white italic tracking-tighter" style="background: linear-gradient(135deg, var(--gold), var(--accent)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Era of MathAntics</h1>
+            <button @click="mobileMenu = false" class="md:hidden text-white hover:opacity-75" style="color: rgba(255,255,255,0.6);">
                 <i class="fas fa-times text-xl"></i>
             </button>
         </div>
         <nav class="mt-6 px-4 space-y-2">
-            <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
-            <button @click="tab = 'notices'; mobileMenu = false" :class="tab === 'notices' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🔔 Notices</button>
-            <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
-            <button @click="tab = 'test-scores'; mobileMenu = false" :class="tab === 'test-scores' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📊 Test Scores</button>
-            <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
-            <button @click="tab = 'gamification'; mobileMenu = false" :class="tab === 'gamification' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🏆 Achievements</button>
-            <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
+            <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'text-white shadow-lg' : 'text-white hover:opacity-75'" :style="{ background: tab === 'videos' ? 'linear-gradient(135deg, var(--gold), var(--accent))' : 'transparent', color: tab === 'videos' ? 'var(--deep)' : 'rgba(255,255,255,0.75)' }" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
+            <button @click="tab = 'notices'; mobileMenu = false" :class="tab === 'notices' ? 'text-white shadow-lg' : 'text-white hover:opacity-75'" :style="{ background: tab === 'notices' ? 'linear-gradient(135deg, var(--gold), var(--accent))' : 'transparent', color: tab === 'notices' ? 'var(--deep)' : 'rgba(255,255,255,0.75)' }" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🔔 Notices</button>
+            <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'text-white shadow-lg' : 'text-white hover:opacity-75'" :style="{ background: tab === 'notes' ? 'linear-gradient(135deg, var(--gold), var(--accent))' : 'transparent', color: tab === 'notes' ? 'var(--deep)' : 'rgba(255,255,255,0.75)' }" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
+            <button @click="tab = 'test-scores'; mobileMenu = false" :class="tab === 'test-scores' ? 'text-white shadow-lg' : 'text-white hover:opacity-75'" :style="{ background: tab === 'test-scores' ? 'linear-gradient(135deg, var(--gold), var(--accent))' : 'transparent', color: tab === 'test-scores' ? 'var(--deep)' : 'rgba(255,255,255,0.75)' }" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📊 Test Scores</button>
+            <button @click="tab = 'pomodoro'; mobileMenu = false" :class="tab === 'pomodoro' ? 'text-white shadow-lg' : 'text-white hover:opacity-75'" :style="{ background: tab === 'pomodoro' ? 'linear-gradient(135deg, var(--gold), var(--accent))' : 'transparent', color: tab === 'pomodoro' ? 'var(--deep)' : 'rgba(255,255,255,0.75)' }" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">⏱️ Study Timer</button>
+            <button @click="tab = 'gamification'; mobileMenu = false" :class="tab === 'gamification' ? 'text-white shadow-lg' : 'text-white hover:opacity-75'" :style="{ background: tab === 'gamification' ? 'linear-gradient(135deg, var(--gold), var(--accent))' : 'transparent', color: tab === 'gamification' ? 'var(--deep)' : 'rgba(255,255,255,0.75)' }" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🏆 Achievements</button>
+            <button @click="tab = 'profile'; mobileMenu = false" :class="tab === 'profile' ? 'text-white shadow-lg' : 'text-white hover:opacity-75'" :style="{ background: tab === 'profile' ? 'linear-gradient(135deg, var(--gold), var(--accent))' : 'transparent', color: tab === 'profile' ? 'var(--deep)' : 'rgba(255,255,255,0.75)' }" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">👤 Profile</button>
         </nav>
 
         <!-- Streak Widget -->
         <div class="px-4 pb-4 mt-2">
-          <div class="streak-widget">
-            <div class="streak-fire">🔥</div>
+          <div class="streak-widget" style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(0,245,255,0.05)); border: 1px solid rgba(255,215,0,0.2); padding: 12px; border-radius: 8px;">
+            <div class="streak-fire" style="font-size: 2rem;">🔥</div>
             <div class="streak-info">
-              <div class="streak-num" id="sidebar-streak">0</div>
-              <div class="streak-lbl">Day Streak</div>
+              <div class="streak-num" id="sidebar-streak" style="color: var(--gold);">0</div>
+              <div class="streak-lbl" style="color: rgba(255,255,255,0.6);">Day Streak</div>
             </div>
           </div>
           <!-- Mini Leaderboard -->
-          <div class="mini-leaderboard mt-2">
-            <div class="mini-leaderboard-title">🏆 Top Students</div>
-            <div class="mini-lb-row"><div class="mini-lb-rank">1</div><div class="mini-lb-name">Rahul K.</div><div class="mini-lb-pts">2,400 pts</div></div>
-            <div class="mini-lb-row"><div class="mini-lb-rank">2</div><div class="mini-lb-name">Priya S.</div><div class="mini-lb-pts">1,980 pts</div></div>
-            <div class="mini-lb-row"><div class="mini-lb-rank">3</div><div class="mini-lb-name">Arjun M.</div><div class="mini-lb-pts">1,750 pts</div></div>
+          <div class="mini-leaderboard mt-2" style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.15); padding: 12px; border-radius: 8px;">
+            <div class="mini-leaderboard-title" style="color: var(--gold); font-weight: bold; margin-bottom: 8px;">🏆 Top Students</div>
+            <div class="mini-lb-row" style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; color: rgba(255,255,255,0.7);"><div class="mini-lb-rank" style="color: var(--gold);">1</div><div class="mini-lb-name">Rahul K.</div><div class="mini-lb-pts" style="color: var(--accent);">2,400 pts</div></div>
+            <div class="mini-lb-row" style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; color: rgba(255,255,255,0.7);"><div class="mini-lb-rank" style="color: var(--gold);">2</div><div class="mini-lb-name">Priya S.</div><div class="mini-lb-pts" style="color: var(--accent);">1,980 pts</div></div>
+            <div class="mini-lb-row" style="display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; color: rgba(255,255,255,0.7);"><div class="mini-lb-rank" style="color: var(--gold);">3</div><div class="mini-lb-name">Arjun M.</div><div class="mini-lb-pts" style="color: var(--accent);">1,750 pts</div></div>
           </div>
         </div>
     </aside>
 
     <main class="md:ml-64 p-6 min-h-screen">
         
-        <header class="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-8 bg-white p-4 rounded-2xl shadow-sm border gap-4 header-card-3d">
+        <header class="flex flex-col-reverse md:flex-row justify-between items-start md:items-center mb-8 p-4 rounded-2xl shadow-sm border gap-4 header-card-3d card-3d">
             <div>
                 <div class="flex items-center gap-3 mb-2 md:hidden">
-                    <button @click="mobileMenu = true" class="p-2 bg-slate-100 rounded-lg text-slate-800 hover:bg-blue-50 hover:text-blue-600 transition">
+                    <button @click="mobileMenu = true" class="p-2 rounded-lg transition" style="background: rgba(255,215,0,0.1); color: var(--gold);">
                         <i class="fas fa-bars text-lg"></i>
                     </button>
-                    <span class="font-extrabold italic text-slate-900">Era of <span class="text-blue-500">MathAntics</span></span>
+                    <span class="font-extrabold italic" style="background: linear-gradient(135deg, var(--gold), var(--accent)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Era of MathAntics</span>
                 </div>
-                <h2 class="text-lg font-bold">Welcome back, <span x-text="studentName"></span>!</h2>
-                <p class="text-xs text-slate-400 italic">"The beautiful thing about learning is that no one can take it away from you."</p>
+                <h2 class="text-lg font-bold" style="color: var(--white);">Welcome back, <span x-text="studentName"></span>!</h2>
+                <p class="text-xs italic" style="color: rgba(255,255,255,0.5);">"The beautiful thing about learning is that no one can take it away from you."</p>
             </div>
             <div class="flex items-center gap-3 w-full md:w-auto justify-end">
                 <!-- Added API Warning UI -->
-                <div x-show="youtubeError" class="hidden md:flex items-center gap-2 bg-amber-50 text-amber-600 px-3 py-1.5 rounded-lg text-[10px] font-bold border border-amber-200" x-cloak>
+                <div x-show="youtubeError" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-bold" x-cloak style="background: rgba(255,215,0,0.1); color: var(--gold); border: 1px solid rgba(255,215,0,0.2);">
                     <i class="fas fa-exclamation-triangle"></i>
                     <span x-text="'YouTube Sync: ' + youtubeError"></span>
                 </div>
                 
-                <img :src="profilePic || 'https://via.placeholder.com/150'" class="w-10 h-10 rounded-full border-2 border-blue-500 object-cover">
-                <button @click="logout()" class="text-sm font-bold text-red-500 hover:underline">Logout</button>
+                <img :src="profilePic || 'https://via.placeholder.com/150'" class="w-10 h-10 rounded-full border-2 object-cover" style="border-color: var(--gold);">
+                <button @click="logout()" class="text-sm font-bold hover:opacity-75 transition" style="color: var(--red);">Logout</button>
             </div>
         </header>
 
         <div x-show="tab === 'videos'" class="space-y-6" x-cloak>
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h3 class="text-2xl font-black text-slate-900">Video Library</h3>
+                <h3 class="text-2xl font-black" style="color: var(--white);">Video Library</h3>
                 <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                    <select x-model="selectedClass" class="w-full md:w-44 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition shadow-sm font-bold text-slate-700 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%207L10%2010L13%207%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[position:right_1rem_center] bg-no-repeat">
-                        <option value="All">All Classes</option>
-                        <option value="Class 9">Class 9</option>
-                        <option value="Class 10">Class 10</option>
-                        <option value="Class 11">Class 11</option>
-                        <option value="Class 12">Class 12</option>
+                    <select x-model="selectedClass" class="w-full md:w-44 rounded-xl px-4 py-3 text-sm outline-none transition shadow-sm font-bold appearance-none" style="background: var(--glass); border: 1px solid rgba(255,215,0,0.2); color: var(--white);">
+                        <option value="All" style="background: var(--deep2); color: var(--white);">All Classes</option>
+                        <option value="Class 9" style="background: var(--deep2); color: var(--white);">Class 9</option>
+                        <option value="Class 10" style="background: var(--deep2); color: var(--white);">Class 10</option>
+                        <option value="Class 11" style="background: var(--deep2); color: var(--white);">Class 11</option>
+                        <option value="Class 12" style="background: var(--deep2); color: var(--white);">Class 12</option>
                     </select>
                     <div class="relative w-full md:w-72">
-                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-sm"></i>
-                        <input type="text" x-model.debounce.300ms="videoSearchQuery" placeholder="Search lessons..." class="w-full bg-white border border-slate-200 rounded-xl pl-11 pr-4 py-3 text-sm focus:border-blue-500 outline-none transition shadow-sm font-medium">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-sm" style="color: rgba(255,255,255,0.4);"></i>
+                        <input type="text" x-model.debounce.300ms="videoSearchQuery" placeholder="Search lessons..." class="w-full rounded-xl pl-11 pr-4 py-3 text-sm outline-none transition shadow-sm font-medium" style="background: var(--glass); border: 1px solid rgba(255,215,0,0.2); color: var(--white);">
                     </div>
                 </div>
             </div>
 
             <!-- Live Class Section -->
             <div x-show="liveClasses.length > 0" class="mb-6">
-                <h4 class="font-bold text-md mb-2 text-red-600">Upcoming Live Classes</h4>
+                <h4 class="font-bold text-md mb-2" style="color: var(--red);">Upcoming Live Classes</h4>
                 <template x-for="live in liveClasses" :key="live.id">
-                    <a :href="live.url" target="_blank" @click="logAttendance('Joined Live Class: ' + live.url, 'live')" class="p-4 bg-white border border-slate-200 border-l-4 border-l-red-500 rounded-xl flex justify-between items-center hover:bg-red-50 transition mb-2 group">
+                    <a :href="live.url" target="_blank" @click="logAttendance('Joined Live Class: ' + live.url, 'live')" class="p-4 rounded-xl flex justify-between items-center transition mb-2 group" style="background: var(--glass); border: 2px solid var(--red); border-left: 4px solid var(--red);">
                         <div>
-                            <p class="font-bold text-sm text-red-800">Live session scheduled</p>
-                            <p class="text-xs text-slate-500" x-text="new Date(live.time).toLocaleString()"></p>
+                            <p class="font-bold text-sm" style="color: var(--red);">Live session scheduled</p>
+                            <p class="text-xs" style="color: rgba(255,255,255,0.5);" x-text="new Date(live.time).toLocaleString()"></p>
                         </div>
-                        <span class="bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold animate-pulse">Join Live</span>
+                        <span class="px-4 py-2 rounded-lg text-xs font-bold animate-pulse" style="background: var(--red); color: var(--white);">Join Live</span>
                     </a>
                 </template>
             </div>
 
             <!-- Videos Section -->
             <div class="mt-8">
-                <h4 class="font-black text-lg mb-6 flex items-center gap-2 text-slate-800">
-                    <span class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center text-xs"><i class="fas fa-play"></i></span>
+                <h4 class="font-black text-lg mb-6 flex items-center gap-2" style="color: var(--white);">
+                    <span class="w-8 h-8 rounded-lg flex items-center justify-center text-xs" style="background: var(--glass); border: 1px solid rgba(255,215,0,0.2); color: var(--gold);"><i class="fas fa-play"></i></span>
                     Latest Uploads
                 </h4>
-                <div x-show="recordedVideos.length === 0" class="text-slate-500 italic py-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200" x-cloak>
+                <div x-show="recordedVideos.length === 0" class="italic py-12 text-center rounded-2xl border-2 border-dashed" x-cloak style="background: rgba(255,215,0,0.05); border-color: rgba(255,215,0,0.2); color: rgba(255,255,255,0.6);">
                     <i class="fas fa-search text-3xl mb-3 opacity-20"></i>
                     <p x-text="videoSearchQuery ? 'No videos found matching your search.' : 'No videos available for the selected class.'"></p>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <template x-for="rec in recordedVideos" :key="rec.id">
-                        <div @click="openVideo(rec.link, rec.title)" class="group bg-white rounded-3xl overflow-hidden border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col card-3d">
-                            <div class="aspect-video bg-slate-900 relative overflow-hidden">
+                        <div @click="openVideo(rec.link, rec.title)" class="group rounded-3xl overflow-hidden border shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col card-3d" style="background: var(--glass); border-color: rgba(255,215,0,0.2);">
+                            <div class="aspect-video relative overflow-hidden" style="background: var(--deep2);">
                                 <template x-if="extractYouTubeID(rec.link)">
                                      <img :src="'https://img.youtube.com/vi/' + extractYouTubeID(rec.link) + '/mqdefault.jpg'" class="absolute inset-0 w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-500">
                                 </template>
@@ -183,37 +211,37 @@
 
         <!-- Notices Tab -->
         <div x-show="tab === 'notices'" class="space-y-6" x-cloak>
-            <h3 class="text-2xl font-black">College Notices</h3>
+            <h3 class="text-2xl font-black" style="color: var(--white);">College Notices</h3>
             <div class="grid gap-4">
                 <template x-for="note in notifications" :key="note.id">
-                    <div class="p-6 bg-white border rounded-2xl shadow-sm card-3d">
+                    <div class="p-6 rounded-2xl shadow-sm card-3d" style="background: var(--glass); border: 1px solid rgba(255,215,0,0.2);">
                         <div class="flex items-center gap-3 mb-3">
-                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
-                            <h4 class="font-bold text-slate-900" x-text="note.title"></h4>
+                            <span class="w-2 h-2 rounded-full" style="background: var(--gold);"></span>
+                            <h4 class="font-bold" style="color: var(--white);" x-text="note.title"></h4>
                         </div>
-                        <p class="text-slate-600 text-sm leading-relaxed" x-text="note.content"></p>
-                        <p class="text-[10px] text-slate-400 font-bold mt-4 uppercase" x-text="formatDate(note.timestamp)"></p>
+                        <p class="text-sm leading-relaxed" style="color: rgba(255,255,255,0.6);" x-text="note.content"></p>
+                        <p class="text-[10px] font-bold mt-4 uppercase" style="color: rgba(255,255,255,0.4);" x-text="formatDate(note.timestamp)"></p>
                     </div>
                 </template>
             </div>
         </div>
 
         <div x-show="tab === 'test-scores'" class="space-y-6" x-cloak>
-            <h3 class="text-2xl font-black">Test Scores</h3>
-            <p class="text-slate-500 text-sm">Track your performance in mathematics tests and assessments.</p>
+            <h3 class="text-2xl font-black" style="color: var(--white);">Test Scores</h3>
+            <p class="text-sm" style="color: rgba(255,255,255,0.6);">Track your performance in mathematics tests and assessments.</p>
                                 <template x-if="testScoresError">
-                                    <div class="mt-4 p-4 bg-rose-50 text-rose-700 border border-rose-100 rounded-xl text-sm">
+                                    <div class="mt-4 p-4 rounded-xl text-sm" style="background: rgba(255,58,58,0.1); color: var(--red); border: 1px solid rgba(255,58,58,0.2);">
                                         <strong>Error:</strong> <span x-text="testScoresError"></span>
                                     </div>
                                 </template>
-            <div x-show="testScores.length === 0" class="text-slate-500 italic py-12 text-center bg-white rounded-2xl border-2 border-dashed border-slate-200" x-cloak>
+            <div x-show="testScores.length === 0" class="italic py-12 text-center rounded-2xl border-2 border-dashed" x-cloak style="background: rgba(255,215,0,0.05); border-color: rgba(255,215,0,0.2); color: rgba(255,255,255,0.6);">
                 <i class="fas fa-chart-line text-3xl mb-3 opacity-20"></i>
                 <p>No test scores available yet.</p>
             </div>
             
             <div class="grid gap-4">
                 <template x-for="score in testScores" :key="score.id">
-                    <div class="p-6 bg-white border border-slate-200 rounded-2xl shadow-sm hover:shadow-md transition card-3d">
+                    <div class="p-6 rounded-2xl shadow-sm hover:shadow-md transition card-3d" style="background: var(--glass); border: 1px solid rgba(255,215,0,0.2);">
                         <div class="flex items-center justify-between">
                             <div class="flex-1">
                                 <h4 class="font-bold text-lg text-slate-800" x-text="score.testName"></h4>
@@ -241,67 +269,59 @@
                 <p class="text-slate-500 text-sm">Boost your productivity using the Pomodoro technique.</p>
             </div>
 
-            <div class="bg-white p-10 rounded-[3rem] border shadow-xl text-center relative overflow-hidden">
+            <div class="p-10 rounded-[3rem] border shadow-xl text-center relative overflow-hidden" style="background: var(--glass); border-color: rgba(255,215,0,0.2);">
                 <!-- Background Decoration -->
-                <div class="absolute top-0 left-0 w-full h-2" :class="{
-                    'bg-red-500': pomodoro.mode === 'work',
-                    'bg-green-500': pomodoro.mode === 'short',
-                    'bg-blue-500': pomodoro.mode === 'long'
-                }"></div>
+                <div class="absolute top-0 left-0 w-full h-2" :style="{background: pomodoro.mode === 'work' ? 'var(--red)' : (pomodoro.mode === 'short' ? 'var(--green)' : '#3b82f6')}"></div>
 
                 <!-- Mode Switcher -->
-                <div class="inline-flex p-1 bg-slate-100 rounded-2xl mb-10">
-                    <button @click="switchPomodoroMode('work')" :class="pomodoro.mode === 'work' ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500'" class="px-6 py-2 rounded-xl font-bold text-sm transition-all">Work</button>
-                    <button @click="switchPomodoroMode('short')" :class="pomodoro.mode === 'short' ? 'bg-white text-green-600 shadow-sm' : 'text-slate-500'" class="px-6 py-2 rounded-xl font-bold text-sm transition-all">Short Break</button>
-                    <button @click="switchPomodoroMode('long')" :class="pomodoro.mode === 'long' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500'" class="px-6 py-2 rounded-xl font-bold text-sm transition-all">Long Break</button>
+                <div class="inline-flex p-1 rounded-2xl mb-10" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2);">
+                    <button @click="switchPomodoroMode('work')" class="px-6 py-2 rounded-xl font-bold text-sm transition-all" :style="{color: pomodoro.mode === 'work' ? 'var(--red)' : 'rgba(255,255,255,0.4)'}">Work</button>
+                    <button @click="switchPomodoroMode('short')" class="px-6 py-2 rounded-xl font-bold text-sm transition-all" :style="{color: pomodoro.mode === 'short' ? 'var(--green)' : 'rgba(255,255,255,0.4)'}">Short Break</button>
+                    <button @click="switchPomodoroMode('long')" class="px-6 py-2 rounded-xl font-bold text-sm transition-all" :style="{color: pomodoro.mode === 'long' ? '#3b82f6' : 'rgba(255,255,255,0.4)'}">Long Break</button>
                 </div>
 
                 <!-- Timer Display -->
                 <div class="relative flex justify-center items-center mb-10">
                     <svg class="w-64 h-64 transform -rotate-90">
-                        <circle cx="128" cy="128" r="120" stroke="currentColor" stroke-width="8" fill="transparent" class="text-slate-100" />
+                        <circle cx="128" cy="128" r="120" stroke="currentColor" stroke-width="8" fill="transparent" style="color: rgba(255,255,255,0.1);" />
                         <circle cx="128" cy="128" r="120" stroke="currentColor" stroke-width="8" fill="transparent" 
                             :stroke-dasharray="754" 
                             :stroke-dashoffset="754 - (754 * (pomodoro.timeLeft / pomodoro.settings[pomodoro.mode]))"
-                            :class="{
-                                'text-red-500': pomodoro.mode === 'work',
-                                'text-green-500': pomodoro.mode === 'short',
-                                'text-blue-500': pomodoro.mode === 'long'
-                            }"
+                            :style="{color: pomodoro.mode === 'work' ? 'var(--red)' : (pomodoro.mode === 'short' ? 'var(--green)' : '#3b82f6')}"
                             class="transition-all duration-1000 ease-linear" />
                     </svg>
                     <div class="absolute inset-0 flex flex-col justify-center items-center">
-                        <span class="text-6xl font-black text-slate-900 tracking-tighter" x-text="formatPomodoroTime(pomodoro.timeLeft)"></span>
-                        <span class="text-xs font-bold text-slate-400 uppercase mt-2" x-text="pomodoro.mode + ' phase'"></span>
+                        <span class="text-6xl font-black tracking-tighter" style="color: var(--gold);" x-text="formatPomodoroTime(pomodoro.timeLeft)"></span>
+                        <span class="text-xs font-bold uppercase mt-2" style="color: rgba(255,255,255,0.4);" x-text="pomodoro.mode + ' phase'"></span>
                     </div>
                 </div>
 
                 <!-- Controls -->
                 <div class="flex justify-center items-center gap-6">
-                    <button @click="resetPomodoro()" class="w-14 h-14 rounded-2xl bg-slate-100 text-slate-600 hover:bg-slate-200 transition-all flex items-center justify-center text-xl shadow-inner">
+                    <button @click="resetPomodoro()" class="w-14 h-14 rounded-2xl flex items-center justify-center text-xl shadow-inner transition-all" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: var(--gold);">
                         <i class="fas fa-undo"></i>
                     </button>
                     <button @click="pomodoro.isActive ? pausePomodoro() : startPomodoro()" 
-                        :class="pomodoro.mode === 'work' ? 'bg-red-500 shadow-red-200' : (pomodoro.mode === 'short' ? 'bg-green-500 shadow-green-200' : 'bg-blue-500 shadow-blue-200')"
-                        class="w-24 h-24 rounded-[2rem] text-white text-3xl shadow-2xl hover:scale-105 transition-all flex items-center justify-center">
+                        class="w-24 h-24 rounded-[2rem] text-white text-3xl shadow-2xl hover:scale-105 transition-all flex items-center justify-center"
+                        :style="{background: pomodoro.mode === 'work' ? 'var(--red)' : (pomodoro.mode === 'short' ? 'var(--green)' : '#3b82f6')}">
                         <i class="fas" :class="pomodoro.isActive ? 'fa-pause' : 'fa-play'"></i>
                     </button>
-                    <div class="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex flex-col items-center justify-center shadow-inner">
+                    <div class="w-14 h-14 rounded-2xl flex flex-col items-center justify-center shadow-inner" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: var(--gold);">
                         <span class="text-lg font-black" x-text="pomodoro.sessions"></span>
                         <span class="text-[8px] font-bold uppercase">Done</span>
                     </div>
                 </div>
 
                 <!-- Custom Duration Settings -->
-                <div class="mt-10 pt-8 border-t border-slate-50">
+                <div class="mt-10 pt-8" style="border-top: 1px solid rgba(255,215,0,0.2);">
                     <div class="flex flex-col items-center gap-3">
-                        <label class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Adjust Work Duration</label>
-                        <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-2xl">
+                        <label class="text-[10px] font-black uppercase tracking-widest" style="color: rgba(255,255,255,0.4);">Adjust Work Duration</label>
+                        <div class="flex items-center gap-4 p-3 rounded-2xl" style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2);">
                             <input type="range" min="5" max="100" step="5" 
                                 :value="pomodoro.settings.work / 60" 
                                 @input="updateWorkDuration($event.target.value)"
-                                class="w-40 md:w-64 h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-red-500">
-                            <span class="text-sm font-black text-slate-700 w-16" x-text="(pomodoro.settings.work / 60) + ' min'"></span>
+                                class="w-40 md:w-64 h-1.5 rounded-lg appearance-none cursor-pointer" style="background: rgba(255,215,0,0.2); accent-color: var(--gold);">
+                            <span class="text-sm font-black w-16" style="color: var(--gold);" x-text="(pomodoro.settings.work / 60) + ' min'"></span>
                         </div>
                     </div>
                 </div>
@@ -405,44 +425,44 @@
           </div>
         </div>
 
-        <div x-show="tab === 'profile'" class="max-w-md mx-auto bg-white p-8 rounded-3xl border shadow-sm" x-cloak>
-            <h3 class="text-xl font-black mb-6">Profile Settings</h3>
+        <div x-show="tab === 'profile'" class="max-w-md mx-auto p-8 rounded-3xl border shadow-sm card-3d" x-cloak style="background: var(--glass); border-color: rgba(255,215,0,0.2);">
+            <h3 class="text-xl font-black mb-6" style="color: var(--white);">Profile Settings</h3>
             <div class="flex flex-col items-center gap-4">
-                <img :src="profilePic || 'https://via.placeholder.com/150'" class="w-32 h-32 rounded-full border-4 border-blue-100 object-cover shadow-inner">
-                <input type="file" @change="uploadDP($event)" class="text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer">
-                <p class="text-[10px] text-slate-400">Allowed: JPG, PNG (Max 2MB)</p>
+                <img :src="profilePic || 'https://via.placeholder.com/150'" class="w-32 h-32 rounded-full border-4 object-cover shadow-inner" style="border-color: var(--gold);">
+                <input type="file" @change="uploadDP($event)" class="text-sm cursor-pointer" style="color: rgba(255,255,255,0.6);">
+                <p class="text-[10px]" style="color: rgba(255,255,255,0.4);">Allowed: JPG, PNG (Max 2MB)</p>
             </div>
             <div class="mt-8 space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="text-xs font-black uppercase text-slate-400">Full Name</label>
-                        <input type="text" x-model="studentName" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold">
+                        <label class="text-xs font-black uppercase" style="color: rgba(255,255,255,0.4);">Full Name</label>
+                        <input type="text" x-model="studentName" class="w-full mt-1 p-3 rounded-xl outline-none font-bold" style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); color: var(--white);">
                     </div>
                     <div>
-                        <label class="text-xs font-black uppercase text-slate-400">Father's Name</label>
-                        <input type="text" x-model="fatherName" placeholder="Guardian Name" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold">
+                        <label class="text-xs font-black uppercase" style="color: rgba(255,255,255,0.4);">Father's Name</label>
+                        <input type="text" x-model="fatherName" placeholder="Guardian Name" class="w-full mt-1 p-3 rounded-xl outline-none font-bold" style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); color: var(--white);">
                     </div>
                     <div>
-                        <label class="text-xs font-black uppercase text-slate-400">Class / Grade</label>
-                        <select x-model="studentClass" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
+                        <label class="text-xs font-black uppercase" style="color: rgba(255,255,255,0.4);">Class / Grade</label>
+                        <select x-model="studentClass" class="w-full mt-1 p-3 rounded-xl outline-none font-bold" style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); color: var(--white);">
                             <option value="">Select Class</option>
-                            <option value="Class 9">Class 9</option>
-                            <option value="Class 10">Class 10</option>
-                            <option value="Class 11">Class 11</option>
-                            <option value="Class 12">Class 12</option>
+                            <option value="Class 9" style="background: var(--deep2); color: var(--white);">Class 9</option>
+                            <option value="Class 10" style="background: var(--deep2); color: var(--white);">Class 10</option>
+                            <option value="Class 11" style="background: var(--deep2); color: var(--white);">Class 11</option>
+                            <option value="Class 12" style="background: var(--deep2); color: var(--white);">Class 12</option>
                         </select>
                     </div>
                     <div>
-                        <label class="text-xs font-black uppercase text-slate-400">Date of Birth</label>
-                        <input type="date" x-model="dob" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
+                        <label class="text-xs font-black uppercase" style="color: rgba(255,255,255,0.4);">Date of Birth</label>
+                        <input type="date" x-model="dob" class="w-full mt-1 p-3 rounded-xl outline-none font-bold" style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); color: var(--white);">
                     </div>
-                    <div>
-                        <label class="text-xs font-black uppercase text-slate-400">Present School Name</label>
-                        <input type="text" x-model="schoolName" placeholder="Enter School Name" class="w-full mt-1 p-3 bg-slate-50 border rounded-xl outline-none focus:border-blue-500 font-bold text-slate-700">
+                    <div class="md:col-span-2">
+                        <label class="text-xs font-black uppercase" style="color: rgba(255,255,255,0.4);">Present School Name</label>
+                        <input type="text" x-model="schoolName" placeholder="Enter School Name" class="w-full mt-1 p-3 rounded-xl outline-none font-bold" style="background: rgba(255,215,0,0.05); border: 1px solid rgba(255,215,0,0.2); color: var(--white);">
                     </div>
                 </div>
-                <button @click="saveProfile()" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg shadow-blue-200 hover:bg-blue-700 transition">Save Changes</button>
-                <button @click="openIdCard()" class="w-full mt-2 bg-slate-800 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg hover:bg-slate-900 transition flex items-center justify-center gap-2">
+                <button @click="saveProfile()" class="w-full text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition" style="background: linear-gradient(135deg, var(--gold), var(--gold2));">Save Changes</button>
+                <button @click="openIdCard()" class="w-full mt-2 text-white py-4 rounded-2xl font-black uppercase tracking-widest shadow-lg transition flex items-center justify-center gap-2" style="background: var(--accent); border: 1px solid rgba(255,215,0,0.2);">
                     <i class="fas fa-id-card"></i> View ID Card
                 </button>
             </div>
@@ -451,78 +471,80 @@
     </main>
 
     <!-- ID Card Modal -->
-    <div x-show="showIdCard" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-md" x-cloak x-transition.opacity>
+    <div x-show="showIdCard" class="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-md" x-cloak x-transition.opacity style="background: rgba(5,5,15,0.95);">
         <div class="relative w-full max-w-[340px]" @click.away="showIdCard = false">
-            <div id="id-card-content" class="bg-white rounded-[1.5rem] overflow-hidden shadow-2xl transform transition-all">
+            <div id="id-card-content" class="rounded-[1.5rem] overflow-hidden shadow-2xl transform transition-all" style="background: var(--white);">
                 <!-- Header -->
-                <div class="h-32 bg-slate-900 relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-blue-600 rounded-full mix-blend-overlay filter blur-xl opacity-50 transform translate-x-10 -translate-y-10"></div>
-                    <div class="absolute bottom-0 left-0 w-24 h-24 bg-purple-600 rounded-full mix-blend-overlay filter blur-xl opacity-50 transform -translate-x-10 translate-y-10"></div>
+                <div class="h-32 relative overflow-hidden" style="background: linear-gradient(135deg, var(--deep), var(--deep2));">
+                    <div class="absolute top-0 right-0 w-32 h-32 rounded-full mix-blend-overlay filter blur-xl opacity-50 transform translate-x-10 -translate-y-10" style="background: var(--accent);"></div>
+                    <div class="absolute bottom-0 left-0 w-24 h-24 rounded-full mix-blend-overlay filter blur-xl opacity-50 transform -translate-x-10 translate-y-10" style="background: var(--accent2);"></div>
                     <div class="absolute inset-x-0 top-0 pt-5 text-center z-10">
-                        <h3 class="font-black text-xl text-white tracking-tight italic">Era of <span class="text-blue-400">MathAntics</span></h3>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Official Student ID</p>
+                        <h3 class="font-black text-xl tracking-tight italic" style="background: linear-gradient(135deg, var(--gold), var(--accent)); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Era of MathAntics</h3>
+                        <p class="text-[10px] font-bold uppercase tracking-[0.2em] mt-1" style="color: rgba(255,215,0,0.6);">Official Student ID</p>
                     </div>
                 </div>
 
                 <!-- Profile Image -->
                 <div class="relative -mt-16 flex justify-center">
-                    <div class="p-1.5 bg-white rounded-full shadow-lg">
-                        <img :src="profilePic || 'https://via.placeholder.com/150'" class="w-28 h-28 rounded-full object-cover border-4 border-slate-100 bg-slate-100">
+                    <div class="p-1.5 rounded-full shadow-lg" style="background: var(--white);">
+                        <img :src="profilePic || 'https://via.placeholder.com/150'" class="w-28 h-28 rounded-full object-cover border-4" style="border-color: var(--gold); background: var(--deep2);">
                     </div>
                 </div>
 
                 <!-- Details -->
                 <div class="text-center p-6 pt-4 pb-8">
-                    <h2 class="text-2xl font-black text-slate-900" x-text="studentName"></h2>
-                    <div class="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-xs font-bold uppercase tracking-wide mt-2">Active Student</div>
+                    <h2 class="text-2xl font-black" style="color: var(--deep);" x-text="studentName"></h2>
+                    <div class="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide mt-2" style="background: rgba(255,215,0,0.1); color: var(--gold);">Active Student</div>
 
                     <div class="mt-6 space-y-2 text-left text-sm">
                         <!-- Personal Info Grid -->
                         <div class="grid grid-cols-2 gap-2">
-                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Class</span>
-                                <span class="font-bold text-slate-800" x-text="studentClass || '-'"></span>
+                            <div class="p-2.5 rounded-xl border" style="background: rgba(255,215,0,0.05); border-color: rgba(255,215,0,0.2);">
+                                <span class="block text-[10px] font-bold uppercase" style="color: rgba(255,215,0,0.6);">Class</span>
+                                <span class="font-bold" style="color: var(--deep);" x-text="studentClass || '-'"></span>
                             </div>
-                            <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                                 <span class="block text-[10px] font-bold text-slate-400 uppercase">DOB</span>
-                                <span class="font-bold text-slate-800" x-text="dob || '-'"></span>
+                            <div class="p-2.5 rounded-xl border" style="background: rgba(255,215,0,0.05); border-color: rgba(255,215,0,0.2);">
+                                 <span class="block text-[10px] font-bold uppercase" style="color: rgba(255,215,0,0.6);">DOB</span>
+                                <span class="font-bold" style="color: var(--deep);" x-text="dob || '-'"></span>
                             </div>
                         </div>
                         
-                        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex justify-between items-center">
+                        <div class="p-2.5 rounded-xl border flex justify-between items-center" style="background: rgba(255,215,0,0.05); border-color: rgba(255,215,0,0.2);">
                             <div>
-                                <span class="block text-[10px] font-bold text-slate-400 uppercase">Father's Name</span>
-                                <span class="font-bold text-slate-800" x-text="fatherName || '-'"></span>
+                                <span class="block text-[10px] font-bold uppercase" style="color: rgba(255,215,0,0.6);">Father's Name</span>
+                                <span class="font-bold" style="color: var(--deep);" x-text="fatherName || '-'"></span>
                             </div>
                             <div class="text-right">
-                                 <span class="block text-[10px] font-bold text-slate-400 uppercase">School Name</span>
-                                <span class="font-bold text-slate-800" x-text="schoolName || '-'"></span>
+                                 <span class="block text-[10px] font-bold uppercase" style="color: rgba(255,215,0,0.6);">School Name</span>
+                                <span class="font-bold" style="color: var(--deep);" x-text="schoolName || '-'"></span>
                             </div>
                         </div>
 
-                        <div class="flex justify-between items-center p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold text-slate-400 uppercase">Student ID</span>
-                            <span class="font-mono font-bold text-slate-700" x-text="studentId ? 'EMA-' + studentId.substring(0, 6).toUpperCase() : 'Generating...'"></span>
+                        <div class="flex justify-between items-center p-2.5 rounded-xl border" style="background: rgba(255,215,0,0.05); border-color: rgba(255,215,0,0.2);">
+                            <span class="text-xs font-bold uppercase" style="color: rgba(255,215,0,0.6);">Student ID</span>
+                            <span class="font-mono font-bold" style="color: var(--deep);" x-text="studentId ? 'EMA-' + studentId.substring(0, 6).toUpperCase() : 'Generating...'"></span>
                         </div>
                     </div>
 
                     <!-- QR Code -->
                     <div class="mt-6 flex flex-col items-center">
-                        <div id="qrcode" class="p-2 bg-white rounded-lg border border-slate-200 shadow-sm"></div>
-                        <p class="text-[10px] text-slate-400 mt-2 font-bold uppercase tracking-wider">Scan to Verify</p>
+                        <div id="qrcode" class="p-2 rounded-lg border shadow-sm" style="background: var(--white); border-color: rgba(255,215,0,0.2);"></div>
+                        <p class="text-[10px] mt-2 font-bold uppercase tracking-wider" style="color: rgba(255,215,0,0.6);">Scan to Verify</p>
                     </div>
                 </div>
 
                 <!-- Footer -->
-                <div class="bg-slate-900 p-3 text-center">
-                    <p class="text-[10px] text-slate-500 font-medium">Property of Era of MathAntics.</p>
+                <div class="p-3 text-center" style="background: linear-gradient(135deg, var(--deep), var(--deep2));">
+                    <p class="text-[10px] font-medium" style="color: rgba(255,215,0,0.5);">Property of Era of MathAntics.</p>
                 </div>
             </div>
             <div class="mt-6 grid grid-cols-2 gap-3">
-                <button @click="downloadIdCard()" class="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                <button @click="downloadIdCard()" class="w-full py-4 text-white rounded-xl font-bold shadow-lg transition flex items-center justify-center gap-2" style="background: linear-gradient(135deg, var(--gold), var(--accent));">
                     <i class="fas fa-file-pdf"></i> Save PDF
                 </button>
-                <button @click="showIdCard = false" class="w-full py-4 bg-white/10 text-white rounded-xl font-bold backdrop-blur-md border border-white/20 hover:bg-white/20 transition">
+                <button @click="showIdCard = false" class="w-full py-4 text-white rounded-xl font-bold backdrop-blur-md border transition" style="background: rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.2);">
+                    Close
+                </button>
                     Close
                 </button>
             </div>
@@ -531,7 +553,7 @@
 
     <!-- Video Player Modal -->
     <div x-show="videoModal.open" class="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-900/90 backdrop-blur-md" x-cloak x-transition.opacity>
-        <div class="relative w-full max-w-4xl aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl" @click.away="videoModal.open = false; videoModal.videoId = ''">
+        <div class="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden shadow-2xl" @click.away="videoModal.open = false; videoModal.videoId = ''" style="background: var(--deep2);">
             <button @click="videoModal.open = false; videoModal.videoId = ''" class="absolute top-4 right-4 z-10 w-10 h-10 bg-white/10 hover:bg-white/20 text-white rounded-full flex items-center justify-center transition-all">
                 <i class="fas fa-times"></i>
             </button>
@@ -542,21 +564,21 @@
     </div>
 
     <!-- ID Card Welcome Modal -->
-    <div x-show="welcomeModal.open" class="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm" x-cloak x-transition.opacity>
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center transform transition-all relative" @click.away="welcomeModal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0">
-            <button @click="welcomeModal.open = false" class="absolute top-6 right-6 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none">
+    <div x-show="welcomeModal.open" class="fixed inset-0 z-[110] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity style="background: rgba(5,5,15,0.95);">
+        <div class="rounded-[2rem] shadow-2xl w-full max-w-sm p-8 text-center transform transition-all relative" @click.away="welcomeModal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" style="background: var(--glass); border: 1px solid rgba(255,215,0,0.2);">
+            <button @click="welcomeModal.open = false" class="absolute top-6 right-6 transition-colors focus:outline-none" style="color: rgba(255,255,255,0.6);">
                 <i class="fas fa-times text-xl"></i>
             </button>
-            <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4 border-white">
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4" style="background: rgba(255,215,0,0.1); border-color: var(--gold); color: var(--gold);">
                 <i class="fas fa-id-card"></i>
             </div>
-            <h3 class="text-2xl font-black text-slate-900 mb-2">Your ID Card is Ready!</h3>
-            <p class="text-slate-500 font-medium mb-8 leading-relaxed">Welcome to the family! Your official student ID card has been generated. You can view or download it now.</p>
+            <h3 class="text-2xl font-black mb-2" style="color: var(--white);">Your ID Card is Ready!</h3>
+            <p class="font-medium mb-8 leading-relaxed" style="color: rgba(255,255,255,0.6);">Welcome to the family! Your official student ID card has been generated. You can view or download it now.</p>
             <div class="space-y-3">
-                <button @click="welcomeModal.open = false; openIdCard()" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl hover:bg-blue-700 transition shadow-lg hover:-translate-y-0.5">
+                <button @click="welcomeModal.open = false; openIdCard()" class="w-full text-white font-bold py-4 rounded-xl transition shadow-lg hover:-translate-y-0.5" style="background: linear-gradient(135deg, var(--gold), var(--accent));">
                     View ID Card
                 </button>
-                <button @click="downloadIdCardFromWelcome()" class="w-full bg-slate-100 text-slate-700 font-bold py-4 rounded-xl hover:bg-slate-200 transition">
+                <button @click="downloadIdCardFromWelcome()" class="w-full font-bold py-4 rounded-xl transition" style="background: rgba(255,215,0,0.1); border: 1px solid rgba(255,215,0,0.2); color: var(--gold);">
                     Download PDF
                 </button>
             </div>
@@ -564,15 +586,15 @@
     </div>
 
     <!-- Custom Notification Modal -->
-    <div x-show="modal.open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm" x-cloak x-transition.opacity>
-        <div class="bg-white rounded-[2rem] shadow-2xl w-full max-w-sm p-8 transform transition-all" @click.away="modal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-4">
+    <div x-show="modal.open" class="fixed inset-0 z-[100] flex items-center justify-center p-4 backdrop-blur-sm" x-cloak x-transition.opacity style="background: rgba(5,5,15,0.95);">
+        <div class="rounded-[2rem] shadow-2xl w-full max-w-sm p-8 transform transition-all" @click.away="modal.open = false" x-transition:enter="ease-out duration-300" x-transition:enter-start="opacity-0 scale-90 translate-y-4" x-transition:enter-end="opacity-100 scale-100 translate-y-0" x-transition:leave="ease-in duration-200" x-transition:leave-start="opacity-100 scale-100 translate-y-0" x-transition:leave-end="opacity-0 scale-90 translate-y-4" style="background: var(--glass); border: 1px solid rgba(255,215,0,0.2);">
             <div class="text-center">
-                <div class="w-20 h-20 bg-gradient-to-br from-blue-100 to-white text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4 border-white">
+                <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg text-3xl border-4" style="background: rgba(255,215,0,0.1); border-color: var(--gold); color: var(--gold);">
                     <i class="fas fa-bell"></i>
                 </div>
-                <h3 class="text-2xl font-black text-slate-900 mb-2" x-text="modal.title">Notification</h3>
-                <p class="text-slate-500 font-medium mb-8 leading-relaxed" x-text="modal.message"></p>
-                <button @click="modal.open = false" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl hover:bg-blue-600 transition shadow-xl hover:-translate-y-1">
+                <h3 class="text-2xl font-black mb-2" style="color: var(--white);" x-text="modal.title">Notification</h3>
+                <p class="font-medium mb-8 leading-relaxed" style="color: rgba(255,255,255,0.6);" x-text="modal.message"></p>
+                <button @click="modal.open = false" class="w-full text-white font-bold py-4 rounded-xl transition shadow-xl hover:-translate-y-1" style="background: linear-gradient(135deg, var(--gold), var(--accent));">
                     Close
                 </button>
             </div>
@@ -1072,6 +1094,80 @@
     <script src="gamification-component.js"></script>
     <script src="effects-3d-enhanced.js" defer></script>
     <script src="firstVisitorCelebration.js"></script>
+
+    <script>
+        // ============ CUSTOM CURSOR ============
+        const cursor = document.getElementById('cursor');
+        const cursorDot = document.getElementById('cursorDot');
+        let cx = 0, cy = 0, dx = 0, dy = 0;
+        document.addEventListener('mousemove', e => {
+            dx = e.clientX; dy = e.clientY;
+            cursorDot.style.left = dx - 3 + 'px';
+            cursorDot.style.top = dy - 3 + 'px';
+        });
+        function animCursor() {
+            cx += (dx - cx) * 0.12;
+            cy += (dy - cy) * 0.12;
+            cursor.style.left = cx - 9 + 'px';
+            cursor.style.top = cy - 9 + 'px';
+            requestAnimationFrame(animCursor);
+        }
+        animCursor();
+
+        // ============ PARTICLES ============
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const particles = Array.from({length: 90}, () => ({
+            x: Math.random() * canvas.width,
+            y: Math.random() * canvas.height,
+            r: Math.random() * 1.5 + 0.3,
+            dx: (Math.random() - 0.5) * 0.4,
+            dy: (Math.random() - 0.5) * 0.4,
+            alpha: Math.random() * 0.5 + 0.1,
+            color: Math.random() > 0.6 ? '255,215,0' : Math.random() > 0.5 ? '0,245,255' : '255,255,255'
+        }));
+
+        function drawParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.x += p.dx;
+                p.y += p.dy;
+                if (p.x < 0) p.x = canvas.width;
+                if (p.x > canvas.width) p.x = 0;
+                if (p.y < 0) p.y = canvas.height;
+                if (p.y > canvas.height) p.y = 0;
+                ctx.fillStyle = `rgba(${p.color}, ${p.alpha})`;
+                ctx.fillRect(p.x, p.y, p.r, p.r);
+            });
+
+            // Draw connection lines
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 120) {
+                        ctx.strokeStyle = `rgba(255,215,0,${0.3 * (1 - dist / 120)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(drawParticles);
+        }
+        drawParticles();
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
 
 
     <!-- Chat Bubble -->

@@ -17,9 +17,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link rel="stylesheet" href="gamification.css">
-    <link rel="stylesheet" href="gamification-personality.css">
-    <link rel="stylesheet" href="effects-3d-enhanced.css">
 
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
@@ -27,39 +24,103 @@
 
     <style>
         :root {
-            --primary-blue: #1e40af;
-            --primary-red: #dc2626;
-            --accent-blue: #3b82f6;
-            --accent-red: #ef4444;
-            --brand-dark: #0f172a;
+            --gold: #FFD700;
+            --gold2: #FFA500;
+            --deep: #0a0a1a;
+            --deep2: #0d0d2b;
+            --navy: #0a0f3d;
+            --accent: #00f5ff;
+            --accent2: #7b2fff;
+            --white: #ffffff;
+            --glass: rgba(255,255,255,0.06);
+            --glass2: rgba(255,215,0,0.08);
+            --red: #ff3a3a;
+            --green: #00e676;
         }
-        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: var(--deep); color: var(--white); overflow-x: hidden; cursor: none; }
         .text-gradient {
-            background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
+            background: linear-gradient(135deg, var(--gold), var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .glass-morphism {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,215,0,0.2);
         }
-        .reveal { opacity: 0; transform: translateY(30px) scale(0.95) rotateX(15deg); transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1); transform-origin: top; }
-        .reveal.revealed { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
-        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
-        .animate-float { animation: float 3s ease-in-out infinite; }
+        /* Custom Cursor */
+        .cursor {
+            width: 18px; height: 18px;
+            border: 2px solid var(--gold);
+            border-radius: 50%;
+            position: fixed; top:0; left:0;
+            pointer-events: none;
+            z-index: 99999;
+            transition: transform 0.15s ease, border-color 0.3s;
+            mix-blend-mode: difference;
+        }
+        .cursor-dot {
+            width: 6px; height: 6px;
+            background: var(--gold);
+            border-radius: 50%;
+            position: fixed; top:0; left:0;
+            pointer-events: none;
+            z-index: 99999;
+        }
+        /* Particle Canvas */
+        #particles { position:fixed; top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none; }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--deep2); }
+        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
+        .reveal { opacity: 0; transform: translateY(40px); transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94); }
+        .reveal.visible { opacity: 1; transform: translateY(0); }
+        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        @keyframes floatSymbol { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-30px) rotate(10deg);} }
+        .math-float { animation: floatSymbol 8s ease-in-out infinite; color: var(--gold); opacity:0.06; }
         .marquee-scroll { animation: marquee 25s linear infinite; display: flex; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .tilt-card {
-            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s ease;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
             transform-style: preserve-3d;
         }
         .tilt-card:hover {
-            transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-5px);
-            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.15);
+            transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
         }
+        /* Glow Ring */
+        .glow-ring {
+            position:absolute; width:800px; height:800px;
+            border-radius:50%;
+            border:1px solid rgba(255,215,0,0.06);
+            top:50%;left:50%;transform:translate(-50%,-50%);
+            animation:expandRing 4s ease-out infinite;
+            pointer-events:none;
+        }
+        @keyframes expandRing { 0%{transform:translate(-50%,-50%) scale(0.3);opacity:0.8;} 100%{transform:translate(-50%,-50%) scale(1.5);opacity:0;} }
+        .glow-ring:nth-child(2) { animation-delay:1.3s; }
+        .glow-ring:nth-child(3) { animation-delay:2.6s; }
         .floating-logo { animation: logo-3d 6s infinite ease-in-out; transform-style: preserve-3d; }
         @keyframes logo-3d { 0%, 100% { transform: rotateY(0deg); } 50% { transform: rotateY(15deg) rotateX(10deg); } }
+        /* Section Styling */
+        .section-tag {
+            font-size:0.8rem; letter-spacing:4px; text-transform:uppercase;
+            color: var(--gold); display:inline-block; margin-bottom:16px;
+        }
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3.5rem);
+            font-weight:700; line-height:1.2;
+            background: linear-gradient(135deg, var(--white) 0%, rgba(255,255,255,0.7) 100%);
+            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+            margin-bottom:20px;
+        }
+        .section-line {
+            width:80px; height:3px;
+            background: linear-gradient(90deg, var(--gold), var(--accent));
+            margin: 0 auto;
+            border-radius:2px;
+        }
         [x-cloak] { display: none !important; }
         
         /* Enhanced Spinner Animations */
@@ -70,59 +131,69 @@
             from { transform: rotate(0deg); }
             to { transform: rotate(360deg); }
         }
-        
         /* Beautiful Loading/Processing Spinner with Glow */
         .spinner-glow {
             animation: spinWithGlow 2s ease-in-out infinite;
-            filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.5));
+            filter: drop-shadow(0 0 6px rgba(255,215,0,0.5));
         }
         @keyframes spinWithGlow {
-            0%, 100% { transform: rotate(0deg); filter: drop-shadow(0 0 6px rgba(37, 99, 235, 0.5)); }
-            50% { filter: drop-shadow(0 0 15px rgba(59, 130, 246, 0.8)); }
+            0%, 100% { transform: rotate(0deg); filter: drop-shadow(0 0 6px rgba(255,215,0,0.5)); }
+            50% { filter: drop-shadow(0 0 15px rgba(255,215,0,0.8)); }
         }
+        /* Gradient Backgrounds */
+        .gradient-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); }
+        .gradient-accent { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
+        @keyframes fadeInDown { from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);} }
+        @keyframes fadeInUp { from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);} }
+        @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
+        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.3);} }
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900" x-data="mathAnticsWebsite()" x-init="init()">
+<body class="bg-slate-50 text-slate-900" x-data="mathAnticsWebsite()" x-init="init()" x-cloak>
+    <!-- CURSOR -->
+    <div class="cursor" id="cursor"></div>
+    <div class="cursor-dot" id="cursorDot"></div>
+    <!-- PARTICLES -->
+    <canvas id="particles"></canvas>
 
     <!-- Top Notification Bar -->
-    <div class="bg-slate-900 text-white py-2 text-xs font-bold text-center tracking-widest uppercase hidden md:block">
-    <span class="text-yellow-400 mr-2">New Batch Alert:</span> Admissions open for Academic Year <span x-text="academicYear"></span> | <a href="#apply" class="underline hover:text-blue-300">Register Now</a>
+    <div class="bg-slate-900 text-white py-2 text-xs font-bold text-center tracking-widest uppercase hidden md:block" style="background: var(--deep2); border-bottom: 1px solid rgba(255,215,0,0.1);">
+    <span style="color: var(--gold);" class="mr-2">✨ New Batch Alert:</span> Admissions open for Academic Year <span x-text="academicYear"></span> | <a href="#apply" class="underline hover:opacity-80" style="color: var(--accent);">Register Now</a>
     </div>
 
-    <nav class="fixed top-0 w-full z-50 transition-all duration-300" 
-         :class="scrolled ? 'bg-white/95 backdrop-blur-md shadow-md top-0' : 'bg-white top-0 md:top-8'">
+    <nav id="navbar" class="fixed top-0 w-full z-50 transition-all duration-300" style="background: rgba(10,10,26,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,215,0,0.2);">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg shadow-lg floating-logo">
                 <div class="leading-none">
-                    <span class="font-extrabold text-slate-900 text-xl tracking-tight">Era of <span class="text-blue-600">MathAntics</span></span><br>
-                    <span class="font-bold text-slate-400 text-[10px] tracking-widest uppercase">Master Mathematics</span>
+                    <span class="font-extrabold text-white text-xl tracking-tight" style="background: linear-gradient(135deg, var(--gold), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Era of MathAntics</span><br>
+                    <span class="font-bold text-white text-[10px] tracking-widest uppercase" style="opacity: 0.6;">Master Mathematics</span>
                 </div>
             </div>
 
-            <div class="hidden md:flex items-center space-x-8 font-bold text-sm text-slate-600">
-                <a href="#home" class="hover:text-blue-600 transition">Home</a>
-                <a href="#results" class="hover:text-blue-600 transition">Selections</a>
-                <a href="#apply" class="hover:text-blue-600 transition">Admissions</a>
-                <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5" x-cloak>
+            <div class="hidden md:flex items-center space-x-8 font-bold text-sm" style="color: rgba(255,255,255,0.75);">
+                <a href="#home" class="hover:text-yellow-400 transition" style="color: rgba(255,255,255,0.75);">Home</a>
+                <a href="#results" class="hover:text-yellow-400 transition" style="color: rgba(255,255,255,0.75);">Selections</a>
+                <a href="#apply" class="hover:text-yellow-400 transition" style="color: rgba(255,255,255,0.75);">Admissions</a>
+                <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="transition-all transform hover:-translate-y-0.5" style="background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--deep); border: none; padding: 10px 28px; border-radius: 2px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; cursor: pointer; box-shadow: 0 0 40px rgba(255,215,0,0.35), 0 4px 20px rgba(0,0,0,0.4);" x-cloak>
                     <i class="fas" :class="isLoggedIn || isStaffLoggedIn ? 'fa-th-large' : 'fa-user-circle'"></i> 
                     <span x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Login')"></span>
                 </a>
             </div>
 
             <div class="flex items-center gap-3 md:hidden">
-                <a x-show="isLoggedIn || isStaffLoggedIn" :href="isStaffLoggedIn ? 'staff.html' : 'student.html'" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg" x-cloak>Dashboard</a>
-                <button @click="mobileMenu = !mobileMenu" class="text-2xl text-slate-800 focus:outline-none">
+                <a x-show="isLoggedIn || isStaffLoggedIn" :href="isStaffLoggedIn ? 'staff.html' : 'student.html'" class="text-xs font-bold" style="background: linear-gradient(135deg, var(--gold), var(--accent)); color: var(--deep); padding: 10px 16px; border-radius: 8px; text-decoration: none; box-shadow: 0 0 30px rgba(255,215,0,0.3);" x-cloak>Dashboard</a>
+                <button @click="mobileMenu = !mobileMenu" class="text-2xl transition" style="color: var(--white);">
                     <i class="fas" :class="mobileMenu ? 'fa-times' : 'fa-bars'"></i>
                 </button>
             </div>
         </div>
 
-        <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t p-6 space-y-4 absolute w-full shadow-xl">
-            <a @click="mobileMenu = false" href="#home" class="block font-medium">Home</a>
-            <a @click="mobileMenu = false" href="#about" class="block font-medium">About</a>
-            <a @click="mobileMenu = false" :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="block text-blue-600 font-bold" x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Student Portal')"></a>
+        <div x-show="mobileMenu" x-cloak class="md:hidden p-6 space-y-4 absolute w-full" style="background: rgba(10,10,26,0.95); border-top: 1px solid rgba(255,215,0,0.2); backdrop-filter: blur(20px); box-shadow: 0 15px 30px rgba(0,0,0,0.5);">
+            <a @click="mobileMenu = false" href="#home" class="block font-medium" style="color: rgba(255,255,255,0.75);">Home</a>
+            <a @click="mobileMenu = false" href="#about" class="block font-medium" style="color: rgba(255,255,255,0.75);">About</a>
+            <a @click="mobileMenu = false" :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="block font-bold" style="color: var(--gold);" x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Student Portal')"></a>
         </div>
     </nav>
 
@@ -195,46 +266,22 @@
         </div>
     </section>
 
-    <!-- Staff / Team Section -->
-    <section id="team" class="py-24 bg-white reveal">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16">
-                <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Expert Educators</span>
-                <h2 class="text-3xl md:text-5xl font-black text-slate-900 mt-2">Meet Our <span class="text-gradient">Team</span></h2>
-                <p class="text-slate-500 font-bold mt-4 max-w-2xl mx-auto">Our mentors are dedicated to making mathematics simple, intuitive, and fun for every student.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <template x-for="member in staffList" :key="member.id">
-                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 text-center hover:shadow-xl transition-all group tilt-card tilt-card-3d team-card-3d reveal-3d">
-                        <div class="w-32 h-32 mx-auto bg-white rounded-full mb-6 border-4 border-white shadow-md overflow-hidden flex items-center justify-center bg-blue-100 text-blue-600">
-                            <i class="fas fa-user-tie text-5xl"></i>
-                        </div>
-                        <h4 class="text-xl font-black text-slate-900" x-text="member.name"></h4>
-                        <p class="text-blue-600 font-bold text-sm uppercase tracking-wider mt-1" x-text="member.role"></p>
-                        <p class="text-xs text-slate-400 mt-4 font-medium italic">"Dedicated to student excellence in competitive mathematics."</p>
-                    </div>
-                </template>
-            </div>
-        </div>
-    </section>
-
     <!-- Stats Strip -->
     <div class="bg-slate-900 text-white py-12 border-b border-slate-800">
         <div class="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 divide-x divide-slate-800">
-            <div class="text-center px-4 stat-3d">
+            <div class="text-center px-4">
                 <div class="text-3xl md:text-4xl font-black text-yellow-400 mb-1" x-text="animatedStats.students + '+'"></div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Happy Students</div>
             </div>
-            <div class="text-center px-4 stat-3d">
+            <div class="text-center px-4">
                 <div class="text-3xl md:text-4xl font-black text-blue-400 mb-1">500+</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Selections</div>
             </div>
-            <div class="text-center px-4 stat-3d">
+            <div class="text-center px-4">
                 <div class="text-3xl md:text-4xl font-black text-red-400 mb-1">4.9</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">App Rating</div>
             </div>
-            <div class="text-center px-4 stat-3d">
+            <div class="text-center px-4">
                 <div class="text-3xl md:text-4xl font-black text-green-400 mb-1">Daily</div>
                 <div class="text-xs font-bold text-slate-400 uppercase tracking-widest">Live Classes</div>
             </div>
@@ -254,7 +301,7 @@
                 <!-- Content is duplicated for seamless scroll effect -->
                 <div class="flex gap-6 px-3">
                     <template x-for="(student, index) in starAchievers" :key="index">
-                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center tilt-card achiever-card-3d">
+                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300 tilt-card">
                             <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
                                 <img :src="student.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + student.avatarSeed" alt="Student" class="w-full h-full object-cover">
                             </div>
@@ -266,7 +313,7 @@
                 </div>
                 <div class="flex gap-6 px-3" aria-hidden="true">
                     <template x-for="(student, index) in starAchievers" :key="index">
-                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center tilt-card achiever-card-3d">
+                        <div class="min-w-[250px] bg-white p-4 rounded-2xl shadow-sm border border-slate-100 text-center transform hover:scale-105 transition duration-300 tilt-card">
                             <div class="w-24 h-24 mx-auto bg-slate-200 rounded-full mb-4 border-4 border-blue-100 overflow-hidden">
                                 <img :src="student.image || 'https://api.dicebear.com/7.x/avataaars/svg?seed=' + student.avatarSeed" alt="Student" class="w-full h-full object-cover">
                             </div>
@@ -280,63 +327,6 @@
         </div>
     </section>
 
-    <!-- Math Quiz + Tip Row -->
-    <section class="py-16 bg-white">
-      <div class="max-w-7xl mx-auto px-6">
-        <div class="text-center mb-10">
-          <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Interactive</span>
-          <h2 class="text-3xl md:text-5xl font-black text-slate-900 mt-2">Test Your <span class="text-gradient">Skills Now</span></h2>
-          <p class="text-slate-500 font-bold mt-3 max-w-xl mx-auto">Quick daily quiz to keep your maths sharp — no login needed!</p>
-        </div>
-        <div class="grid md:grid-cols-3 gap-8 items-start">
-          <!-- Quiz Widget -->
-          <div class="md:col-span-2" id="quiz-widget">
-            <div class="flex items-center justify-between mb-3">
-              <span class="text-xs font-bold uppercase tracking-widest opacity-70">Daily Challenge</span>
-              <span class="quiz-streak">🔥 ×0</span>
-            </div>
-            <div id="quiz-progress"><div id="quiz-progress-fill" style="width:0%"></div></div>
-            <div class="quiz-question">Loading question…</div>
-            <div class="quiz-options">
-              <button class="quiz-opt">A</button>
-              <button class="quiz-opt">B</button>
-              <button class="quiz-opt">C</button>
-              <button class="quiz-opt">D</button>
-            </div>
-            <div class="flex items-center justify-between">
-              <div class="quiz-score">Score: 0 | Best Streak: 0 🔥</div>
-              <button id="quiz-next-btn">Next →</button>
-            </div>
-          </div>
-          <!-- Tip + Countdown col -->
-          <div class="space-y-6">
-            <!-- Tip of the Day -->
-            <div id="tip-card">
-              <div class="tip-badge">💡 Tip of the Day</div>
-              <p id="tip-text">Loading tip…</p>
-              <button id="tip-refresh-btn">Next Tip →</button>
-            </div>
-            <!-- Exam Countdown -->
-            <div id="countdown-banner">
-              <div>
-                <div class="text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">Board Exam Countdown</div>
-                <div class="text-sm font-bold text-white">Class 10 — March 2026</div>
-              </div>
-              <div class="countdown-units">
-                <div class="countdown-unit"><span class="countdown-num" id="cd-days">--</span><span class="countdown-label">Days</span></div>
-                <div class="countdown-divider">:</div>
-                <div class="countdown-unit"><span class="countdown-num" id="cd-hours">--</span><span class="countdown-label">Hrs</span></div>
-                <div class="countdown-divider">:</div>
-                <div class="countdown-unit"><span class="countdown-num" id="cd-mins">--</span><span class="countdown-label">Min</span></div>
-                <div class="countdown-divider">:</div>
-                <div class="countdown-unit"><span class="countdown-num" id="cd-secs">--</span><span class="countdown-label">Sec</span></div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Instruction Section -->
     <section class="py-20 bg-slate-900 text-white relative overflow-hidden">
         <div class="max-w-7xl mx-auto px-6 relative z-10">
@@ -344,18 +334,18 @@
                 <span class="text-yellow-400 font-bold tracking-widest uppercase text-xs">Coaching Instructions</span>
                 <h2 class="text-3xl md:text-5xl font-black mt-2 mb-6">How to Start Learning</h2>
                 <div class="grid md:grid-cols-3 gap-8 mt-12">
-                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 step-card-3d">
-                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4 step-number-3d">1</div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">1</div>
                         <h3 class="text-xl font-bold mb-2">Register Online</h3>
                         <p class="text-slate-400">Fill out the form below with your name and phone number to create your student account.</p>
                     </div>
-                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 step-card-3d">
-                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4 step-number-3d">2</div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">2</div>
                         <h3 class="text-xl font-bold mb-2">Access Portal</h3>
                         <p class="text-slate-400">Log in to the student dashboard to access free study notes, resources, and recorded videos.</p>
                     </div>
-                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700 step-card-3d">
-                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4 step-number-3d">3</div>
+                    <div class="bg-slate-800 p-8 rounded-3xl border border-slate-700">
+                         <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold mb-4">3</div>
                         <h3 class="text-xl font-bold mb-2">Join Classes</h3>
                         <p class="text-slate-400">Check the dashboard for live class schedules and join sessions directly from your browser.</p>
                     </div>
@@ -374,19 +364,19 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/6bgs-EINbJ0?si=pzvmI5kS13ajKIZR" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/wmYJS5SVaIc?si=cV34cxxO2hMtXE0e" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/soVvWgx8pCM?si=1_4OfRts4E9O1O9K" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/6uXk2y6vxRA?si=qu-X6EUK3WTgZdfI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
-                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative video-card-3d">
+                <div class="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-white aspect-video relative">
                     <iframe class="w-full h-full" src="https://www.youtube.com/embed/OzDAMBJTZ18?si=ChHwoAgLc5odShkB" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                 </div>
 
@@ -424,7 +414,7 @@
                 <div class="grid md:grid-cols-2 gap-6">
                     <div x-show="!isLoginMode">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Full Name</label>
-                            <input type="text" x-model="applicationForm.name" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none input-3d" placeholder="Enter student name">
+                            <input type="text" x-model="applicationForm.name" :required="!isLoginMode" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-4 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold transition-all outline-none" placeholder="Enter student name">
                     </div>
                     <div :class="isLoginMode ? 'md:col-span-2' : ''">
                             <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Email Address</label>
@@ -558,7 +548,9 @@
                     <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg">
                     <span class="font-black text-2xl tracking-tighter text-white">Era of MathAntics</span>
                 </div>
-                <p class="text-slate-400 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. The most trusted platform for math enthusiasts.</p>
+                <p class="text-slate-400 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. The most trusted platform for math enthusiasts.
+                    MADE WITH LOVE ❤️ ERA OF MATHANTICS TEAM [TEACH HEAD - ABHAY SARASWAT]
+                </p>
                 <div class="flex space-x-4">
                     <a href="#" class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fab fa-youtube"></i></a>
                     <a href="#" class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
@@ -567,9 +559,9 @@
             <div>
                 <h4 class="font-bold mb-6 text-white">Quick Links</h4>
                 <ul class="space-y-4 text-sm font-medium">
-                    <li><a href="#home" class="hover:text-blue-600 footer-link-3d">Home</a></li>
-                    <li><a href="#apply" class="hover:text-blue-600 footer-link-3d">Student Portal</a></li>
-                    <li><a href="#contact" class="hover:text-blue-600 footer-link-3d">Contact Us</a></li>
+                    <li><a href="#home" class="hover:text-blue-600">Home</a></li>
+                    <li><a href="#apply" class="hover:text-blue-600">Student Portal</a></li>
+                    <li><a href="#contact" class="hover:text-blue-600">Contact Us</a></li>
                 </ul>
             </div>
             <div>
@@ -1004,46 +996,103 @@
         }
     </script>
 
-    <!-- Chat Bubble -->
-    <div id="chat-bubble">
-      <button id="chat-bubble-btn" title="Ask MathBot">💬<span class="badge-dot"></span></button>
-      <div id="chat-panel-popup">
-        <div class="chat-header">🤖 MathBot Assistant <span style="cursor:pointer;opacity:0.7" onclick="document.getElementById('chat-panel-popup').classList.remove('open')">✕</span></div>
-        <div class="chat-msgs"></div>
-        <div class="chat-input-row">
-          <input type="text" placeholder="Ask about maths…" />
-          <button>➤</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quote Toast -->
-    <div id="quote-toast">
-      <div class="quote-icon">📚</div>
-      <div class="quote-text"></div>
-      <div class="quote-author"></div>
-    </div>
-
-    <!-- Achievement Popup -->
-    <div id="achievement-popup">
-      <div class="achievement-popup-inner">
-        <div class="achievement-icon">⭐</div>
-        <div class="achievement-text">
-          <strong>Well done!</strong>
-          <span>Keep going</span>
-          <div><span class="achievement-badge-label">Nice Work</span></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Welcome Back Animation & First Visitor Celebration Scripts -->
     <script src="welcomeBackAnimation.js"></script>
     <script src="firstVisitorCelebration.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.0/dist/confetti.browser.min.js"></script>
-    <script src="gamification.js"></script>
-    <script src="gamification-component.js"></script>
-    <script src="effects-3d-enhanced.js" defer></script>
-    <link rel="stylesheet" href="features-new.css">
+
+    <script>
+    // ============ CUSTOM CURSOR ============
+    const cursor = document.getElementById('cursor');
+    const cursorDot = document.getElementById('cursorDot');
+    let cx = 0, cy = 0, dx = 0, dy = 0;
+    document.addEventListener('mousemove', e => {
+      dx = e.clientX; dy = e.clientY;
+      cursorDot.style.left = dx - 3 + 'px';
+      cursorDot.style.top = dy - 3 + 'px';
+    });
+    function animCursor() {
+      cx += (dx - cx) * 0.12;
+      cy += (dy - cy) * 0.12;
+      cursor.style.left = cx - 9 + 'px';
+      cursor.style.top = cy - 9 + 'px';
+      requestAnimationFrame(animCursor);
+    }
+    animCursor();
+    document.querySelectorAll('button,a,[class*="card"]').forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(2)');
+      el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
+    });
+
+    // ============ PARTICLES ============
+    const canvas = document.getElementById('particles');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+
+    const particles = Array.from({length:90},() => ({
+      x: Math.random()*canvas.width,
+      y: Math.random()*canvas.height,
+      r: Math.random()*1.5+0.3,
+      dx: (Math.random()-0.5)*0.4,
+      dy: (Math.random()-0.5)*0.4,
+      alpha: Math.random()*0.5+0.1,
+      color: Math.random()>0.6?'255,215,0':Math.random()>0.5?'0,245,255':'255,255,255'
+    }));
+
+    function drawParticles() {
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      particles.forEach(p => {
+        p.x += p.dx; p.y += p.dy;
+        if(p.x<0||p.x>canvas.width) p.dx*=-1;
+        if(p.y<0||p.y>canvas.height) p.dy*=-1;
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+        ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
+        ctx.fill();
+      });
+      // Connection lines
+      for(let i=0;i<particles.length;i++){
+        for(let j=i+1;j<particles.length;j++){
+          const d=Math.hypot(particles[i].x-particles[j].x,particles[i].y-particles[j].y);
+          if(d<120){
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x,particles[i].y);
+            ctx.lineTo(particles[j].x,particles[j].y);
+            ctx.strokeStyle=`rgba(255,215,0,${0.06*(1-d/120)})`;
+            ctx.lineWidth=0.5;
+            ctx.stroke();
+          }
+        }
+      }
+      requestAnimationFrame(drawParticles);
+    }
+    drawParticles();
+
+    // ============ NAVBAR SCROLL ============
+    window.addEventListener('scroll',()=>{
+      const nav=document.getElementById('navbar');
+      nav.style.background = window.scrollY>50?'rgba(5,5,15,0.97)':'rgba(10,10,26,0.85)';
+    });
+
+    // ============ REVEAL ON SCROLL ============
+    const revealEls = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver(entries=>{
+      entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+    },{threshold:0.12});
+    revealEls.forEach(el=>observer.observe(el));
+
+    // ============ 3D TILT ============
+    document.querySelectorAll('.tilt-card').forEach(card=>{
+      card.addEventListener('mousemove',e=>{
+        const r=card.getBoundingClientRect();
+        const x=(e.clientX-r.left)/r.width-0.5;
+        const y=(e.clientY-r.top)/r.height-0.5;
+        card.style.transform=`perspective(800px) rotateY(${x*12}deg) rotateX(${-y*12}deg) translateY(-8px)`;
+      });
+      card.addEventListener('mouseleave',()=>{ card.style.transform=''; });
+    });
+    </script>
 
 </body>
 </html>

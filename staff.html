@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Staff Portal | Era of MathAntics</title>
+    <title>Staff Portal | Arrow of Mathematics</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         fetch('/api/check-auth').then(res => res.json()).then(data => {
-            if (!data.authenticated || data.role !== 'staff') {
-                window.location.href = 'index.html';
-            }
+            if (!data.authenticated || data.role !== 'staff') window.location.href = 'index.html';
         }).catch(() => window.location.href = 'index.html');
     </script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- Socket.IO Client -->
+    <script src="https://cdn.jsdelivr.net/npm/socket.io-client@4.7.5/dist/socket.io.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="welcomeBackAnimation.css">
     <link rel="stylesheet" href="gamification.css">
@@ -20,213 +20,357 @@
     <link rel="stylesheet" href="effects-3d-enhanced.css">
     <link rel="stylesheet" href="features-new.css">
     <link rel="stylesheet" href="firstVisitorCelebration.css">
-    <link rel="stylesheet" href="style.css">
     <style>
         :root {
-            --gold: #FFD700;
-            --gold2: #FFA500;
-            --deep: #0a0a1a;
-            --deep2: #0d0d2b;
-            --navy: #0a0f3d;
-            --accent: #00f5ff;
-            --accent2: #7b2fff;
-            --white: #ffffff;
-            --glass: rgba(255,255,255,0.06);
-            --glass2: rgba(255,215,0,0.08);
-            --red: #ff3a3a;
-            --green: #00e676;
+            --gold:#FFD700;--gold2:#FFA500;--deep:#0a0a1a;--deep2:#0d0d2b;
+            --accent:#00f5ff;--accent2:#7b2fff;--white:#ffffff;
+            --glass:rgba(255,255,255,0.06);--red:#ff3a3a;--green:#00e676;
         }
-        body { background: var(--deep) !important; color: var(--white) !important; cursor: none; }
-        /* Custom Cursor */
-        .cursor { width: 18px; height: 18px; border: 2px solid var(--gold); border-radius: 50%; position: fixed; top:0; left:0; pointer-events: none; z-index: 99999; transition: transform 0.15s ease; mix-blend-mode: difference; }
-        .cursor-dot { width: 6px; height: 6px; background: var(--gold); border-radius: 50%; position: fixed; top:0; left:0; pointer-events: none; z-index: 99999; }
-        #particles { position:fixed; top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--deep2); }
-        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
-        /* Enhanced Hover 3D for Staff Portal */
-        .hover-3d {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.4s ease;
-            transform-style: preserve-3d;
-            background: var(--glass);
-            border: 1px solid rgba(255,215,0,0.2);
-            box-shadow: 0 8px 16px -5px rgba(0,0,0,0.3);
-        }
-        .hover-3d:hover {
-            transform: perspective(1000px) rotateX(3deg) translateY(-5px);
-            box-shadow: 0 18px 36px -8px rgba(255,215,0,0.25);
-        }
+        body { background:var(--deep) !important;color:var(--white) !important;cursor:none;font-family:'Inter',sans-serif; }
+        .cursor{width:18px;height:18px;border:2px solid var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:99999;transition:transform 0.15s ease;mix-blend-mode:difference;}
+        .cursor-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:99999;}
+        #particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+        ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:var(--deep2);}::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px;}
+        .card-staff{background:var(--glass);border:1px solid rgba(255,215,0,0.2);border-radius:16px;transition:all 0.3s;}
+        .card-staff:hover{border-color:rgba(255,215,0,0.35);transform:translateY(-2px);}
+        [x-cloak]{display:none !important;}
 
-        .button-3d-press {
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-            background: linear-gradient(135deg, var(--gold), var(--gold2));
-            box-shadow: 0 4px 0px rgba(0, 0, 0, 0.3);
-        }
-        .button-3d-press:hover {
-            transform: translateY(-2px) translateZ(5px);
-            box-shadow: 0 6px 0px rgba(255,215,0,0.4);
-        }
-        .button-3d-press:active {
-            transform: translateY(2px) translateZ(0px);
-            box-shadow: 0 2px 0px rgba(0, 0, 0, 0.15);
-        }
+        /* ── LIVE CLASS CONTROLS ── */
+        .live-badge{display:inline-flex;align-items:center;gap:6px;background:rgba(255,58,58,0.15);border:1px solid rgba(255,58,58,0.4);color:var(--red);padding:4px 12px;border-radius:50px;font-size:0.7rem;font-weight:800;letter-spacing:1px;text-transform:uppercase;}
+        .live-dot{width:8px;height:8px;border-radius:50%;background:var(--red);animation:live-pulse 1.2s ease-in-out infinite;}
+        @keyframes live-pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,58,58,0.4);}50%{box-shadow:0 0 0 8px transparent;}}
 
-        /* Beautiful Loading Spinner with Multiple Effects */
-        .loading-3d-spinner {
-            animation: spin3d 2s infinite cubic-bezier(0.68, -0.55, 0.27, 1.55), pulse-glow 2s infinite ease-in-out;
-            transform-style: preserve-3d;
-            box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
-        }
-        @keyframes spin3d {
-            0% { transform: rotateY(0deg) rotateX(0deg); }
-            50% { transform: rotateY(180deg) rotateX(90deg); }
-            100% { transform: rotateY(360deg) rotateX(180deg); }
-        }
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 10px rgba(37, 99, 235, 0.5), inset 0 0 5px rgba(37, 99, 235, 0.3); }
-            50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.8), inset 0 0 10px rgba(59, 130, 246, 0.5); }
-        }
-        
-        /* Processing Modal Styles */
-        .processing-modal {
-            animation: fadeInStay 0.3s ease-out;
-        }
-        .processing-content {
-            animation: slideUp 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .processing-spinner {
-            animation: spinSmooth 1.5s linear infinite, scalePulse 2s ease-in-out infinite;
-        }
-        @keyframes fadeInStay {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes slideUp {
-            from { transform: translateY(20px) scale(0.95); opacity: 0; }
-            to { transform: translateY(0) scale(1); opacity: 1; }
-        }
-        @keyframes spinSmooth {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        @keyframes scalePulse {
-            0%, 100% { filter: drop-shadow(0 0 4px rgba(37, 99, 235, 0.4)); }
-            50% { filter: drop-shadow(0 0 12px rgba(59, 130, 246, 0.7)); }
-        }
+        /* ── LIVE TEACHER CONTROL PANEL ── */
+        #live-control-panel{position:fixed;inset:0;z-index:200;background:var(--deep);display:flex;flex-direction:column;}
+        .ctrl-header{background:rgba(10,10,26,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,215,0,0.1);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+        .ctrl-layout{flex:1;display:flex;overflow:hidden;}
+        .ctrl-stream{flex:1;display:flex;flex-direction:column;background:#000;align-items:center;justify-content:center;position:relative;}
+        .ctrl-sidebar{width:340px;display:flex;flex-direction:column;background:rgba(13,13,43,0.95);border-left:1px solid rgba(255,215,0,0.1);flex-shrink:0;overflow-y:auto;}
+        .ctrl-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;font-size:0.8rem;font-weight:700;cursor:pointer;border:1px solid rgba(255,215,0,0.2);background:rgba(255,255,255,0.05);color:var(--white);transition:all 0.2s;}
+        .ctrl-btn:hover{background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.4);}
+        .ctrl-btn.danger{background:rgba(255,58,58,0.15);border-color:rgba(255,58,58,0.4);color:var(--red);}
+        .ctrl-btn.success{background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.4);color:var(--green);}
+        .chat-msg{background:rgba(255,255,255,0.05);border-radius:10px;padding:8px 12px;border-left:3px solid rgba(255,215,0,0.3);font-size:0.82rem;margin-bottom:8px;animation:msgSlide 0.2s ease;}
+        .chat-msg.teacher{border-left-color:var(--gold);background:rgba(255,215,0,0.07);}
+        @keyframes msgSlide{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+        .student-chip{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:8px;margin-bottom:6px;font-size:0.82rem;}
+        .hand-chip{background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.3);}
+
+        /* ── TABLE STYLES ── */
+        .data-table{width:100%;border-collapse:separate;border-spacing:0;}
+        .data-table thead th{background:rgba(255,215,0,0.05);color:rgba(255,255,255,0.5);font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;padding:12px 16px;border-bottom:1px solid rgba(255,215,0,0.1);}
+        .data-table tbody tr{border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.2s;}
+        .data-table tbody tr:hover{background:rgba(255,215,0,0.04);}
+        .data-table tbody td{padding:12px 16px;font-size:0.85rem;}
+        .status-pill{padding:3px 10px;border-radius:50px;font-size:0.7rem;font-weight:800;text-transform:uppercase;letter-spacing:0.5px;}
+        .pill-green{background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.3);}
+        .pill-yellow{background:rgba(255,215,0,0.1);color:var(--gold);border:1px solid rgba(255,215,0,0.3);}
+        .pill-red{background:rgba(255,58,58,0.1);color:var(--red);border:1px solid rgba(255,58,58,0.3);}
+
+        /* ── FORM STYLES ── */
+        .form-input{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,215,0,0.2);border-radius:10px;padding:10px 14px;color:var(--white);font-size:0.9rem;outline:none;transition:border-color 0.2s;}
+        .form-input:focus{border-color:rgba(255,215,0,0.5);}
+        .form-input::placeholder{color:rgba(255,255,255,0.3);}
+        .form-input option{background:var(--deep2);}
+        .form-label{display:block;font-size:0.75rem;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.4);margin-bottom:6px;}
+        .btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--deep);font-weight:900;border:none;padding:10px 24px;border-radius:10px;cursor:pointer;font-size:0.85rem;transition:all 0.2s;}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(255,215,0,0.3);}
+        .btn-danger{background:rgba(255,58,58,0.15);color:var(--red);border:1px solid rgba(255,58,58,0.3);font-weight:700;padding:8px 16px;border-radius:8px;cursor:pointer;font-size:0.8rem;transition:all 0.2s;}
+        .btn-danger:hover{background:rgba(255,58,58,0.25);}
     </style>
 </head>
-<body class="font-['Inter']" x-data="staffPortal()" x-init="init()" x-cloak>
-    <!-- CURSOR -->
+<body x-data="staffPortal()" x-init="init()" x-cloak>
     <div class="cursor" id="cursor"></div>
     <div class="cursor-dot" id="cursorDot"></div>
-    <!-- PARTICLES -->
     <canvas id="particles"></canvas>
 
-    <!-- Login Section -->
+    <!-- ════════════════════════════════════════════════════════
+         LIVE CLASS TEACHER CONTROL PANEL
+    ════════════════════════════════════════════════════════ -->
+    <div id="live-control-panel" x-show="liveCtrl.active" x-cloak style="display:none;">
+        <!-- Header -->
+        <div class="ctrl-header">
+            <div class="flex items-center gap-3">
+                <span class="live-badge"><span class="live-dot"></span> LIVE</span>
+                <span class="font-bold" x-text="liveCtrl.batchName"></span>
+                <span class="text-xs opacity-40" x-text="liveCtrl.duration"></span>
+                <span class="text-xs" style="color:var(--gold);">👥 <span x-text="liveCtrl.studentCount"></span></span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button @click="shareLiveResource()" class="ctrl-btn">
+                    <i class="fas fa-paperclip"></i> Share Resource
+                </button>
+                <button @click="toggleChatMute()" class="ctrl-btn" :class="liveCtrl.chatMuted ? 'danger' : ''">
+                    <i class="fas" :class="liveCtrl.chatMuted ? 'fa-comment-slash' : 'fa-comments'"></i>
+                    <span x-text="liveCtrl.chatMuted ? 'Unmute Chat' : 'Mute Chat'"></span>
+                </button>
+                <button @click="stopLiveClass()" class="ctrl-btn danger">
+                    <i class="fas fa-stop-circle"></i> End Class
+                </button>
+            </div>
+        </div>
+
+        <!-- Layout -->
+        <div class="ctrl-layout">
+            <!-- Stream Preview (Teacher's own stream info) -->
+            <div class="ctrl-stream">
+                <div class="text-center p-8">
+                    <div style="font-size:4rem;">📡</div>
+                    <h3 class="text-2xl font-black mt-4" style="color:var(--gold);">You are LIVE!</h3>
+                    <p class="opacity-60 mt-2 text-sm">Students can see your screen/camera via the stream key below.</p>
+                    <div class="mt-6 p-4 rounded-xl text-left" style="background:rgba(255,215,0,0.05);border:1px solid rgba(255,215,0,0.2);max-width:400px;margin:24px auto 0;">
+                        <p class="text-xs font-bold uppercase opacity-40 mb-2">Stream Key (for OBS / Screen Share)</p>
+                        <code class="text-sm font-mono" style="color:var(--accent);" x-text="liveCtrl.streamKey || 'Generated on start'"></code>
+                    </div>
+
+                    <!-- Live Poll Creator -->
+                    <div class="mt-8 p-6 rounded-2xl text-left" style="background:var(--glass);border:1px solid rgba(255,215,0,0.2);max-width:400px;margin:24px auto 0;">
+                        <h4 class="font-bold mb-4" style="color:var(--gold);">📊 Launch a Quick Poll</h4>
+                        <div x-show="!liveCtrl.activePoll">
+                            <input class="form-input mb-3" x-model="pollForm.question" placeholder="Poll question...">
+                            <template x-for="(opt, i) in pollForm.options" :key="i">
+                                <input class="form-input mb-2" x-model="pollForm.options[i]" :placeholder="'Option ' + (i+1)">
+                            </template>
+                            <button @click="launchPoll()" class="btn-primary w-full mt-2"><i class="fas fa-poll mr-2"></i>Launch Poll</button>
+                        </div>
+                        <div x-show="liveCtrl.activePoll" class="text-center">
+                            <p class="font-bold opacity-70" x-text="'Poll active: ' + liveCtrl.activePoll?.question"></p>
+                            <div class="mt-3">
+                                <template x-for="(opt, i) in liveCtrl.activePoll?.options || []" :key="i">
+                                    <div class="flex justify-between text-sm mb-2 p-2 rounded-lg" style="background:rgba(255,255,255,0.04);">
+                                        <span x-text="opt.text"></span>
+                                        <span style="color:var(--accent);" x-text="opt.votes + ' votes'"></span>
+                                    </div>
+                                </template>
+                            </div>
+                            <button @click="endPoll()" class="btn-danger mt-3 w-full">End Poll</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Sidebar: Chat + Students -->
+            <div class="ctrl-sidebar">
+                <!-- Tabs -->
+                <div class="flex border-b" style="border-color:rgba(255,215,0,0.1);">
+                    <button @click="liveCtrl.sideTab = 'chat'" class="flex-1 py-3 text-sm font-bold transition" :style="liveCtrl.sideTab === 'chat' ? 'color:var(--gold);border-bottom:2px solid var(--gold)' : 'color:rgba(255,255,255,0.4)'">💬 Chat</button>
+                    <button @click="liveCtrl.sideTab = 'students'" class="flex-1 py-3 text-sm font-bold transition" :style="liveCtrl.sideTab === 'students' ? 'color:var(--gold);border-bottom:2px solid var(--gold)' : 'color:rgba(255,255,255,0.4)'">👥 Students</button>
+                    <button @click="liveCtrl.sideTab = 'hands'" class="flex-1 py-3 text-sm font-bold transition relative" :style="liveCtrl.sideTab === 'hands' ? 'color:var(--gold);border-bottom:2px solid var(--gold)' : 'color:rgba(255,255,255,0.4)'">
+                        ✋ Hands
+                        <span x-show="liveCtrl.raisedHands.length > 0" class="absolute top-2 right-3 w-4 h-4 rounded-full text-[10px] flex items-center justify-center font-bold" style="background:var(--red);color:white;" x-text="liveCtrl.raisedHands.length"></span>
+                    </button>
+                </div>
+
+                <!-- Chat Tab -->
+                <div x-show="liveCtrl.sideTab === 'chat'" class="flex flex-col flex-1 overflow-hidden" style="min-height:0;">
+                    <div class="flex-1 overflow-y-auto p-3" id="teacher-chat-messages" style="max-height:calc(100% - 60px);">
+                        <template x-for="msg in liveCtrl.messages" :key="msg.id">
+                            <div class="chat-msg" :class="msg.role === 'staff' ? 'teacher' : ''">
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-xs font-black" :style="msg.role === 'staff' ? 'color:var(--gold)' : 'color:var(--accent)'" x-text="msg.name"></span>
+                                    <div class="flex gap-1" x-show="msg.role !== 'staff'">
+                                        <button @click="muteUser(msg.uid)" class="text-[10px] px-1.5 py-0.5 rounded opacity-60 hover:opacity-100" style="background:rgba(255,215,0,0.1);color:var(--gold);" title="Mute user">🔇</button>
+                                        <button @click="kickUser(msg.uid)" class="text-[10px] px-1.5 py-0.5 rounded opacity-60 hover:opacity-100" style="background:rgba(255,58,58,0.1);color:var(--red);" title="Kick user">✕</button>
+                                    </div>
+                                </div>
+                                <p class="text-xs leading-relaxed opacity-90" x-text="msg.message"></p>
+                            </div>
+                        </template>
+                    </div>
+                    <div class="p-3 border-t" style="border-color:rgba(255,215,0,0.1);display:flex;gap:8px;">
+                        <input type="text" x-model="liveCtrl.chatInput" class="form-input" style="flex:1;padding:8px 12px;font-size:0.8rem;" placeholder="Send a message..." @keydown.enter="teacherSendMessage()">
+                        <button @click="teacherSendMessage()" class="ctrl-btn" style="padding:8px 12px;"><i class="fas fa-paper-plane"></i></button>
+                    </div>
+                </div>
+
+                <!-- Students Tab -->
+                <div x-show="liveCtrl.sideTab === 'students'" class="p-3 overflow-y-auto">
+                    <p class="text-xs opacity-40 mb-3 font-bold uppercase">Live Students (<span x-text="liveCtrl.studentCount"></span>)</p>
+                    <div class="text-sm opacity-40 text-center py-8" x-show="liveCtrl.studentCount === 0">No students joined yet</div>
+                    <template x-for="s in liveCtrl.students" :key="s.uid">
+                        <div class="student-chip">
+                            <span x-text="s.name"></span>
+                            <div class="flex gap-1">
+                                <button @click="muteUser(s.uid)" class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(255,215,0,0.1);color:var(--gold);" title="Mute">🔇</button>
+                                <button @click="kickUser(s.uid)" class="text-[10px] px-1.5 py-0.5 rounded" style="background:rgba(255,58,58,0.1);color:var(--red);" title="Kick">✕</button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Hands Tab -->
+                <div x-show="liveCtrl.sideTab === 'hands'" class="p-3 overflow-y-auto">
+                    <p class="text-xs opacity-40 mb-3 font-bold uppercase">Raised Hands (<span x-text="liveCtrl.raisedHands.length"></span>)</p>
+                    <div class="text-sm opacity-40 text-center py-8" x-show="liveCtrl.raisedHands.length === 0">No hands raised</div>
+                    <template x-for="h in liveCtrl.raisedHands" :key="h.uid">
+                        <div class="student-chip hand-chip">
+                            <span>✋ <span x-text="h.name"></span></span>
+                            <button @click="liveCtrl.raisedHands = liveCtrl.raisedHands.filter(x => x.uid !== h.uid)" class="text-xs opacity-60 hover:opacity-100">✓ Ack</button>
+                        </div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════
+         MAIN STAFF DASHBOARD
+    ════════════════════════════════════════════════════════ -->
     <template x-if="!isLoggedIn">
-        <div class="min-h-screen flex flex-col items-center justify-center bg-slate-900 text-white p-4">
-            <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mb-4"></div>
-            <div class="rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mb-4 loading-3d-spinner"></div>
+        <div class="min-h-screen flex flex-col items-center justify-center text-white p-4">
+            <div class="animate-spin rounded-full h-12 w-12 border-4 mb-4" style="border-color:var(--gold);border-top-color:transparent;"></div>
             <h2 class="text-xl font-bold">Verifying Staff Access...</h2>
-            <p class="text-slate-400 mt-2 text-sm">If you are not redirected, please <a href="index.html" class="text-blue-400 underline">login here</a>.</p>
-            <div x-show="error" class="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-xs" x-text="error"></div>
+            <p class="opacity-50 mt-2 text-sm">If not redirected, <a href="index.html" class="underline" style="color:var(--accent);">login here</a>.</p>
         </div>
     </template>
 
-    <!-- Dashboard Section -->
     <template x-if="isLoggedIn">
         <div class="flex min-h-screen">
             <!-- Sidebar -->
-            <aside class="w-64 bg-slate-900 text-white hidden md:block">
+            <aside class="w-64 hidden md:flex flex-col" style="background:var(--deep2);border-right:1px solid rgba(255,215,0,0.15);">
                 <div class="p-6">
-                    <h2 class="text-xl font-bold bg-gradient-to-r from-blue-400 to-red-400 bg-clip-text text-transparent">
-                        Admin Dashboard
-                    </h2>
+                    <h2 class="text-xl font-black" style="background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;">Arrow of Mathematics</h2>
+                    <p class="text-xs opacity-40 mt-1 font-bold uppercase tracking-widest">Staff Portal</p>
                 </div>
-                <nav class="mt-6">
-                    <button @click="activeTab = 'admissions'" :class="activeTab === 'admissions' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
-                        <i class="fas fa-user-graduate w-6"></i> Admissions
+                <nav class="flex-1 px-4 space-y-1">
+                    <!-- LIVE CLASS (top priority) -->
+                    <button @click="activeTab = 'live'" :style="activeTab === 'live' ? 'background:linear-gradient(135deg,var(--red),#ff6b35);color:white;' : 'background:rgba(255,58,58,0.07);color:rgba(255,255,255,0.7);border:1px solid rgba(255,58,58,0.2);'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-broadcast-tower w-5 mr-2"></i> Live Classes
                     </button>
-                    <button @click="activeTab = 'news'" :class="activeTab === 'news' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
-                        <i class="fas fa-newspaper w-6"></i> Post News
+                    <button @click="activeTab = 'batches'" :style="activeTab === 'batches' ? 'background:linear-gradient(135deg,var(--gold),var(--accent));color:var(--deep)' : 'color:rgba(255,255,255,0.7)'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-layer-group w-5 mr-2"></i> Batch Management
                     </button>
-                    <button @click="activeTab = 'docs'" :class="activeTab === 'docs' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
-                        <i class="fas fa-folder-open w-6"></i> Resources
+                    <button @click="activeTab = 'admissions'" :style="activeTab === 'admissions' ? 'background:linear-gradient(135deg,var(--gold),var(--accent));color:var(--deep)' : 'color:rgba(255,255,255,0.7)'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-user-graduate w-5 mr-2"></i> Admissions
                     </button>
-                    <button @click="activeTab = 'scores'" :class="activeTab === 'scores' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
-                        <i class="fas fa-chart-bar w-6"></i> Test Scores
+                    <button @click="activeTab = 'news'" :style="activeTab === 'news' ? 'background:linear-gradient(135deg,var(--gold),var(--accent));color:var(--deep)' : 'color:rgba(255,255,255,0.7)'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-newspaper w-5 mr-2"></i> Post News
                     </button>
-                    <button @click="activeTab = 'manage-staff'" :class="activeTab === 'manage-staff' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
-                        <i class="fas fa-users-cog w-6"></i> Manage Staff
+                    <button @click="activeTab = 'docs'" :style="activeTab === 'docs' ? 'background:linear-gradient(135deg,var(--gold),var(--accent));color:var(--deep)' : 'color:rgba(255,255,255,0.7)'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-folder-open w-5 mr-2"></i> Resources
+                    </button>
+                    <button @click="activeTab = 'scores'" :style="activeTab === 'scores' ? 'background:linear-gradient(135deg,var(--gold),var(--accent));color:var(--deep)' : 'color:rgba(255,255,255,0.7)'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-chart-bar w-5 mr-2"></i> Test Scores
+                    </button>
+                    <button @click="activeTab = 'analytics'" :style="activeTab === 'analytics' ? 'background:linear-gradient(135deg,var(--gold),var(--accent));color:var(--deep)' : 'color:rgba(255,255,255,0.7)'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-chart-pie w-5 mr-2"></i> Analytics
+                    </button>
+                    <button @click="activeTab = 'manage-staff'" :style="activeTab === 'manage-staff' ? 'background:linear-gradient(135deg,var(--gold),var(--accent));color:var(--deep)' : 'color:rgba(255,255,255,0.7)'" class="w-full flex items-center px-4 py-3 rounded-xl font-bold transition-all text-sm">
+                        <i class="fas fa-users-cog w-5 mr-2"></i> Manage Staff
                     </button>
                 </nav>
-                <div class="absolute bottom-0 w-64 p-6">
-                    <button @click="logout" class="text-slate-400 hover:text-white flex items-center transition-colors">
-                        <i class="fas fa-sign-out-alt mr-2"></i> Logout
-                    </button>
+                <div class="p-4">
+                    <button @click="logout" class="flex items-center gap-2 text-sm font-bold transition opacity-60 hover:opacity-100" style="color:var(--red);"><i class="fas fa-sign-out-alt"></i> Logout</button>
                 </div>
             </aside>
 
-            <!-- Main Content -->
-            <main class="flex-1 p-8">
-                <header class="flex justify-between items-center mb-8">
-                    <h1 class="text-2xl font-bold text-gray-800" x-text="tabTitle()"></h1>
-                    <button @click="exportData" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md">
-                    <button @click="exportData" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md button-3d-press">
-                        <i class="fas fa-download mr-2"></i> Export Data
-                    </button>
+            <main class="flex-1 overflow-y-auto p-6" style="max-height:100vh;">
+                <header class="flex justify-between items-center mb-8 p-4 rounded-2xl card-staff">
+                    <h1 class="text-xl font-black" x-text="tabTitle()"></h1>
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full" :style="wsConnected ? 'background:var(--green)' : 'background:rgba(255,255,255,0.2)'"></div>
+                        <span class="text-xs font-bold" :style="wsConnected ? 'color:var(--green)' : 'color:rgba(255,255,255,0.4)'" x-text="wsConnected ? 'Live Connected' : 'Offline'"></span>
+                        <button @click="exportData" class="ctrl-btn success"><i class="fas fa-download mr-1"></i> Export</button>
+                    </div>
                 </header>
 
-                <!-- Admissions Section -->
-                <div x-show="activeTab === 'admissions'" class="space-y-6">
-                    <div class="flex flex-col md:flex-row gap-4 mb-4">
-                        <div class="relative flex-1">
-                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" x-model="admissionSearch" placeholder="Search by name or email..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
-                        </div>
-                        <select x-model="classFilter" class="px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 font-semibold text-gray-700">
-                            <option value="All">All Classes</option>
-                            <option value="Class 9">Class 9</option>
-                            <option value="Class 10">Class 10</option>
-                            <option value="Class 11">Class 11</option>
-                            <option value="Class 12">Class 12</option>
-                        </select>
+                <!-- ── LIVE CLASSES TAB ── -->
+                <div x-show="activeTab === 'live'" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="p-4 rounded-2xl card-staff text-center"><div class="text-3xl font-black" style="color:var(--gold);" x-text="admissions.length"></div><div class="text-xs opacity-40 uppercase font-bold mt-1">Total Students</div></div>
+                        <div class="p-4 rounded-2xl card-staff text-center"><div class="text-3xl font-black" style="color:var(--green);" x-text="liveCtrl.sessionId ? '1' : '0'"></div><div class="text-xs opacity-40 uppercase font-bold mt-1">Live Right Now</div></div>
+                        <div class="p-4 rounded-2xl card-staff text-center"><div class="text-3xl font-black" style="color:var(--accent);" x-text="batches.length"></div><div class="text-xs opacity-40 uppercase font-bold mt-1">Active Batches</div></div>
                     </div>
-                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
-                        <table class="w-full text-left border-collapse">
-                            <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
-                                <tr>
-                                    <th class="px-6 py-4">Student Name</th>
-                                    <th class="px-6 py-4">Email</th>
-                                    <th class="px-6 py-4">Class</th>
-                                    <th class="px-6 py-4">Date</th>
-                                    <th class="px-6 py-4">Admission</th>
-                                    <th class="px-6 py-4">Access</th>
-                                    <th class="px-6 py-4">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y">
-                                <template x-for="item in filteredAdmissions" :key="item.id">
-                                    <tr :class="item.isBlocked ? 'bg-red-50 opacity-75' : 'hover:bg-blue-50/50'" class="transition-colors">
-                                        <td class="px-6 py-4 font-medium" x-text="item.name || 'Unnamed'"></td>
-                                        <td class="px-6 py-4 text-gray-600 text-sm font-mono" x-text="item.email || 'N/A'"></td>
-                                        <td class="px-6 py-4 text-gray-600" x-text="item.studentClass || 'N/A'"></td>
-                                        <td class="px-6 py-4 text-gray-500 text-sm" x-text="formatDate(item.timestamp || item.createdAt)"></td>
-                                        <td class="px-6 py-4">
-                                            <span :class="item.status === 'Approved' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'" 
-                                                class="px-2 py-1 rounded-full text-xs font-semibold" x-text="item.status"></span>
-                                        </td>
-                                        <td class="px-6 py-4">
-                                            <span :class="item.isBlocked ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'" 
-                                                class="px-2 py-1 rounded-full text-xs font-semibold" x-text="item.isBlocked ? 'Blocked' : 'Active'"></span>
-                                        </td>
-                                        <td class="px-6 py-4 space-x-2 flex">
-                                            <button @click="approveAdmission(item.id)" x-show="item.status !== 'Approved'" class="text-blue-600 hover:underline font-semibold text-sm">Approve</button>
-                                            <button @click="toggleBlockStudent(item.id, item.email, item.isBlocked)" :class="item.isBlocked ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'" class="font-semibold text-sm transition-colors" x-text="item.isBlocked ? 'Unblock' : 'Block'"></button>
-                                            <button @click="deleteStudent(item.id)" class="text-red-600 hover:text-red-800 font-semibold text-sm transition-colors">Delete</button>
+
+                    <!-- Start Live Class -->
+                    <div class="p-6 rounded-2xl card-staff" style="border-color:rgba(255,58,58,0.3);">
+                        <h3 class="text-lg font-black mb-2" style="color:var(--gold);">🔴 Start a Live Class</h3>
+                        <p class="text-xs opacity-50 mb-4">Select a batch and go live instantly. Students will be notified in real-time.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="form-label">Select Batch</label>
+                                <select x-model="liveForm.batchId" class="form-input" @change="liveForm.batchName = batches.find(b=>b.id===liveForm.batchId)?.name || ''">
+                                    <option value="">-- Choose Batch --</option>
+                                    <template x-for="b in batches" :key="b.id">
+                                        <option :value="b.id" x-text="b.name + ' (' + b.grade + ')'"></option>
+                                    </template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Stream Key (optional)</label>
+                                <input type="text" x-model="liveForm.streamKey" class="form-input" placeholder="Leave blank to auto-generate">
+                            </div>
+                        </div>
+                        <button @click="startLiveClass()" :disabled="!liveForm.batchId || liveCtrl.sessionId" class="btn-primary" :style="liveCtrl.sessionId ? 'opacity:0.5;cursor:not-allowed' : ''">
+                            <i class="fas fa-broadcast-tower mr-2"></i>
+                            <span x-text="liveCtrl.sessionId ? 'Class Already Live' : 'Go Live Now'"></span>
+                        </button>
+                    </div>
+
+                    <!-- Schedule a Class -->
+                    <div class="p-6 rounded-2xl card-staff">
+                        <h3 class="text-lg font-black mb-4" style="color:var(--white);">🗓️ Schedule a Future Class</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="form-label">Batch</label>
+                                <select x-model="scheduleForm.batchId" class="form-input">
+                                    <option value="">-- Batch --</option>
+                                    <template x-for="b in batches" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label">Date & Time</label>
+                                <input type="datetime-local" x-model="scheduleForm.scheduledAt" class="form-input">
+                            </div>
+                            <div>
+                                <label class="form-label">Duration (minutes)</label>
+                                <input type="number" x-model.number="scheduleForm.duration" class="form-input" placeholder="60" min="15" max="300">
+                            </div>
+                        </div>
+                        <button @click="scheduleClass()" class="ctrl-btn success"><i class="fas fa-calendar-plus mr-2"></i>Schedule Class</button>
+                    </div>
+                </div>
+
+                <!-- ── BATCH MANAGEMENT TAB ── -->
+                <div x-show="activeTab === 'batches'" class="space-y-6">
+                    <!-- Create Batch -->
+                    <div class="p-6 rounded-2xl card-staff">
+                        <h3 class="font-black text-lg mb-4" style="color:var(--gold);">+ Create New Batch</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                            <div><label class="form-label">Batch Name</label><input type="text" x-model="batchForm.name" class="form-input" placeholder="e.g. Board Prep 2026"></div>
+                            <div><label class="form-label">Grade</label>
+                                <select x-model="batchForm.grade" class="form-input">
+                                    <option value="">-- Grade --</option>
+                                    <option value="Class 9">Class 9</option>
+                                    <option value="Class 10">Class 10</option>
+                                    <option value="Class 11">Class 11</option>
+                                    <option value="Class 12">Class 12</option>
+                                </select>
+                            </div>
+                            <div><label class="form-label">Teacher</label><input type="text" x-model="batchForm.teacher" class="form-input" placeholder="Teacher name"></div>
+                            <div><label class="form-label">Schedule</label><input type="text" x-model="batchForm.schedule" class="form-input" placeholder="Mon, Wed 4PM"></div>
+                        </div>
+                        <button @click="createBatch()" class="btn-primary"><i class="fas fa-plus mr-2"></i>Create Batch</button>
+                    </div>
+
+                    <!-- Existing Batches -->
+                    <div class="card-staff rounded-2xl overflow-hidden">
+                        <div class="p-4 border-b" style="border-color:rgba(255,215,0,0.1);">
+                            <h3 class="font-black">Existing Batches</h3>
+                        </div>
+                        <table class="data-table">
+                            <thead><tr><th>Batch Name</th><th>Grade</th><th>Teacher</th><th>Schedule</th><th>Students</th><th>Actions</th></tr></thead>
+                            <tbody>
+                                <template x-for="b in batches" :key="b.id">
+                                    <tr>
+                                        <td class="font-bold" x-text="b.name"></td>
+                                        <td><span class="status-pill pill-yellow" x-text="b.grade"></span></td>
+                                        <td class="opacity-70" x-text="b.teacher"></td>
+                                        <td class="opacity-70 text-xs" x-text="b.schedule"></td>
+                                        <td style="color:var(--accent);" x-text="b.studentCount || 0"></td>
+                                        <td>
+                                            <button @click="liveForm.batchId = b.id; liveForm.batchName = b.name; activeTab = 'live'" class="text-xs font-bold px-2 py-1 rounded" style="background:rgba(255,58,58,0.1);color:var(--red);">Go Live</button>
+                                            <button @click="deleteBatch(b.id)" class="btn-danger ml-2" style="padding:4px 8px;font-size:0.7rem;"><i class="fas fa-trash"></i></button>
                                         </td>
                                     </tr>
                                 </template>
@@ -235,295 +379,400 @@
                     </div>
                 </div>
 
-                <!-- Post News Section -->
-                <div x-show="activeTab === 'news'" class="space-y-8">
-                    <!-- Post News Form -->
-                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
-                        <h3 class="text-lg font-bold mb-6">Post New Update</h3>
-                        <form @submit.prevent="postNews">
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold mb-2">Headline</label>
-                                <input type="text" x-model="newsForm.title" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold mb-2">Content</label>
-                                <textarea x-model="newsForm.content" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500 h-32" required></textarea>
-                            </div>
-                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md">Publish Update</button>
-                        </form>
-                    </div>
-
-                    <!-- News List -->
-                    <div class="bg-white p-8 rounded-xl shadow-sm border">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold">Previous News</h3>
-                            <div class="relative w-64">
-                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" x-model="newsSearch" placeholder="Search news..." class="w-full pl-10 pr-4 py-1.5 border rounded-lg text-sm outline-none">
-                            </div>
+                <!-- ── ADMISSIONS TAB ── -->
+                <div x-show="activeTab === 'admissions'" class="space-y-6">
+                    <div class="flex flex-col md:flex-row gap-3 mb-2">
+                        <div class="relative flex-1">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 opacity-40 text-sm"></i>
+                            <input type="text" x-model="admissionSearch" placeholder="Search students..." class="form-input pl-10">
                         </div>
-                        <div x-show="filteredNews.length === 0" class="text-center py-12 text-gray-500">
-                            <p class="text-sm">No news posted yet.</p>
-                        </div>
-                        <div class="space-y-3">
-                            <template x-for="news in filteredNews" :key="news.id">
-                                <div class="p-4 bg-slate-50 rounded-lg border flex items-start justify-between hover:bg-slate-100 transition-colors">
-                                    <div class="flex-1">
-                                        <h4 class="font-bold text-gray-800" x-text="news.title"></h4>
-                                        <p class="text-sm text-gray-600 mt-1 line-clamp-2" x-text="news.content"></p>
-                                        <p class="text-xs text-gray-400 mt-2" x-text="formatDate(news.timestamp)"></p>
-                                    </div>
-                                    <button @click="deleteNews(news.id)" class="ml-4 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex-shrink-0">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </template>
-                        </div>
+                        <select x-model="classFilter" class="form-input" style="width:180px;">
+                            <option value="All">All Classes</option>
+                            <option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>
+                            <option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+                        </select>
                     </div>
-                </div>
-
-                <!-- Documents Section -->
-                <div x-show="activeTab === 'docs'" class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
-                    <div class="mb-8">
-                        <h3 class="font-bold mb-4 border-b pb-2">Add New Resource</h3>
-                        <form @submit.prevent="addDoc">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Document Title</label>
-                                    <input type="text" x-model="docForm.name" class="w-full px-4 py-2 border rounded-lg" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Resource URL</label>
-                                    <input type="url" x-model="docForm.url" class="w-full px-4 py-2 border rounded-lg" placeholder="https://..." required>
-                                </div>
-                                <div class="md:col-span-2">
-                                    <label class="block text-xs font-bold uppercase text-gray-500 mb-1">Target Class</label>
-                                    <select x-model="docForm.classGrade" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
-                                        <option value="All">All Classes</option>
-                                        <option value="Class 9">Class 9</option>
-                                        <option value="Class 10">Class 10</option>
-                                        <option value="Class 11">Class 11</option>
-                                        <option value="Class 12">Class 12</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <button type="submit" class="bg-slate-800 text-white px-6 py-2 rounded-lg font-bold hover:bg-slate-900 shadow-md">Upload Link</button>
-                        </form>
-                    </div>
-                    
-                    <div class="flex flex-col md:flex-row justify-between items-center mb-4 gap-3">
-                        <h3 class="font-bold">Existing Resources</h3>
-                        <div class="flex gap-2">
-                            <select x-model="classFilter" class="px-3 py-1.5 border rounded-lg text-xs font-bold outline-none">
-                                <option value="All">Filter by Class</option>
-                                <option value="Class 9">Class 9</option>
-                                <option value="Class 10">Class 10</option>
-                                <option value="Class 11">Class 11</option>
-                                <option value="Class 12">Class 12</option>
-                            </select>
-                            <div class="relative">
-                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                                <input type="text" x-model="resourceSearch" placeholder="Search..." class="pl-8 pr-3 py-1.5 border rounded-lg text-xs outline-none w-32 md:w-44">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="space-y-3">
-                        <template x-for="doc in filteredResources" :key="doc.id">
-                            <div class="flex items-center justify-between p-4 bg-slate-50 rounded-lg border">
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-file-pdf text-red-500 mr-3 text-xl"></i>
-                                    <span class="font-medium" x-text="doc.name"></span>
-                                </div>
-                                <button @click="deleteDoc(doc.id)" class="text-red-500 hover:text-red-700 transition-colors">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Test Scores Section -->
-                <div x-show="activeTab === 'scores'" class="space-y-8">
-                    <!-- Enter Test Scores Form -->
-                    <div class="max-w-3xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
-                        <h3 class="text-lg font-bold mb-6">Enter Offline Test Score</h3>
-                        <form @submit.prevent="submitTestScore">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Student Email</label>
-                                    <input type="email" x-model="testScoreForm.studentEmail" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="student@example.com" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Test Name</label>
-                                    <input type="text" x-model="testScoreForm.testName" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Chapter 5 Test" required>
-                                </div>
-                            </div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Score Obtained</label>
-                                    <input type="number" x-model.number="testScoreForm.score" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" min="0" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Total Marks</label>
-                                    <input type="number" x-model.number="testScoreForm.total" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" min="1" value="100" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Percentage</label>
-                                    <input type="number" x-model.number="testScoreForm.percentage" class="w-full px-4 py-2 border rounded-lg bg-slate-50 outline-none focus:ring-2 focus:ring-blue-500" readonly :value="testScoreForm.total && testScoreForm.score ? Math.round((testScoreForm.score / testScoreForm.total) * 100) : 0">
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-semibold mb-2">Date of Test</label>
-                                <input type="date" x-model="testScoreForm.date" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
-                            </div>
-                            <button type="submit" class="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 shadow-md transition-all">Submit Test Score</button>
-                        </form>
-                    </div>
-
-                    <!-- Recent Submissions -->
-                    <div class="bg-white p-8 rounded-xl shadow-sm border">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold">Recent Score Submissions</h3>
-                            <div class="relative w-64">
-                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" x-model="scoreSearch" placeholder="Search student email..." class="w-full pl-10 pr-4 py-1.5 border rounded-lg text-sm outline-none">
-                            </div>
-                        </div>
-                        <div x-show="filteredScores.length === 0" class="text-center py-12 text-gray-500">
-                            <p class="text-sm">No scores submitted yet.</p>
-                        </div>
-                        <div class="space-y-3">
-                            <template x-for="score in filteredScores" :key="score.id">
-                                <div class="p-4 bg-slate-50 rounded-lg border hover:bg-slate-100 transition-colors">
-                                    <div class="flex items-start justify-between">
-                                        <div class="flex-1">
-                                            <h4 class="font-bold text-gray-800" x-text="score.studentEmail"></h4>
-                                            <p class="text-sm text-gray-600 mt-1" x-text="score.testName"></p>
-                                            <div class="flex items-center gap-4 mt-3">
-                                                <span class="text-sm font-semibold text-blue-600" x-text="'Score: ' + score.score + '/' + score.total"></span>
-                                                <span class="text-sm font-semibold" :class="score.percentage >= 80 ? 'text-green-600' : score.percentage >= 60 ? 'text-yellow-600' : 'text-red-600'" x-text="score.percentage + '%'"></span>
-                                            </div>
-                                            <p class="text-xs text-gray-400 mt-2" x-text="'Submitted: ' + formatDate(score.timestamp)"></p>
-                                        </div>
-                                        <button @click="deleteScore(score.id)" class="text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors flex-shrink-0">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Manage Staff Section -->
-                <div x-show="activeTab === 'manage-staff'" class="space-y-8">
-                    <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
-                        <h3 class="text-lg font-bold mb-6">Add New Staff Member</h3>
-                        <p class="text-xs text-gray-500 mb-6 italic">Adding a staff member by their Gmail grants them instant access to this portal via OTP login.</p>
-                        <form @submit.prevent="addStaff">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Full Name</label>
-                                    <input type="text" x-model="staffForm.name" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-semibold mb-2">Role/Title</label>
-                                    <input type="text" x-model="staffForm.role" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Math Head" required>
-                                </div>
-                            </div>
-                            <div class="mb-4">
-                                <label class="block text-sm font-semibold mb-2">Official Gmail Address</label>
-                                <input type="email" x-model="staffForm.email" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
-                            </div>
-                            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-md">Add Staff Member</button>
-                        </form>
-                    </div>
-
-                    <div class="bg-white p-8 rounded-xl shadow-sm border">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold">Authorized Team</h3>
-                            <div class="relative w-64">
-                                <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                                <input type="text" x-model="staffSearch" placeholder="Search team..." class="w-full pl-10 pr-4 py-1.5 border rounded-lg text-sm outline-none">
-                            </div>
-                        </div>
-                        <div class="bg-white rounded-xl border overflow-hidden">
-                            <table class="w-full text-left border-collapse">
-                                <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
+                    <div class="card-staff rounded-2xl overflow-auto">
+                        <table class="data-table">
+                            <thead><tr><th>Name</th><th>Email</th><th>Class</th><th>Date</th><th>Admission</th><th>Access</th><th>Actions</th></tr></thead>
+                            <tbody>
+                                <template x-for="item in filteredAdmissions" :key="item.id">
                                     <tr>
-                                        <th class="px-6 py-4">Name</th>
-                                        <th class="px-6 py-4">Email</th>
-                                        <th class="px-6 py-4">Role</th>
-                                        <th class="px-6 py-4">Action</th>
+                                        <td class="font-bold" x-text="item.name || 'Unnamed'"></td>
+                                        <td class="font-mono text-xs opacity-70" x-text="item.email"></td>
+                                        <td><span class="status-pill pill-yellow" x-text="item.studentClass || 'N/A'"></span></td>
+                                        <td class="text-xs opacity-50" x-text="formatDate(item.timestamp || item.createdAt)"></td>
+                                        <td><span :class="item.status === 'Approved' ? 'pill-green' : 'pill-yellow'" class="status-pill" x-text="item.status"></span></td>
+                                        <td><span :class="item.isBlocked ? 'pill-red' : 'pill-green'" class="status-pill" x-text="item.isBlocked ? 'Blocked' : 'Active'"></span></td>
+                                        <td class="flex gap-2">
+                                            <button @click="approveAdmission(item.id)" x-show="item.status !== 'Approved'" class="text-xs font-bold px-2 py-1 rounded" style="color:var(--accent);background:rgba(0,245,255,0.08);border:1px solid rgba(0,245,255,0.2);">Approve</button>
+                                            <button @click="toggleBlockStudent(item.id, item.email, item.isBlocked)" :class="item.isBlocked ? 'pill-green' : 'pill-red'" class="status-pill cursor-pointer" x-text="item.isBlocked ? 'Unblock' : 'Block'"></button>
+                                            <button @click="deleteStudent(item.id)" class="btn-danger" style="padding:3px 8px;font-size:0.7rem;"><i class="fas fa-trash"></i></button>
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    <!-- Hardcoded Super Admins (Protected) -->
-                                    <template x-for="email in staffEmails">
-                                        <tr class="bg-blue-50/30">
-                                            <td class="px-6 py-4 font-medium italic">Super Admin</td>
-                                            <td class="px-6 py-4 text-gray-600 text-sm font-mono" x-text="email"></td>
-                                            <td class="px-6 py-4 text-blue-600 font-bold text-xs uppercase">Owner</td>
-                                            <td class="px-6 py-4 text-gray-400 text-xs italic">System Protected</td>
-                                        </tr>
-                                    </template>
-                                    <!-- Dynamic Staff -->
-                                    <template x-for="staff in filteredStaff" :key="staff.id">
-                                        <tr class="hover:bg-slate-50">
-                                            <td class="px-6 py-4 font-medium" x-text="staff.name"></td>
-                                            <td class="px-6 py-4 text-gray-600 text-sm font-mono" x-text="staff.email"></td>
-                                            <td class="px-6 py-4 text-gray-600" x-text="staff.role"></td>
-                                            <td class="px-6 py-4">
-                                                <button @click="deleteStaff(staff.id)" class="text-red-500 hover:text-red-700">
-                                                    <i class="fas fa-trash-alt"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                </tbody>
-                            </table>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ── NEWS TAB ── -->
+                <div x-show="activeTab === 'news'" class="space-y-6">
+                    <div class="p-6 rounded-2xl card-staff">
+                        <h3 class="font-black mb-4" style="color:var(--gold);">📢 Post New Notice</h3>
+                        <div class="space-y-4">
+                            <div><label class="form-label">Headline</label><input type="text" x-model="newsForm.title" class="form-input" placeholder="Notice title..."></div>
+                            <div><label class="form-label">Content</label><textarea x-model="newsForm.content" class="form-input h-28 resize-none" placeholder="Notice content..."></textarea></div>
+                            <button @click="postNews()" class="btn-primary"><i class="fas fa-paper-plane mr-2"></i>Publish</button>
+                        </div>
+                    </div>
+                    <div class="card-staff rounded-2xl overflow-hidden">
+                        <div class="p-4 border-b" style="border-color:rgba(255,215,0,0.1);"><h3 class="font-black">Posted Notices</h3></div>
+                        <div class="p-4 space-y-3">
+                            <template x-for="news in filteredNews" :key="news.id">
+                                <div class="p-4 rounded-xl flex justify-between" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,215,0,0.1);">
+                                    <div><h4 class="font-bold" x-text="news.title"></h4><p class="text-xs opacity-50 mt-1 line-clamp-2" x-text="news.content"></p><p class="text-xs opacity-30 mt-2" x-text="formatDate(news.timestamp)"></p></div>
+                                    <button @click="deleteNews(news.id)" class="btn-danger ml-4" style="height:fit-content;padding:6px 10px;"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </template>
+                            <div x-show="filteredNews.length === 0" class="text-center py-8 opacity-40 text-sm">No notices posted yet.</div>
                         </div>
                     </div>
                 </div>
 
+                <!-- ── RESOURCES TAB ── -->
+                <div x-show="activeTab === 'docs'" class="space-y-6">
+                    <div class="p-6 rounded-2xl card-staff">
+                        <h3 class="font-black mb-4" style="color:var(--gold);">📎 Add Resource</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div><label class="form-label">Title</label><input type="text" x-model="docForm.name" class="form-input" placeholder="Document title"></div>
+                            <div><label class="form-label">URL</label><input type="url" x-model="docForm.url" class="form-input" placeholder="https://..."></div>
+                            <div><label class="form-label">Type</label>
+                                <select x-model="docForm.type" class="form-input">
+                                    <option value="pdf">PDF Notes</option><option value="video">Video Link</option><option value="test">Practice Test</option>
+                                </select>
+                            </div>
+                            <div><label class="form-label">Target Class</label>
+                                <select x-model="docForm.classGrade" class="form-input">
+                                    <option value="All">All Classes</option><option value="Class 9">Class 9</option><option value="Class 10">Class 10</option>
+                                    <option value="Class 11">Class 11</option><option value="Class 12">Class 12</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button @click="addDoc()" class="btn-primary"><i class="fas fa-upload mr-2"></i>Upload Resource</button>
+                    </div>
+                    <div class="card-staff rounded-2xl overflow-hidden">
+                        <div class="p-4 space-y-3">
+                            <template x-for="doc in filteredResources" :key="doc.id">
+                                <div class="p-4 rounded-xl flex justify-between items-center" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,215,0,0.1);">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-file-pdf" style="color:var(--red);font-size:1.2rem;"></i>
+                                        <div><p class="font-bold text-sm" x-text="doc.name"></p><p class="text-xs opacity-40 uppercase" x-text="(doc.classGrade || 'All') + ' · ' + (doc.type || 'pdf')"></p></div>
+                                    </div>
+                                    <button @click="deleteDoc(doc.id)" class="btn-danger" style="padding:6px 10px;"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── SCORES TAB ── -->
+                <div x-show="activeTab === 'scores'" class="space-y-6">
+                    <div class="p-6 rounded-2xl card-staff">
+                        <h3 class="font-black mb-4" style="color:var(--gold);">📊 Enter Test Score</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <div><label class="form-label">Student Email</label><input type="email" x-model="testScoreForm.studentEmail" class="form-input" placeholder="student@email.com"></div>
+                            <div><label class="form-label">Test Name</label><input type="text" x-model="testScoreForm.testName" class="form-input" placeholder="e.g. Chapter 5 Test"></div>
+                            <div><label class="form-label">Score Obtained</label><input type="number" x-model.number="testScoreForm.score" class="form-input" min="0"></div>
+                            <div><label class="form-label">Total Marks</label><input type="number" x-model.number="testScoreForm.total" class="form-input" min="1"></div>
+                            <div><label class="form-label">Date</label><input type="date" x-model="testScoreForm.date" class="form-input"></div>
+                            <div><label class="form-label">Percentage</label><input class="form-input opacity-50" :value="testScoreForm.total ? Math.round(testScoreForm.score/testScoreForm.total*100) + '%' : '0%'" readonly></div>
+                        </div>
+                        <button @click="submitTestScore()" class="btn-primary w-full">Submit Score</button>
+                    </div>
+                    <div class="card-staff rounded-2xl overflow-hidden">
+                        <div class="p-4 space-y-3">
+                            <template x-for="score in filteredScores" :key="score.id">
+                                <div class="p-4 rounded-xl flex justify-between" style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,215,0,0.1);">
+                                    <div>
+                                        <h4 class="font-bold" x-text="score.studentEmail"></h4>
+                                        <p class="text-sm opacity-60 mt-1" x-text="score.testName"></p>
+                                        <div class="flex gap-4 mt-2">
+                                            <span class="text-sm font-bold" style="color:var(--accent);" x-text="score.score + '/' + score.total"></span>
+                                            <span class="font-bold text-sm" :style="score.percentage >= 80 ? 'color:var(--green)' : score.percentage >= 60 ? 'color:var(--gold)' : 'color:var(--red)'" x-text="score.percentage + '%'"></span>
+                                        </div>
+                                    </div>
+                                    <button @click="deleteScore(score.id)" class="btn-danger" style="padding:6px 10px;height:fit-content;"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── ANALYTICS TAB ── -->
+                <div x-show="activeTab === 'analytics'" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="p-6 rounded-2xl card-staff text-center"><div class="text-3xl font-black" style="color:var(--gold);" x-text="admissions.length"></div><div class="text-xs opacity-40 uppercase mt-1 font-bold">Total Students</div></div>
+                        <div class="p-6 rounded-2xl card-staff text-center"><div class="text-3xl font-black" style="color:var(--green);" x-text="admissions.filter(a=>a.status==='Approved').length"></div><div class="text-xs opacity-40 uppercase mt-1 font-bold">Active</div></div>
+                        <div class="p-6 rounded-2xl card-staff text-center"><div class="text-3xl font-black" style="color:var(--accent);" x-text="allScores.length"></div><div class="text-xs opacity-40 uppercase mt-1 font-bold">Tests Submitted</div></div>
+                        <div class="p-6 rounded-2xl card-staff text-center"><div class="text-3xl font-black" style="color:var(--accent2);" x-text="batches.length"></div><div class="text-xs opacity-40 uppercase mt-1 font-bold">Batches</div></div>
+                    </div>
+                    <div class="p-6 rounded-2xl card-staff">
+                        <h3 class="font-black mb-4">📊 Score Distribution</h3>
+                        <div class="space-y-3">
+                            <template x-for="range in scoreRanges" :key="range.label">
+                                <div>
+                                    <div class="flex justify-between text-sm mb-1">
+                                        <span x-text="range.label"></span>
+                                        <span x-text="range.count + ' students'"></span>
+                                    </div>
+                                    <div class="h-4 rounded-full" style="background:rgba(255,255,255,0.08);">
+                                        <div class="h-full rounded-full transition-all duration-1000" :style="'width:' + (allScores.length ? range.count/allScores.length*100 : 0) + '%;background:' + range.color"></div>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── MANAGE STAFF TAB ── -->
+                <div x-show="activeTab === 'manage-staff'" class="space-y-6">
+                    <div class="p-6 rounded-2xl card-staff">
+                        <h3 class="font-black mb-2" style="color:var(--gold);">Add Staff Member</h3>
+                        <p class="text-xs opacity-50 mb-4">Adding a Gmail grants instant portal access via OTP login.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div><label class="form-label">Full Name</label><input type="text" x-model="staffForm.name" class="form-input"></div>
+                            <div><label class="form-label">Role</label><input type="text" x-model="staffForm.role" class="form-input" placeholder="e.g. Math Head"></div>
+                            <div><label class="form-label">Gmail</label><input type="email" x-model="staffForm.email" class="form-input"></div>
+                        </div>
+                        <button @click="addStaff()" class="btn-primary">Add Staff</button>
+                    </div>
+                    <div class="card-staff rounded-2xl overflow-hidden">
+                        <table class="data-table">
+                            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr></thead>
+                            <tbody>
+                                <template x-for="staff in filteredStaff" :key="staff.id">
+                                    <tr><td class="font-bold" x-text="staff.name"></td><td class="font-mono text-xs opacity-70" x-text="staff.email"></td><td><span class="status-pill pill-yellow" x-text="staff.role"></span></td>
+                                    <td><button @click="deleteStaff(staff.id)" class="btn-danger" style="padding:4px 8px;"><i class="fas fa-trash"></i></button></td></tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </main>
         </div>
     </template>
 
-    <!-- Shared Components / Modals -->
-    <div x-show="loading" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 processing-modal">
-        <div class="bg-white p-8 rounded-2xl flex flex-col items-center shadow-2xl processing-content" style="min-width: 220px;">
-            <div class="rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mb-4 processing-spinner"></div>
-            <span class="font-bold text-gray-700 text-center tracking-wide">Processing...</span>
+    <!-- Loading -->
+    <div x-show="loading" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
+        <div class="p-8 rounded-2xl flex flex-col items-center" style="background:var(--glass);border:1px solid rgba(255,215,0,0.2);">
+            <div class="rounded-full h-12 w-12 border-4 mb-4 animate-spin" style="border-color:var(--gold);border-top-color:transparent;"></div>
+            <span class="font-bold" style="color:var(--gold);">Processing...</span>
         </div>
     </div>
 
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="live-class.js"></script>
     <script src="script.js"></script>
+    <script>
+    // Extend staffPortal() with live class features
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('staffPortalLiveExtension', () => ({})); // placeholder
+    });
+    </script>
+    <script>
+    // Inject live class support into window after script.js loads
+    window.addEventListener('load', () => {
+        if (typeof Alpine !== 'undefined' && window._staffPortalComponent) {
+            const comp = window._staffPortalComponent;
 
-    <!-- Welcome Back Animation & First Visitor Celebration Scripts -->
+            // ── Live Class WebSocket Setup ──
+            comp.wsConnected = false;
+            comp.liveCtrl = {
+                active: false, sessionId: null, batchName: '', batchId: '',
+                streamKey: '', studentCount: 0, chatMuted: false,
+                messages: [], chatInput: '', sideTab: 'chat',
+                students: [], raisedHands: [], activePoll: null, duration: '',
+            };
+            comp.liveForm = { batchId: '', batchName: '', streamKey: '' };
+            comp.scheduleForm = { batchId: '', scheduledAt: '', duration: 60 };
+            comp.pollForm = { question: '', options: ['', '', '', ''] };
+            comp.batches = [
+                { id:'b1', name:'Maths Foundation', grade:'Class 10', teacher:'Dr. Abhay Sharma', schedule:'Mon,Wed,Fri 4PM', studentCount: 24 },
+                { id:'b2', name:'Board Preparation 2026', grade:'Class 10', teacher:'Ms. Priya Singh', schedule:'Tue,Thu 5PM', studentCount: 18 },
+                { id:'b3', name:'PCM Full Course', grade:'Class 12', teacher:'Mr. Rajesh Kumar', schedule:'Sat,Sun 10AM', studentCount: 31 },
+                { id:'b4', name:'JEE Foundation', grade:'Class 12', teacher:'Ms. Neha Verma', schedule:'Daily 6PM', studentCount: 42 },
+                { id:'b5', name:'Doubt Solving Batch', grade:'Class 10', teacher:'Dr. Abhay Sharma', schedule:'Fri 7PM', studentCount: 15 },
+            ];
+
+            comp.initLiveWebSocket = async function() {
+                try {
+                    const tr = await fetch('/api/live-token');
+                    const { token } = await tr.json();
+                    LiveClass.connect({ token, role: 'staff', user: { name: this.staffName || 'Teacher' } });
+                    LiveClass.on('connected', () => { this.wsConnected = true; });
+                    LiveClass.on('disconnected', () => { this.wsConnected = false; });
+                    LiveClass.on('teacher:session_started', (data) => {
+                        this.liveCtrl.sessionId = data.sessionId;
+                        this.liveCtrl.active = true;
+                        this.startDurationTimer();
+                        document.body.style.overflow = 'hidden';
+                    });
+                    LiveClass.on('session:student_count', ({ count, newStudent }) => {
+                        this.liveCtrl.studentCount = count;
+                        if (newStudent) {
+                            const already = this.liveCtrl.students.find(s => s.uid === newStudent.uid);
+                            if (!already) this.liveCtrl.students.push(newStudent);
+                        }
+                    });
+                    LiveClass.on('chat:message', (msg) => {
+                        this.liveCtrl.messages.push(msg);
+                        if (this.liveCtrl.messages.length > 200) this.liveCtrl.messages.shift();
+                        this.$nextTick(() => { const el = document.getElementById('teacher-chat-messages'); if(el) el.scrollTop = el.scrollHeight; });
+                    });
+                    LiveClass.on('hand:raised', (data) => {
+                        const already = this.liveCtrl.raisedHands.find(h => h.uid === data.uid);
+                        if (!already) this.liveCtrl.raisedHands.push(data);
+                    });
+                    LiveClass.on('hand:lowered', ({ uid }) => {
+                        this.liveCtrl.raisedHands = this.liveCtrl.raisedHands.filter(h => h.uid !== uid);
+                    });
+                    LiveClass.on('poll:update', ({ options }) => {
+                        if (this.liveCtrl.activePoll) this.liveCtrl.activePoll.options = options;
+                    });
+                } catch(e) { console.warn('LiveClass WS init failed'); }
+            };
+
+            comp.startLiveClass = function() {
+                if (!this.liveForm.batchId) { alert('Please select a batch'); return; }
+                const batch = this.batches.find(b => b.id === this.liveForm.batchId);
+                this.liveCtrl.batchName = batch?.name || this.liveForm.batchId;
+                this.liveCtrl.batchId = this.liveForm.batchId;
+                this.liveCtrl.streamKey = this.liveForm.streamKey || 'sk_' + Math.random().toString(36).slice(2,12);
+                LiveClass.startSession({ batchId: this.liveForm.batchId, batchName: this.liveCtrl.batchName, streamKey: this.liveCtrl.streamKey });
+            };
+
+            comp.stopLiveClass = function() {
+                if (!confirm('End the live class?')) return;
+                LiveClass.stopSession();
+                this.liveCtrl.active = false;
+                this.liveCtrl.sessionId = null;
+                this.liveCtrl.students = [];
+                this.liveCtrl.raisedHands = [];
+                this.liveCtrl.messages = [];
+                clearInterval(this._durationInterval);
+                document.body.style.overflow = '';
+            };
+
+            comp.toggleChatMute = function() {
+                this.liveCtrl.chatMuted = !this.liveCtrl.chatMuted;
+                LiveClass.muteChat(this.liveCtrl.chatMuted);
+            };
+
+            comp.muteUser = function(uid) { LiveClass.muteUser(uid); };
+            comp.kickUser = function(uid) {
+                LiveClass.kickUser(uid);
+                this.liveCtrl.students = this.liveCtrl.students.filter(s => s.uid !== uid);
+            };
+
+            comp.teacherSendMessage = function() {
+                const msg = this.liveCtrl.chatInput.trim();
+                if (!msg) return;
+                LiveClass.sendMessage(msg);
+                this.liveCtrl.chatInput = '';
+            };
+
+            comp.launchPoll = function() {
+                const opts = this.pollForm.options.filter(o => o.trim());
+                if (!this.pollForm.question.trim() || opts.length < 2) { alert('Add question and at least 2 options'); return; }
+                LiveClass.createPoll(this.pollForm.question, opts);
+                this.liveCtrl.activePoll = { question: this.pollForm.question, options: opts.map(o => ({text:o, votes:0})), active:true };
+                this.pollForm = { question:'', options:['','','',''] };
+            };
+
+            comp.endPoll = function() { LiveClass.endPoll(); this.liveCtrl.activePoll = null; };
+
+            comp.shareLiveResource = function() {
+                const title = prompt('Resource title:');
+                const url = prompt('Resource URL:');
+                if (title && url) LiveClass.shareResource(title, url);
+            };
+
+            comp.scheduleClass = async function() {
+                if (!this.scheduleForm.batchId || !this.scheduleForm.scheduledAt) { alert('Fill all fields'); return; }
+                const batch = this.batches.find(b => b.id === this.scheduleForm.batchId);
+                try {
+                    await window.db.collection('liveSchedule').add({
+                        batchId: this.scheduleForm.batchId,
+                        batchName: batch?.name || '',
+                        teacherName: this.staffName || 'Teacher',
+                        scheduledAt: new Date(this.scheduleForm.scheduledAt),
+                        duration: this.scheduleForm.duration,
+                        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    });
+                    alert('Class scheduled!');
+                    this.scheduleForm = { batchId:'', scheduledAt:'', duration:60 };
+                } catch(e) { alert('Error: ' + e.message); }
+            };
+
+            comp.createBatch = async function() {
+                if (!this.batchForm.name || !this.batchForm.grade) { alert('Fill required fields'); return; }
+                const newBatch = { id:'b_'+Date.now(), ...this.batchForm, studentCount:0 };
+                this.batches.push(newBatch);
+                // Also save to Firebase if needed
+                this.batchForm = { name:'', grade:'', teacher:'', schedule:'' };
+                alert('Batch created!');
+            };
+
+            comp.deleteBatch = function(id) { if(confirm('Delete batch?')) this.batches = this.batches.filter(b => b.id !== id); };
+
+            comp.startDurationTimer = function() {
+                const start = Date.now();
+                this._durationInterval = setInterval(() => {
+                    const s = Math.floor((Date.now()-start)/1000);
+                    const m = Math.floor(s/60);
+                    this.liveCtrl.duration = `${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+                }, 1000);
+            };
+
+            comp.batchForm = { name:'', grade:'', teacher:'', schedule:'' };
+
+            // Analytics computed
+            Object.defineProperty(comp, 'scoreRanges', { get() {
+                const all = this.allScores || [];
+                return [
+                    { label:'90-100% (Excellent)', count:all.filter(s=>s.percentage>=90).length, color:'var(--green)' },
+                    { label:'75-89% (Good)', count:all.filter(s=>s.percentage>=75&&s.percentage<90).length, color:'var(--gold)' },
+                    { label:'60-74% (Average)', count:all.filter(s=>s.percentage>=60&&s.percentage<75).length, color:'var(--accent)' },
+                    { label:'Below 60% (Needs Help)', count:all.filter(s=>s.percentage<60).length, color:'var(--red)' },
+                ];
+            }});
+
+            // Init WebSocket
+            comp.initLiveWebSocket();
+        }
+    });
+    </script>
+    <script>
+        // Cursor + Particles
+        const cursor = document.getElementById('cursor');
+        const dot = document.getElementById('cursorDot');
+        let cx=0,cy=0,dx=0,dy=0;
+        document.addEventListener('mousemove', e => { dx=e.clientX; dy=e.clientY; dot.style.left=dx-3+'px'; dot.style.top=dy-3+'px'; });
+        (function anim(){ cx+=(dx-cx)*0.12; cy+=(dy-cy)*0.12; cursor.style.left=cx-9+'px'; cursor.style.top=cy-9+'px'; requestAnimationFrame(anim); })();
+        const canvas = document.getElementById('particles');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        const pts = Array.from({length:60},()=>({x:Math.random()*canvas.width,y:Math.random()*canvas.height,r:Math.random()*1.2+0.3,dx:(Math.random()-.5)*.3,dy:(Math.random()-.5)*.3,alpha:Math.random()*.3+.1,color:Math.random()>.6?'255,215,0':Math.random()>.5?'0,245,255':'255,255,255'}));
+        (function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height); pts.forEach(p=>{ p.x+=p.dx; p.y+=p.dy; if(p.x<0)p.x=canvas.width; if(p.x>canvas.width)p.x=0; if(p.y<0)p.y=canvas.height; if(p.y>canvas.height)p.y=0; ctx.fillStyle=`rgba(${p.color},${p.alpha})`; ctx.fillRect(p.x,p.y,p.r,p.r); }); requestAnimationFrame(draw); })();
+        window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+    </script>
     <script src="welcomeBackAnimation.js"></script>
     <script src="firstVisitorCelebration.js"></script>
-
     <script src="gamification.js"></script>
-    <script src="gamification-component.js"></script>
     <script src="effects-3d-enhanced.js" defer></script>
-    <div id="chat-bubble">
-      <button id="chat-bubble-btn" title="Ask MathBot">💬<span class="badge-dot"></span></button>
-      <div id="chat-panel-popup">
-        <div class="chat-header">🤖 MathBot Staff Help</div>
-        <div class="chat-msgs"></div>
-        <div class="chat-input-row">
-          <input type="text" placeholder="Ask about maths…" />
-          <button>➤</button>
-        </div>
-      </div>
-    </div>
-    <div id="quote-toast"><div class="quote-icon">📚</div><div class="quote-text"></div><div class="quote-author"></div></div>
-    <div id="achievement-popup"><div class="achievement-popup-inner"><div class="achievement-icon">⭐</div><div class="achievement-text"><strong>Well done!</strong><span>Keep going</span><div><span class="achievement-badge-label">Nice Work</span></div></div></div></div>
     <script src="features-new.js" defer></script>
 </body>
 </html>

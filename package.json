@@ -1,22 +1,27 @@
 {
-  "name": "pplm-college-backend",
-  "version": "1.0.0",
-  "description": "Backend API for PPLM College Website",
-  "main": "submit-application.js",
+  "name": "arrow-of-mathematics-live-server",
+  "version": "2.0.0",
+  "description": "Real-time live class server for Arrow of Mathematics — supports 10,000+ concurrent users",
+  "main": "live-server.js",
   "scripts": {
-    "start": "node submit-application.js"
+    "start": "node live-server.js",
+    "dev": "nodemon live-server.js",
+    "cluster": "node cluster.js",
+    "test": "node stress-test.js"
   },
-  "private": true,
   "dependencies": {
-    "cookie": "^0.6.0",
-    "cors": "^2.8.5",
-    "dotenv": "^17.3.1",
     "express": "^4.18.2",
-    "express-rate-limit": "^7.1.5",
-    "firebase-admin": "^11.11.1",
-    "jose": "^5.2.3",
+    "socket.io": "^4.7.5",
+    "@socket.io/redis-adapter": "^8.3.0",
+    "redis": "^4.6.13",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.13",
-    "twilio": "^4.19.0"
+    "express-rate-limit": "^7.2.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

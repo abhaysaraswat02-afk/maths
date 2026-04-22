@@ -1,11 +1,11 @@
 {
   "version": 2,
   "functions": {
-    "submit-application.js": {
+    "api/**/*.js": {
       "runtime": "nodejs20.x"
     }
   },
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/submit-application.js" }
+    { "source": "/api/(.*)", "destination": "/api/submit-application.js" }
   ]
 }

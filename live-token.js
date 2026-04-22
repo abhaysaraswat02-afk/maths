@@ -1,4 +1,4 @@
-export default function handler(req, res) {
+module.exports = function handler(req, res) {
   try {
     const token = Math.random().toString(36).substring(2);
 

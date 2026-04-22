@@ -101,8 +101,17 @@
             currentUser = data;
             document.getElementById('user-display').innerText = `Student: ${data.name || data.email.split('@')[0]}`;
 
-            // Establish Firebase SDK session for Chat/RTDB
-            await auth.signInAnonymously().catch(err => console.error("Firebase Session Error:", err.message));
+            // Establish Firebase SDK session for Chat/RTDB (required by Security Rules)
+            try {
+                if (!auth.currentUser) {
+                    await auth.signInAnonymously();
+                }
+            } catch (err) {
+                console.error("Firebase Session Error:", err.message);
+                if (err.code === 'auth/unauthorized-domain') {
+                    alert("Security Error: This domain is not authorized in your Firebase settings.");
+                }
+            }
 
             try {
                 const response = await fetch('/api/get-batches');

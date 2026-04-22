@@ -125,7 +125,10 @@
             loadBatches();
 
             try {
-                const res = await fetch('/api/check-auth');
+                // 1. Check Server Session
+                const res = await fetch('/api/check-auth').catch(() => { throw new Error("Server unreachable"); });
+                if (!res.ok) throw new Error("Failed to verify staff session");
+                
                 const data = await res.json();
                 if (!data.authenticated || data.role !== 'staff') {
                     window.location.href = '/index.html';
@@ -134,13 +137,27 @@
                 currentUser = data;
                 updateLaunchButtonState();
 
-                // Sign in anonymously for Realtime DB / Chat rules
-                await auth.signInAnonymously();
-                isAuthReady = true;
-                console.log("Instructor Session Ready");
+                // 2. Initialize Firebase SDK Session
+                try {
+                    // Only sign in if not already authenticated
+                    if (!auth.currentUser) {
+                        await auth.signInAnonymously();
+                    }
+                    isAuthReady = true;
+                    console.log("Firebase Session Established:", auth.currentUser.uid);
+                } catch (fbErr) {
+                    console.error("Firebase Auth Error:", fbErr);
+                    if (fbErr.code === 'auth/operation-not-allowed') {
+                        throw new Error("Anonymous Auth is disabled in Firebase Console.");
+                    } else if (fbErr.code === 'auth/unauthorized-domain') {
+                        throw new Error("This domain is not whitelisted in Firebase Console.");
+                    } else {
+                        throw new Error("Firebase Auth: " + fbErr.message);
+                    }
+                }
             } catch (err) {
-                console.error("Studio Init Error:", err.message);
-                alert("Firebase Connection Error: Please ensure 'Anonymous Auth' is enabled in your Firebase Console.");
+                console.error("Studio Initialization Failed:", err);
+                alert("Connection Error: " + err.message);
             }
             updateLaunchButtonState();
         }

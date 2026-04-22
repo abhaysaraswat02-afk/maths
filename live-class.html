@@ -10,8 +10,10 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
         #video-container iframe { border-radius: 0.5rem; }
         .chat-gradient { background: linear-gradient(to bottom, #1f2937, #111827); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -78,20 +80,17 @@
             projectId: "era-of-mathantics-8b6d1",
             storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
             messagingSenderId: "521238168559",
-            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
-            databaseURL: "https://era-of-mathantics-8b6d1-default-rtdb.firebaseio.com"
+            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const auth = firebase.auth();
 
         let currentUser = null;
         const urlParams = new URLSearchParams(window.location.search);
         const batchId = urlParams.get('batch') || 'general_class';
 
         async function init() {
-            // Sign in anonymously to satisfy Firestore rules
-            await firebase.auth().signInAnonymously().catch(err => console.warn("Firebase Auth Session:", err.message));
-
             const res = await fetch('/api/check-auth');
             const data = await res.json();
             if (!data.authenticated) {
@@ -101,10 +100,16 @@
             currentUser = data;
             document.getElementById('user-display').innerText = `Student: ${data.name || data.email.split('@')[0]}`;
 
+            // Establish Firebase SDK session for Chat/RTDB
+            await auth.signInAnonymously().catch(err => console.error("Firebase Session Error:", err.message));
+
             try {
-                const batchDoc = await db.collection('batches').doc(batchId).get();
-                const batchData = batchDoc.data();
-                document.getElementById('batch-name').innerText = `Live Class: ${batchData ? batchData.name : 'Mathematics'}`;
+                const response = await fetch('/api/get-batches');
+                const batches = await response.json();
+                // Handle array or single object if the API format changes
+                const batchList = Array.isArray(batches) ? batches : [];
+                const batchData = batchList.find(b => b.id === batchId);
+                document.getElementById('batch-name').innerText = `Live Class: ${batchData ? batchData.name : 'Era of MathAntics'}`;
             } catch (e) {
                 console.error("Batch info error:", e);
                 document.getElementById('batch-name').innerText = 'Live Class';

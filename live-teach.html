@@ -105,12 +105,12 @@
             projectId: "era-of-mathantics-8b6d1",
             storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
             messagingSenderId: "521238168559",
-            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
-            databaseURL: "https://era-of-mathantics-8b6d1-default-rtdb.firebaseio.com"
+            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const rtdb = firebase.database();
+        // Fix: Use the correct RTDB URL dynamically if not in config
+        const rtdb = firebase.database("https://era-of-mathantics-8b6d1-default-rtdb.firebaseio.com");
         const auth = firebase.auth();
 
         let currentUser = null;
@@ -119,9 +119,6 @@
         let jitsiApi = null;
 
         async function init() {
-            // Sign in anonymously to satisfy Firestore/Database security rules
-            await auth.signInAnonymously().catch(err => console.warn("Firebase Auth Session:", err.message));
-
             const res = await fetch('/api/check-auth');
             const data = await res.json();
             if (!data.authenticated || data.role !== 'staff') {
@@ -129,30 +126,42 @@
                 return;
             }
             currentUser = data;
+
+            // Sign in anonymously to satisfy Firestore/Database security rules (auth != null)
+            try {
+                await auth.signInAnonymously();
+                console.log("Firebase Session Established");
+            } catch (err) {
+                console.error("Firebase Auth Error:", err.message);
+            }
+
             loadBatches();
         }
 
         async function loadBatches() {
             const list = document.getElementById('batch-list');
             try {
-                const snapshot = await db.collection('batches').get();
+                const response = await fetch('/api/get-batches');
+                if (!response.ok) throw new Error("API returned error status");
+                
+                const batches = await response.json();
                 list.innerHTML = '';
 
-                if (snapshot.empty) {
+                if (!Array.isArray(batches) || batches.length === 0) {
                     list.innerHTML = `
                         <div class="text-center py-8 text-gray-500">
                             <i class="fas fa-folder-open text-3xl mb-3 block"></i>
                             <p class="text-sm">No batches found.</p>
-                            <p class="text-[10px] mt-1">Please create batches in the Admin Dashboard first.</p>
+                            <p class="text-[10px] mt-1">Check if batches are created in Manage Batches.</p>
+                            <button onclick="loadBatches()" class="mt-4 text-blue-500 text-xs hover:underline">Retry</button>
                         </div>`;
                     return;
                 }
 
-                snapshot.forEach(doc => {
-                    const batch = doc.data();
+                batches.forEach(batch => {
                     const div = document.createElement('div');
                     div.className = "p-4 bg-gray-800/50 border border-gray-700 rounded-xl cursor-pointer hover:border-blue-500 transition-all group animate-fade-in";
-                    div.onclick = () => selectBatch(doc.id, batch.name, div);
+                    div.onclick = () => selectBatch(batch.id, batch.name, div);
                     div.innerHTML = `
                         <div class="flex justify-between items-center">
                             <div>
@@ -166,7 +175,8 @@
                 });
             } catch (error) {
                 console.error("Error fetching batches:", error);
-                list.innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded-xl">Failed to load batches. Check Firebase permissions.</div>`;
+                list.innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded-xl text-center">
+                    Failed to load batches.<br><span class="opacity-70">${error.message}</span><br><button onclick="loadBatches()" class="mt-2 underline font-bold">Retry</button></div>`;
             }
         }
 

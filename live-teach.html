@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
@@ -110,6 +111,7 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const rtdb = firebase.database();
+        const auth = firebase.auth();
 
         let currentUser = null;
         let selectedBatchId = null;
@@ -117,6 +119,9 @@
         let jitsiApi = null;
 
         async function init() {
+            // Sign in anonymously to satisfy Firestore/Database security rules
+            await auth.signInAnonymously().catch(err => console.warn("Firebase Auth Session:", err.message));
+
             const res = await fetch('/api/check-auth');
             const data = await res.json();
             if (!data.authenticated || data.role !== 'staff') {

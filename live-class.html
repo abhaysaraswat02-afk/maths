@@ -8,6 +8,8 @@
     <script src="https://meet.jit.si/external_api.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         #video-container iframe { border-radius: 0.5rem; }
@@ -76,7 +78,8 @@
             projectId: "era-of-mathantics-8b6d1",
             storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
             messagingSenderId: "521238168559",
-            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
+            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
+            databaseURL: "https://era-of-mathantics-8b6d1-default-rtdb.firebaseio.com"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -86,6 +89,9 @@
         const batchId = urlParams.get('batch') || 'general_class';
 
         async function init() {
+            // Sign in anonymously to satisfy Firestore rules
+            await firebase.auth().signInAnonymously().catch(err => console.warn("Firebase Auth Session:", err.message));
+
             const res = await fetch('/api/check-auth');
             const data = await res.json();
             if (!data.authenticated) {
@@ -95,9 +101,14 @@
             currentUser = data;
             document.getElementById('user-display').innerText = `Student: ${data.name || data.email.split('@')[0]}`;
 
-            const batchDoc = await db.collection('batches').doc(batchId).get();
-            const batchData = batchDoc.data();
-            document.getElementById('batch-name').innerText = `Live Class: ${batchData ? batchData.name : 'Mathematics'}`;
+            try {
+                const batchDoc = await db.collection('batches').doc(batchId).get();
+                const batchData = batchDoc.data();
+                document.getElementById('batch-name').innerText = `Live Class: ${batchData ? batchData.name : 'Mathematics'}`;
+            } catch (e) {
+                console.error("Batch info error:", e);
+                document.getElementById('batch-name').innerText = 'Live Class';
+            }
 
             startLiveStream();
             initChat();

@@ -33,9 +33,9 @@
             <div id="batch-list" class="space-y-2 mb-8 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                 <div class="animate-pulse text-gray-700 text-xs">Fetching active batches...</div>
             </div>
-            <button id="launch-btn" disabled onclick="startLiveSession()" 
+            <button id="launch-btn" disabled onclick="startLiveSession()"
                 class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 disabled:text-gray-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-900/20">
-                GO LIVE NOW
+                INITIALIZING...
             </button>
         </div>
     </div>
@@ -120,6 +120,7 @@
         let isAuthReady = false;
 
         async function init() {
+            updateLaunchButtonState();
             // Load batches immediately to avoid hanging UI
             loadBatches();
 
@@ -131,16 +132,17 @@
                     return;
                 }
                 currentUser = data;
+                updateLaunchButtonState();
 
                 // Sign in anonymously for Realtime DB / Chat rules
                 await auth.signInAnonymously();
                 isAuthReady = true;
                 console.log("Instructor Session Ready");
-                updateLaunchButtonState(); // Check button state after auth is ready
             } catch (err) {
-                console.warn("Auth/Session Warning:", err.message);
-                updateLaunchButtonState(); // Also check if auth failed, button should remain disabled
+                console.error("Studio Init Error:", err.message);
+                alert("Firebase Connection Error: Please ensure 'Anonymous Auth' is enabled in your Firebase Console.");
             }
+            updateLaunchButtonState();
         }
 
         async function loadBatches() {
@@ -200,22 +202,31 @@
 
         function updateLaunchButtonState() {
             const launchBtn = document.getElementById('launch-btn');
-            launchBtn.disabled = !(selectedBatchId && isAuthReady && currentUser);
+            const isReady = !!(selectedBatchId && isAuthReady && currentUser);
+
+            launchBtn.disabled = !isReady;
+
+            if (!currentUser) {
+                launchBtn.innerText = "VERIFYING ACCESS...";
+            } else if (!isAuthReady) {
+                launchBtn.innerText = "CONNECTING TO FIREBASE...";
+            } else if (!selectedBatchId) {
+                launchBtn.innerText = "SELECT A BATCH ABOVE";
+            } else {
+                launchBtn.innerText = "GO LIVE NOW";
+            }
         }
 
         async function startLiveSession() {
-            if (!selectedBatchId || !isAuthReady || !currentUser) {
-                alert("Studio is still initializing. Please wait a moment...");
-                return;
-            }
-
             const btn = document.getElementById('launch-btn');
             const originalText = btn.innerText;
-            
+
+            if (btn.disabled) return;
+
             try {
                 btn.disabled = true;
                 btn.innerText = "STARTING STUDIO...";
-            
+
                 // Signal the Live state to students in RTDB
                 await rtdb.ref(`liveSessions/${selectedBatchId}`).set({
                     isLive: true,

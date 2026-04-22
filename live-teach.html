@@ -117,6 +117,7 @@
         let selectedBatchId = null;
         let selectedBatchName = "";
         let jitsiApi = null;
+        let isAuthReady = false;
 
         async function init() {
             // Load batches immediately to avoid hanging UI
@@ -133,7 +134,8 @@
 
                 // Sign in anonymously for Realtime DB / Chat rules
                 await auth.signInAnonymously();
-                console.log("Firebase Session Established");
+                isAuthReady = true;
+                console.log("Instructor Session Ready");
             } catch (err) {
                 console.warn("Auth/Session Warning:", err.message);
             }
@@ -195,21 +197,37 @@
         }
 
         async function startLiveSession() {
-            if (!selectedBatchId) return;
+            if (!selectedBatchId || !isAuthReady || !currentUser) {
+                alert("Studio is still initializing. Please wait a moment...");
+                return;
+            }
+
+            const btn = document.getElementById('launch-btn');
+            const originalText = btn.innerText;
             
-            // Signal the Live state to students in RTDB
-            await rtdb.ref(`liveSessions/${selectedBatchId}`).set({
-                isLive: true,
-                classTitle: selectedBatchName,
-                startedAt: firebase.database.ServerValue.TIMESTAMP,
-                instructor: currentUser.email
-            });
+            try {
+                btn.disabled = true;
+                btn.innerText = "STARTING STUDIO...";
+            
+                // Signal the Live state to students in RTDB
+                await rtdb.ref(`liveSessions/${selectedBatchId}`).set({
+                    isLive: true,
+                    classTitle: selectedBatchName,
+                    startedAt: firebase.database.ServerValue.TIMESTAMP,
+                    instructor: currentUser.email || 'Instructor'
+                });
 
-            document.getElementById('batch-overlay').style.display = 'none';
-            document.getElementById('batch-info').innerText = `Batch: ${selectedBatchName} | Active Instructor: ${currentUser.email}`;
+                document.getElementById('batch-overlay').style.display = 'none';
+                document.getElementById('batch-info').innerText = `Batch: ${selectedBatchName} | Active Instructor: ${currentUser.email}`;
 
-            launchInstructorMedia();
-            initStaffChat();
+                launchInstructorMedia();
+                initStaffChat();
+            } catch (error) {
+                console.error("Failed to start session:", error);
+                alert("Error starting live session: " + error.message);
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
         }
 
         async function endSession() {

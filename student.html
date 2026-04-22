@@ -17,6 +17,7 @@
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
@@ -51,6 +52,10 @@
             </button>
         </div>
         <nav class="mt-6 px-4 space-y-2">
+            <!-- Added Live Classes Navigation -->
+            <a href="live-class.html" class="flex items-center w-full p-3 rounded-xl font-bold text-slate-400 hover:bg-slate-800 transition-all">
+                <span class="mr-2">🔴</span> Live Classes
+            </a>
             <button @click="tab = 'videos'; mobileMenu = false" :class="tab === 'videos' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📺 YouTube Videos</button>
             <button @click="tab = 'notices'; mobileMenu = false" :class="tab === 'notices' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">🔔 Notices</button>
             <button @click="tab = 'notes'; mobileMenu = false" :class="tab === 'notes' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:bg-slate-800'" class="flex items-center w-full p-3 rounded-xl font-bold transition-all">📚 Notes & Resources</button>
@@ -87,9 +92,9 @@
 
         <div x-show="tab === 'videos'" class="space-y-6" x-cloak>
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <h3 class="text-2xl font-black text-slate-900">Video Library</h3>
+                <h3 class="text-2xl font-black text-slate-900">Learning Dashboard</h3>
                 <div class="flex flex-col md:flex-row gap-3 w-full md:w-auto">
-                    <select x-model="selectedClass" class="w-full md:w-44 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition shadow-sm font-bold text-slate-700 appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2020%2020%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%207L10%2010L13%207%22%20stroke%3D%22%2364748B%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22/%3E%3C/svg%3E')] bg-[position:right_1rem_center] bg-no-repeat">
+                    <select x-model="selectedClass" class="w-full md:w-44 bg-white border border-slate-200 rounded-xl px-4 py-3 text-sm focus:border-blue-500 outline-none transition shadow-sm font-bold text-slate-700">
                         <option value="All">All Classes</option>
                         <option value="Class 9">Class 9</option>
                         <option value="Class 10">Class 10</option>
@@ -103,14 +108,16 @@
                 </div>
             </div>
 
-            <!-- Live Class Section -->
+            <!-- Real-time Live Class Section -->
             <div x-show="liveClasses.length > 0" class="mb-6">
-                <h4 class="font-bold text-md mb-2 text-red-600">Upcoming Live Classes</h4>
+                <h4 class="font-bold text-md mb-2 text-red-600 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span> Ongoing Live Classes
+                </h4>
                 <template x-for="live in liveClasses" :key="live.id">
-                    <a :href="live.url" target="_blank" @click="logAttendance('Joined Live Class: ' + live.url, 'live')" class="p-4 bg-white border border-slate-200 border-l-4 border-l-red-500 rounded-xl flex justify-between items-center hover:bg-red-50 transition mb-2 group">
+                    <a href="live-class.html" class="p-4 bg-white border border-slate-200 border-l-4 border-l-red-500 rounded-xl flex justify-between items-center hover:bg-red-50 transition mb-2 group shadow-sm">
                         <div>
-                            <p class="font-bold text-sm text-red-800">Live session scheduled</p>
-                            <p class="text-xs text-slate-500" x-text="new Date(live.time).toLocaleString()"></p>
+                            <p class="font-bold text-sm text-red-800" x-text="live.classTitle"></p>
+                            <p class="text-xs text-slate-500" x-text="'Started: ' + formatDate(live.startedAt)"></p>
                         </div>
                         <span class="bg-red-500 text-white px-4 py-2 rounded-lg text-xs font-bold animate-pulse">Join Live</span>
                     </a>
@@ -593,6 +600,7 @@
                     }
                     
                     window.db = firebase.firestore();
+                    window.rtdb = firebase.database();
                     const storage = firebase.storage();
                     
                     this.pageLoadTimestamp = new Date();
@@ -635,6 +643,20 @@
                         try {
                             // Fetch Auto-sync Videos from YouTube
                             this.fetchYouTubeVideos();
+
+                            // Listen for Real-time Live Sessions
+                            window.rtdb.ref('liveSessions').on('value', (snapshot) => {
+                                const sessions = snapshot.val() || {};
+                                // Only show sessions that are currently live
+                                this.liveClasses = Object.keys(sessions)
+                                    .map(id => ({ id, ...sessions[id] }))
+                                    .filter(s => s.isLive);
+                                
+                                // Notify if a class just went live while they were on the page
+                                if (this.liveClasses.length > 0) {
+                                    console.log('Active live sessions detected:', this.liveClasses);
+                                }
+                            });
 
                             // Fetch Global Resources
                             window.db.collection('resources').orderBy('timestamp', 'desc').onSnapshot(snap => {

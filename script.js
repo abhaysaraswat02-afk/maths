@@ -24,10 +24,12 @@ function staffPortal() {
         activeTab: 'admissions',
         loading: false,
         admissions: [],
+        batches: [],
         resources: [],
         newsList: [],
         recentScores: [],
         staffList: [],
+        batchForm: { name: '', classLevel: '10', price: 0, originalPrice: 0, teacher: 'Sir (MathAntics)', schedule: '', startDate: '', duration: '', subjects: '', totalSeats: 100 },
         newsForm: { title: '', content: '' },
         docForm: { name: '', url: '', classGrade: 'All' },
         staffForm: { name: '', email: '', role: 'Teacher' },
@@ -141,7 +143,8 @@ function staffPortal() {
                 'news': 'Broadcast College News',
                 'docs': 'Resource Library Management',
                 'scores': 'Manage Offline Test Scores',
-                'manage-staff': 'Manage Team & Access'
+                'manage-staff': 'Manage Team & Access',
+                'batches': 'Manage Course Batches'
             };
             return titles[this.activeTab];
         },
@@ -149,12 +152,13 @@ function staffPortal() {
         async loadData() {
             this.loading = true;
             try {
-                const [admissionRes, resourceRes, newsRes, scoresRes, staffRes] = await Promise.all([
+                const [admissionRes, resourceRes, newsRes, scoresRes, staffRes, batchSnap] = await Promise.all([
                     fetch('/api/admissions'),
                     fetch('/api/resources'),
                     fetch('/api/get-news'),
                     fetch('/api/get-test-scores'),
-                    fetch('/api/get-staff')
+                    fetch('/api/get-staff'),
+                    firebase.firestore().collection('batches').get()
                 ]);
 
                 if (!admissionRes.ok) {
@@ -178,6 +182,7 @@ function staffPortal() {
                 this.newsList = await newsRes.json();
                 this.recentScores = await scoresRes.json();
                 this.staffList = await staffRes.json();
+                this.batches = batchSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
             } catch (err) {
                 console.error('Data load error:', err);
                 this.error = err.message;
@@ -479,6 +484,44 @@ function staffPortal() {
                 this.loadData();
             } catch (err) {
                 alert(err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async addBatch() {
+            this.loading = true;
+            try {
+                const batchData = {
+                    ...this.batchForm,
+                    price: Number(this.batchForm.price),
+                    originalPrice: Number(this.batchForm.originalPrice),
+                    totalSeats: Number(this.batchForm.totalSeats),
+                    enrolled: 0,
+                    subjects: this.batchForm.subjects.split(',').map(s => s.trim()).filter(Boolean),
+                    status: 'upcoming',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                await firebase.firestore().collection('batches').add(batchData);
+                this.batchForm = { name: '', classLevel: '10', price: 0, originalPrice: 0, teacher: 'Sir (MathAntics)', schedule: '', startDate: '', duration: '', subjects: '', totalSeats: 100 };
+                alert('Batch created successfully!');
+                this.loadData();
+            } catch (err) {
+                alert('Error creating batch: ' + err.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteBatch(id) {
+            if (!confirm('Are you sure you want to delete this batch? All enrollment links will be broken.')) return;
+            this.loading = true;
+            try {
+                await firebase.firestore().collection('batches').doc(id).delete();
+                alert('Batch deleted.');
+                this.loadData();
+            } catch (err) {
+                alert('Error deleting batch: ' + err.message);
             } finally {
                 this.loading = false;
             }

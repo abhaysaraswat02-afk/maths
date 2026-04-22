@@ -49,8 +49,16 @@
                     </h2>
                 </div>
                 <nav class="mt-6">
+                    <!-- FEATURE: Access to Live Teaching Studio -->
+                    <a href="live-teach.html" class="w-full flex items-center px-6 py-4 transition-all hover:bg-slate-800 text-red-500 font-bold border-l-4 border-red-600 bg-red-600/5 mb-4 group">
+                        <i class="fas fa-broadcast-tower w-6 group-hover:animate-pulse"></i> 
+                        <span class="ml-1">Go Live Studio</span>
+                    </a>
                     <button @click="activeTab = 'admissions'" :class="activeTab === 'admissions' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-user-graduate w-6"></i> Admissions
+                    </button>
+                    <button @click="activeTab = 'batches'" :class="activeTab === 'batches' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
+                        <i class="fas fa-layer-group w-6"></i> Manage Batches
                     </button>
                     <button @click="activeTab = 'news'" :class="activeTab === 'news' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-newspaper w-6"></i> Post News
@@ -75,10 +83,17 @@
             <!-- Main Content -->
             <main class="flex-1 p-8">
                 <header class="flex justify-between items-center mb-8">
-                    <h1 class="text-2xl font-bold text-gray-800" x-text="tabTitle()"></h1>
-                    <button @click="exportData" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md">
-                        <i class="fas fa-download mr-2"></i> Export Data
-                    </button>
+                    <div class="flex items-center gap-6">
+                        <h1 class="text-2xl font-bold text-gray-800" x-text="tabTitle()"></h1>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <a href="live-teach.html" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md font-bold">
+                            <i class="fas fa-broadcast-tower mr-2"></i> Open Live Studio
+                        </a>
+                        <button @click="exportData" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md">
+                            <i class="fas fa-download mr-2"></i> Export Data
+                        </button>
+                    </div>
                 </header>
 
                 <!-- Admissions Section -->
@@ -128,6 +143,77 @@
                                             <button @click="approveAdmission(item.id)" x-show="item.status !== 'Approved'" class="text-blue-600 hover:underline font-semibold text-sm">Approve</button>
                                             <button @click="toggleBlockStudent(item.id, item.email, item.isBlocked)" :class="item.isBlocked ? 'text-green-600 hover:text-green-700' : 'text-red-600 hover:text-red-700'" class="font-semibold text-sm transition-colors" x-text="item.isBlocked ? 'Unblock' : 'Block'"></button>
                                             <button @click="deleteStudent(item.id)" class="text-red-600 hover:text-red-800 font-semibold text-sm transition-colors">Delete</button>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Batches Management Section -->
+                <div x-show="activeTab === 'batches'" class="space-y-8" x-cloak>
+                    <div class="max-w-4xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
+                        <h3 class="text-lg font-bold mb-6">Create New Course Batch</h3>
+                        <form @submit.prevent="addBatch">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Batch Name</label>
+                                    <input type="text" x-model="batchForm.name" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" placeholder="e.g. Class 10 — Boards Mastery" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Class Level</label>
+                                    <select x-model="batchForm.classLevel" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                                        <option value="9">Class 9</option>
+                                        <option value="10">Class 10</option>
+                                        <option value="11">Class 11</option>
+                                        <option value="12">Class 12</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Offer Price (₹)</label>
+                                    <input type="number" x-model="batchForm.price" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Original Price (₹)</label>
+                                    <input type="number" x-model="batchForm.originalPrice" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Schedule</label>
+                                    <input type="text" x-model="batchForm.schedule" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. Mon·Wed·Fri 7–9 PM" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Subjects (comma separated)</label>
+                                    <input type="text" x-model="batchForm.subjects" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-blue-500" placeholder="Algebra, Geometry, etc." required>
+                                </div>
+                            </div>
+                            <button type="submit" class="bg-blue-600 text-white px-8 py-2 rounded-lg font-bold hover:bg-blue-700 shadow-lg">Create Batch</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-slate-50 border-b text-gray-600 uppercase text-xs font-bold">
+                                <tr>
+                                    <th class="px-6 py-4">Batch Name</th>
+                                    <th class="px-6 py-4">Price</th>
+                                    <th class="px-6 py-4">Enrolled</th>
+                                    <th class="px-6 py-4">Schedule</th>
+                                    <th class="px-6 py-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y">
+                                <template x-for="b in batches" :key="b.id">
+                                    <tr class="hover:bg-blue-50/50 transition-colors">
+                                        <td class="px-6 py-4">
+                                            <div class="font-bold text-gray-800" x-text="b.name"></div>
+                                            <div class="text-xs text-slate-400" x-text="'Class ' + b.classLevel"></div>
+                                        </td>
+                                        <td class="px-6 py-4 text-blue-600 font-bold" x-text="'₹' + b.price"></td>
+                                        <td class="px-6 py-4" x-text="b.enrolled + '/' + b.totalSeats"></td>
+                                        <td class="px-6 py-4 text-sm" x-text="b.schedule"></td>
+                                        <td class="px-6 py-4 text-center">
+                                            <button @click="deleteBatch(b.id)" class="text-red-500 hover:text-red-700 p-2"><i class="fas fa-trash-alt"></i></button>
                                         </td>
                                     </tr>
                                 </template>

@@ -10,8 +10,7 @@
  * - Handles high-concurrency loads automatically.
  */
 
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '.env') }); // Load environment variables from the current script folder
+require('dotenv').config(); // Vercel loads environment variables automatically
 const express = require('express');
 const admin = require('firebase-admin');
 const rateLimit = require('express-rate-limit');
@@ -101,9 +100,6 @@ async function isAuthorizedStaff(email) {
     return false;
   }
 }
-
-// Serve static files (HTML, CSS, JS) from the current folder
-app.use(express.static(__dirname));
 
 // --- Nodemailer Transporter ---
 
@@ -232,7 +228,7 @@ app.post('/api/send-otp', async (req, res) => {
   } catch (error) {
     console.error('Email sending failed:', error); // Log the actual error for debugging
     console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2)); // Log full error object
-    res.status(500).json({ error: 'Failed to send OTP: HTTP 500:' }); // Return generic message as requested
+    res.status(500).json({ error: `Failed to send OTP: ${error.message}` });
   }
 });
 

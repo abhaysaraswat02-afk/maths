@@ -1,11 +1,10 @@
 {
   "version": 2,
-  "functions": {
-    "api/**/*.js": {
-      "runtime": "nodejs20.x"
-    }
-  },
+  "builds": [
+    { "src": "submit-application.js", "use": "@vercel/node" },
+    { "src": "*.{html,css,js,jpg,png,svg,ico}", "use": "@vercel/static" }
+  ],
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/submit-application.js" }
+    { "source": "/api/(.*)", "destination": "/submit-application.js" }
   ]
 }

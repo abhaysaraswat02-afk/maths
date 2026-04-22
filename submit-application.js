@@ -10,7 +10,8 @@
  * - Handles high-concurrency loads automatically.
  */
 
-require('dotenv').config(); // Vercel loads environment variables automatically
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '.env') }); // Load environment variables from the current script folder
 const express = require('express');
 const admin = require('firebase-admin');
 const rateLimit = require('express-rate-limit');
@@ -101,6 +102,9 @@ async function isAuthorizedStaff(email) {
   }
 }
 
+// Serve static files (HTML, CSS, JS) from the current folder
+app.use(express.static(__dirname));
+
 // --- Nodemailer Transporter ---
 
 const GMAIL_USER = stripQuotes(process.env.GMAIL_USER || '');
@@ -115,6 +119,15 @@ const transporter = nodemailer.createTransport({
   tls: {
     rejectUnauthorized: false,
   },
+});
+
+// Test the connection
+transporter.verify((error, success) => {
+  if (error) {
+    console.log("Error with email config:", error);
+  } else {
+    console.log("Server is ready to send OTPs!");
+  }
 });
 
 // --- Security and Middleware ---
@@ -219,7 +232,7 @@ app.post('/api/send-otp', async (req, res) => {
   } catch (error) {
     console.error('Email sending failed:', error); // Log the actual error for debugging
     console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2)); // Log full error object
-    res.status(500).json({ error: 'Failed to send OTP: ' + error.message });
+    res.status(500).json({ error: 'Failed to send OTP: HTTP 500:' }); // Return generic message as requested
   }
 });
 

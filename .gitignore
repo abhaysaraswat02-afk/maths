@@ -1,14 +1,1 @@
-# Dependencies
-node_modules/
-
-# Local environment variables (SENSITIVE)
-.env
-*.local
-
-# Vercel output
 .vercel
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*

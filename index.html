@@ -12,8 +12,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="welcomeBackAnimation.css">
-    <link rel="stylesheet" href="firstVisitorCelebration.css">
     <script src="https://cdn.tailwindcss.com"></script>
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
@@ -24,176 +22,83 @@
 
     <style>
         :root {
-            --gold: #FFD700;
-            --gold2: #FFA500;
-            --deep: #0a0a1a;
-            --deep2: #0d0d2b;
-            --navy: #0a0f3d;
-            --accent: #00f5ff;
-            --accent2: #7b2fff;
-            --white: #ffffff;
-            --glass: rgba(255,255,255,0.06);
-            --glass2: rgba(255,215,0,0.08);
-            --red: #ff3a3a;
-            --green: #00e676;
+            --primary-blue: #1e40af;
+            --primary-red: #dc2626;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --brand-dark: #0f172a;
         }
-        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; background: var(--deep); color: var(--white); overflow-x: hidden; cursor: none; }
+        body { font-family: 'Inter', sans-serif; scroll-behavior: smooth; }
         .text-gradient {
-            background: linear-gradient(135deg, var(--gold), var(--accent));
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-red));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
         .glass-morphism {
-            background: var(--glass);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,215,0,0.2);
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
-        /* Custom Cursor */
-        .cursor {
-            width: 18px; height: 18px;
-            border: 2px solid var(--gold);
-            border-radius: 50%;
-            position: fixed; top:0; left:0;
-            pointer-events: none;
-            z-index: 99999;
-            transition: transform 0.15s ease, border-color 0.3s;
-            mix-blend-mode: difference;
-        }
-        .cursor-dot {
-            width: 6px; height: 6px;
-            background: var(--gold);
-            border-radius: 50%;
-            position: fixed; top:0; left:0;
-            pointer-events: none;
-            z-index: 99999;
-        }
-        /* Particle Canvas */
-        #particles { position:fixed; top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none; }
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: var(--deep2); }
-        ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; }
-        .reveal { opacity: 0; transform: translateY(40px); transition:all 0.8s cubic-bezier(0.25,0.46,0.45,0.94); }
-        .reveal.visible { opacity: 1; transform: translateY(0); }
-        @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-12px);} }
-        .animate-float { animation: float 6s ease-in-out infinite; }
-        @keyframes floatSymbol { 0%,100%{transform:translateY(0) rotate(0deg);} 50%{transform:translateY(-30px) rotate(10deg);} }
-        .math-float { animation: floatSymbol 8s ease-in-out infinite; color: var(--gold); opacity:0.06; }
+        .reveal { opacity: 0; transform: translateY(30px) scale(0.95) rotateX(15deg); transition: all 0.8s cubic-bezier(0.165, 0.84, 0.44, 1); transform-origin: top; }
+        .reveal.revealed { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
+        @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-10px); } }
+        .animate-float { animation: float 3s ease-in-out infinite; }
         .marquee-scroll { animation: marquee 25s linear infinite; display: flex; }
         @keyframes marquee { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .tilt-card {
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease;
+            transition: transform 0.5s cubic-bezier(0.23, 1, 0.32, 1), box-shadow 0.5s ease;
             transform-style: preserve-3d;
         }
         .tilt-card:hover {
-            transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-8px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+            transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-5px);
+            box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.15);
         }
-        /* Glow Ring */
-        .glow-ring {
-            position:absolute; width:800px; height:800px;
-            border-radius:50%;
-            border:1px solid rgba(255,215,0,0.06);
-            top:50%;left:50%;transform:translate(-50%,-50%);
-            animation:expandRing 4s ease-out infinite;
-            pointer-events:none;
-        }
-        @keyframes expandRing { 0%{transform:translate(-50%,-50%) scale(0.3);opacity:0.8;} 100%{transform:translate(-50%,-50%) scale(1.5);opacity:0;} }
-        .glow-ring:nth-child(2) { animation-delay:1.3s; }
-        .glow-ring:nth-child(3) { animation-delay:2.6s; }
         .floating-logo { animation: logo-3d 6s infinite ease-in-out; transform-style: preserve-3d; }
         @keyframes logo-3d { 0%, 100% { transform: rotateY(0deg); } 50% { transform: rotateY(15deg) rotateX(10deg); } }
-        /* Section Styling */
-        .section-tag {
-            font-size:0.8rem; letter-spacing:4px; text-transform:uppercase;
-            color: var(--gold); display:inline-block; margin-bottom:16px;
-        }
-        .section-title {
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            font-weight:700; line-height:1.2;
-            background: linear-gradient(135deg, var(--white) 0%, rgba(255,255,255,0.7) 100%);
-            -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-            margin-bottom:20px;
-        }
-        .section-line {
-            width:80px; height:3px;
-            background: linear-gradient(90deg, var(--gold), var(--accent));
-            margin: 0 auto;
-            border-radius:2px;
-        }
         [x-cloak] { display: none !important; }
-        
-        /* Enhanced Spinner Animations */
-        .fa-spin {
-            animation: spinSmooth 1.5s linear infinite !important;
-        }
-        @keyframes spinSmooth {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        /* Beautiful Loading/Processing Spinner with Glow */
-        .spinner-glow {
-            animation: spinWithGlow 2s ease-in-out infinite;
-            filter: drop-shadow(0 0 6px rgba(255,215,0,0.5));
-        }
-        @keyframes spinWithGlow {
-            0%, 100% { transform: rotate(0deg); filter: drop-shadow(0 0 6px rgba(255,215,0,0.5)); }
-            50% { filter: drop-shadow(0 0 15px rgba(255,215,0,0.8)); }
-        }
-        /* Gradient Backgrounds */
-        .gradient-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); }
-        .gradient-accent { background: linear-gradient(135deg, var(--accent), var(--accent2)); }
-        @keyframes fadeInDown { from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);} }
-        @keyframes fadeInUp { from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);} }
-        @keyframes fadeIn { from{opacity:0;}to{opacity:1;} }
-        @keyframes pulse { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:0.5;transform:scale(1.3);} }
     </style>
 </head>
 
-<body class="bg-slate-50 text-slate-900" x-data="mathAnticsWebsite()" x-init="init()" x-cloak>
-    <!-- CURSOR -->
-    <div class="cursor" id="cursor"></div>
-    <div class="cursor-dot" id="cursorDot"></div>
-    <!-- PARTICLES -->
-    <canvas id="particles"></canvas>
+<body class="bg-slate-50 text-slate-900" x-data="mathAnticsWebsite()" x-init="init()">
 
     <!-- Top Notification Bar -->
-    <div class="bg-slate-900 text-white py-2 text-xs font-bold text-center tracking-widest uppercase hidden md:block" style="background: var(--deep2); border-bottom: 1px solid rgba(255,215,0,0.1);">
-    <span style="color: var(--gold);" class="mr-2">✨ New Batch Alert:</span> Admissions open for Academic Year <span x-text="academicYear"></span> | <a href="#apply" class="underline hover:opacity-80" style="color: var(--accent);">Register Now</a>
+    <div class="bg-slate-900 text-white py-2 text-xs font-bold text-center tracking-widest uppercase hidden md:block">
+    <span class="text-yellow-400 mr-2">New Batch Alert:</span> Admissions open for Academic Year <span x-text="academicYear"></span> | <a href="#apply" class="underline hover:text-blue-300">Register Now</a>
     </div>
 
-    <nav id="navbar" class="fixed top-0 w-full z-50 transition-all duration-300" style="background: rgba(10,10,26,0.85); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,215,0,0.2);">
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300" 
+         :class="scrolled ? 'bg-white/95 backdrop-blur-md shadow-md top-0' : 'bg-white top-0 md:top-8'">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="flex items-center space-x-3">
                 <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg shadow-lg floating-logo">
                 <div class="leading-none">
-                    <span class="font-extrabold text-white text-xl tracking-tight" style="background: linear-gradient(135deg, var(--gold), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Era of MathAntics</span><br>
-                    <span class="font-bold text-white text-[10px] tracking-widest uppercase" style="opacity: 0.6;">Master Mathematics</span>
+                    <span class="font-extrabold text-slate-900 text-xl tracking-tight">Era of <span class="text-blue-600">MathAntics</span></span><br>
+                    <span class="font-bold text-slate-400 text-[10px] tracking-widest uppercase">Master Mathematics</span>
                 </div>
             </div>
 
-            <div class="hidden md:flex items-center space-x-8 font-bold text-sm" style="color: rgba(255,255,255,0.75);">
-                <a href="#home" class="hover:text-yellow-400 transition" style="color: rgba(255,255,255,0.75);">Home</a>
-                <a href="#results" class="hover:text-yellow-400 transition" style="color: rgba(255,255,255,0.75);">Selections</a>
-                <a href="#apply" class="hover:text-yellow-400 transition" style="color: rgba(255,255,255,0.75);">Admissions</a>
-                <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="transition-all transform hover:-translate-y-0.5" style="background: linear-gradient(135deg, var(--gold), var(--gold2)); color: var(--deep); border: none; padding: 10px 28px; border-radius: 2px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; cursor: pointer; box-shadow: 0 0 40px rgba(255,215,0,0.35), 0 4px 20px rgba(0,0,0,0.4);" x-cloak>
+            <div class="hidden md:flex items-center space-x-8 font-bold text-sm text-slate-600">
+                <a href="#home" class="hover:text-blue-600 transition">Home</a>
+                <a href="#results" class="hover:text-blue-600 transition">Selections</a>
+                <a href="#apply" class="hover:text-blue-600 transition">Admissions</a>
+                <a :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="bg-slate-900 text-white px-6 py-2.5 rounded-xl hover:bg-blue-700 shadow-lg shadow-blue-900/20 flex items-center gap-2 transition-all transform hover:-translate-y-0.5" x-cloak>
                     <i class="fas" :class="isLoggedIn || isStaffLoggedIn ? 'fa-th-large' : 'fa-user-circle'"></i> 
                     <span x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Login')"></span>
                 </a>
             </div>
 
             <div class="flex items-center gap-3 md:hidden">
-                <a x-show="isLoggedIn || isStaffLoggedIn" :href="isStaffLoggedIn ? 'staff.html' : 'student.html'" class="text-xs font-bold" style="background: linear-gradient(135deg, var(--gold), var(--accent)); color: var(--deep); padding: 10px 16px; border-radius: 8px; text-decoration: none; box-shadow: 0 0 30px rgba(255,215,0,0.3);" x-cloak>Dashboard</a>
-                <button @click="mobileMenu = !mobileMenu" class="text-2xl transition" style="color: var(--white);">
+                <a x-show="isLoggedIn || isStaffLoggedIn" :href="isStaffLoggedIn ? 'staff.html' : 'student.html'" class="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-bold shadow-lg" x-cloak>Dashboard</a>
+                <button @click="mobileMenu = !mobileMenu" class="text-2xl text-slate-800 focus:outline-none">
                     <i class="fas" :class="mobileMenu ? 'fa-times' : 'fa-bars'"></i>
                 </button>
             </div>
         </div>
 
-        <div x-show="mobileMenu" x-cloak class="md:hidden p-6 space-y-4 absolute w-full" style="background: rgba(10,10,26,0.95); border-top: 1px solid rgba(255,215,0,0.2); backdrop-filter: blur(20px); box-shadow: 0 15px 30px rgba(0,0,0,0.5);">
-            <a @click="mobileMenu = false" href="#home" class="block font-medium" style="color: rgba(255,255,255,0.75);">Home</a>
-            <a @click="mobileMenu = false" href="#about" class="block font-medium" style="color: rgba(255,255,255,0.75);">About</a>
-            <a @click="mobileMenu = false" :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="block font-bold" style="color: var(--gold);" x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Student Portal')"></a>
+        <div x-show="mobileMenu" x-cloak class="md:hidden bg-white border-t p-6 space-y-4 absolute w-full shadow-xl">
+            <a @click="mobileMenu = false" href="#home" class="block font-medium">Home</a>
+            <a @click="mobileMenu = false" href="#about" class="block font-medium">About</a>
+            <a @click="mobileMenu = false" :href="isStaffLoggedIn ? 'staff.html' : (isLoggedIn ? 'student.html' : '#apply')" class="block text-blue-600 font-bold" x-text="isStaffLoggedIn ? 'Staff Portal' : (isLoggedIn ? 'Student Dashboard' : 'Student Portal')"></a>
         </div>
     </nav>
 
@@ -262,6 +167,30 @@
                 </div>
                 <div class="absolute -bottom-10 -left-10 w-64 h-64 bg-blue-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
                 <div class="absolute -top-10 -right-10 w-64 h-64 bg-purple-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Staff / Team Section -->
+    <section id="team" class="py-24 bg-white reveal">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="text-center mb-16">
+                <span class="text-blue-600 font-bold tracking-widest uppercase text-xs">Expert Educators</span>
+                <h2 class="text-3xl md:text-5xl font-black text-slate-900 mt-2">Meet Our <span class="text-gradient">Team</span></h2>
+                <p class="text-slate-500 font-bold mt-4 max-w-2xl mx-auto">Our mentors are dedicated to making mathematics simple, intuitive, and fun for every student.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <template x-for="member in staffList" :key="member.id">
+                    <div class="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 text-center hover:shadow-xl transition-all group tilt-card">
+                        <div class="w-32 h-32 mx-auto bg-white rounded-full mb-6 border-4 border-white shadow-md overflow-hidden flex items-center justify-center bg-blue-100 text-blue-600">
+                            <i class="fas fa-user-tie text-5xl"></i>
+                        </div>
+                        <h4 class="text-xl font-black text-slate-900" x-text="member.name"></h4>
+                        <p class="text-blue-600 font-bold text-sm uppercase tracking-wider mt-1" x-text="member.role"></p>
+                        <p class="text-xs text-slate-400 mt-4 font-medium italic">"Dedicated to student excellence in competitive mathematics."</p>
+                    </div>
+                </template>
             </div>
         </div>
     </section>
@@ -456,7 +385,7 @@
                 </div>
 
                 <button type="submit" :disabled="isSubmitting" class="w-full bg-slate-900 text-white font-bold py-5 rounded-2xl hover:bg-blue-600 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
-                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin spinner-glow mr-2"></i>
+                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
                     <span x-text="isSubmitting ? 'Sending OTP...' : (isLoginMode ? 'Get Login OTP' : 'Get OTP to Register')"></span>
                 </button>
             </form>
@@ -469,7 +398,7 @@
                     <input type="text" x-model="enteredOtp" required maxlength="6" inputmode="numeric" pattern="[0-9]{6}" class="w-full max-w-xs mx-auto bg-slate-50 border-none rounded-xl p-4 focus:ring-2 focus:ring-blue-500 text-center text-2xl tracking-[0.75rem] font-bold">
                 </div>
                 <button type="submit" :disabled="isSubmitting" class="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl hover:bg-blue-700 transition shadow-lg disabled:bg-slate-400 flex items-center justify-center">
-                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin spinner-glow mr-2"></i>
+                    <i x-show="isSubmitting" class="fas fa-spinner fa-spin mr-2"></i>
                     <span x-text="isSubmitting ? 'Verifying...' : 'Verify & Complete Registration'"></span>
                 </button>
                 <button type="button" @click="applicationStep = 'form'" class="text-sm text-slate-500 hover:text-blue-600">Change email address</button>
@@ -490,7 +419,7 @@
                 <h3 class="text-2xl font-black text-slate-900 mb-2">Registration Successful!</h3>
                 <p class="text-slate-600 mb-8">Welcome, <strong x-text="applicationForm.name"></strong>! You are being automatically redirected to the Student Portal to complete your enrollment.</p>
                 <div class="flex items-center justify-center gap-2 font-bold text-slate-500">
-                    <i class="fas fa-spinner fa-spin spinner-glow"></i>
+                    <i class="fas fa-spinner fa-spin"></i>
                     <span>Redirecting...</span>
                 </div>
             </div>
@@ -548,9 +477,7 @@
                     <img src="channels4_profile (1).jpg" alt="Era of MathAntics Logo" class="w-10 h-10 rounded-lg">
                     <span class="font-black text-2xl tracking-tighter text-white">Era of MathAntics</span>
                 </div>
-                <p class="text-slate-400 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. The most trusted platform for math enthusiasts.
-                    MADE WITH LOVE ❤️ ERA OF MATHANTICS TEAM [TEACH HEAD - ABHAY SARASWAT]
-                </p>
+                <p class="text-slate-400 max-w-sm mb-8">Building a community of logic and problem solvers since 2018. The most trusted platform for math enthusiasts.</p>
                 <div class="flex space-x-4">
                     <a href="#" class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition"><i class="fab fa-youtube"></i></a>
                     <a href="#" class="w-10 h-10 bg-slate-800 rounded-full flex items-center justify-center hover:bg-blue-500 hover:text-white transition"><i class="fab fa-facebook-f"></i></a>
@@ -995,104 +922,5 @@
             }
         }
     </script>
-
-    <!-- Welcome Back Animation & First Visitor Celebration Scripts -->
-    <script src="welcomeBackAnimation.js"></script>
-    <script src="firstVisitorCelebration.js"></script>
-
-    <script>
-    // ============ CUSTOM CURSOR ============
-    const cursor = document.getElementById('cursor');
-    const cursorDot = document.getElementById('cursorDot');
-    let cx = 0, cy = 0, dx = 0, dy = 0;
-    document.addEventListener('mousemove', e => {
-      dx = e.clientX; dy = e.clientY;
-      cursorDot.style.left = dx - 3 + 'px';
-      cursorDot.style.top = dy - 3 + 'px';
-    });
-    function animCursor() {
-      cx += (dx - cx) * 0.12;
-      cy += (dy - cy) * 0.12;
-      cursor.style.left = cx - 9 + 'px';
-      cursor.style.top = cy - 9 + 'px';
-      requestAnimationFrame(animCursor);
-    }
-    animCursor();
-    document.querySelectorAll('button,a,[class*="card"]').forEach(el => {
-      el.addEventListener('mouseenter', () => cursor.style.transform = 'scale(2)');
-      el.addEventListener('mouseleave', () => cursor.style.transform = 'scale(1)');
-    });
-
-    // ============ PARTICLES ============
-    const canvas = document.getElementById('particles');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
-
-    const particles = Array.from({length:90},() => ({
-      x: Math.random()*canvas.width,
-      y: Math.random()*canvas.height,
-      r: Math.random()*1.5+0.3,
-      dx: (Math.random()-0.5)*0.4,
-      dy: (Math.random()-0.5)*0.4,
-      alpha: Math.random()*0.5+0.1,
-      color: Math.random()>0.6?'255,215,0':Math.random()>0.5?'0,245,255':'255,255,255'
-    }));
-
-    function drawParticles() {
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      particles.forEach(p => {
-        p.x += p.dx; p.y += p.dy;
-        if(p.x<0||p.x>canvas.width) p.dx*=-1;
-        if(p.y<0||p.y>canvas.height) p.dy*=-1;
-        ctx.beginPath();
-        ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
-        ctx.fillStyle = `rgba(${p.color},${p.alpha})`;
-        ctx.fill();
-      });
-      // Connection lines
-      for(let i=0;i<particles.length;i++){
-        for(let j=i+1;j<particles.length;j++){
-          const d=Math.hypot(particles[i].x-particles[j].x,particles[i].y-particles[j].y);
-          if(d<120){
-            ctx.beginPath();
-            ctx.moveTo(particles[i].x,particles[i].y);
-            ctx.lineTo(particles[j].x,particles[j].y);
-            ctx.strokeStyle=`rgba(255,215,0,${0.06*(1-d/120)})`;
-            ctx.lineWidth=0.5;
-            ctx.stroke();
-          }
-        }
-      }
-      requestAnimationFrame(drawParticles);
-    }
-    drawParticles();
-
-    // ============ NAVBAR SCROLL ============
-    window.addEventListener('scroll',()=>{
-      const nav=document.getElementById('navbar');
-      nav.style.background = window.scrollY>50?'rgba(5,5,15,0.97)':'rgba(10,10,26,0.85)';
-    });
-
-    // ============ REVEAL ON SCROLL ============
-    const revealEls = document.querySelectorAll('.reveal');
-    const observer = new IntersectionObserver(entries=>{
-      entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
-    },{threshold:0.12});
-    revealEls.forEach(el=>observer.observe(el));
-
-    // ============ 3D TILT ============
-    document.querySelectorAll('.tilt-card').forEach(card=>{
-      card.addEventListener('mousemove',e=>{
-        const r=card.getBoundingClientRect();
-        const x=(e.clientX-r.left)/r.width-0.5;
-        const y=(e.clientY-r.top)/r.height-0.5;
-        card.style.transform=`perspective(800px) rotateY(${x*12}deg) rotateX(${-y*12}deg) translateY(-8px)`;
-      });
-      card.addEventListener('mouseleave',()=>{ card.style.transform=''; });
-    });
-    </script>
-
 </body>
 </html>

@@ -1,8 +1,8 @@
 {
   "version": 2,
   "functions": {
-    "api/*.js": {
-      "runtime": "nodejs22.x"
+    "submit-application.js": {
+      "runtime": "nodejs20.x"
     }
   },
   "rewrites": [

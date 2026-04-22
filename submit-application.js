@@ -219,7 +219,7 @@ app.post('/api/send-otp', async (req, res) => {
   } catch (error) {
     console.error('Email sending failed:', error); // Log the actual error for debugging
     console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2)); // Log full error object
-    res.status(500).json({ error: 'Failed to send OTP: HTTP 500:' }); // Return generic message as requested
+    res.status(500).json({ error: 'Failed to send OTP: ' + error.message });
   }
 });
 

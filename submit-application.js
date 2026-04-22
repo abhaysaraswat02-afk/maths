@@ -117,15 +117,6 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// Test the connection
-transporter.verify((error, success) => {
-  if (error) {
-    console.log("Error with email config:", error);
-  } else {
-    console.log("Server is ready to send OTPs!");
-  }
-});
-
 // --- Security and Middleware ---
 
 // Enable CORS. Vercel handles this well, but it's good practice.
@@ -228,7 +219,7 @@ app.post('/api/send-otp', async (req, res) => {
   } catch (error) {
     console.error('Email sending failed:', error); // Log the actual error for debugging
     console.error('Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2)); // Log full error object
-    res.status(500).json({ error: `Failed to send OTP: ${error.message}` });
+    res.status(500).json({ error: 'Failed to send OTP: HTTP 500:' }); // Return generic message as requested
   }
 });
 

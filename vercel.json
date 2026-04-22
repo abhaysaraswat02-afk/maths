@@ -1,7 +1,7 @@
 {
   "version": 2,
   "functions": {
-    "submit-application.js": {
+    "api/*.js": {
       "runtime": "nodejs22.x"
     }
   },

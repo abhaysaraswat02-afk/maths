@@ -10,6 +10,15 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        #instructor-meet iframe { border-radius: 1rem; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
 </head>
 <body class="h-full text-white flex flex-col overflow-hidden">
     <!-- Batch Selection Overlay -->
@@ -95,7 +104,8 @@
             projectId: "era-of-mathantics-8b6d1",
             storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
             messagingSenderId: "521238168559",
-            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
+            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
+            databaseURL: "https://era-of-mathantics-8b6d1-default-rtdb.firebaseio.com"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
@@ -118,26 +128,41 @@
         }
 
         async function loadBatches() {
-            const snapshot = await db.collection('batches').get();
             const list = document.getElementById('batch-list');
-            list.innerHTML = '';
+            try {
+                const snapshot = await db.collection('batches').get();
+                list.innerHTML = '';
 
-            snapshot.forEach(doc => {
-                const batch = doc.data();
-                const div = document.createElement('div');
-                div.className = "p-4 bg-gray-800/50 border border-gray-700 rounded-xl cursor-pointer hover:border-blue-500 transition-all group";
-                div.onclick = () => selectBatch(doc.id, batch.name, div);
-                div.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-sm group-hover:text-blue-400 transition-colors">${batch.name}</p>
-                            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Class ${batch.classLevel} • ${batch.schedule}</p>
+                if (snapshot.empty) {
+                    list.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-folder-open text-3xl mb-3 block"></i>
+                            <p class="text-sm">No batches found.</p>
+                            <p class="text-[10px] mt-1">Please create batches in the Admin Dashboard first.</p>
+                        </div>`;
+                    return;
+                }
+
+                snapshot.forEach(doc => {
+                    const batch = doc.data();
+                    const div = document.createElement('div');
+                    div.className = "p-4 bg-gray-800/50 border border-gray-700 rounded-xl cursor-pointer hover:border-blue-500 transition-all group animate-fade-in";
+                    div.onclick = () => selectBatch(doc.id, batch.name, div);
+                    div.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <p class="font-bold text-sm group-hover:text-blue-400 transition-colors">${batch.name}</p>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-wider">Class ${batch.classLevel} • ${batch.schedule}</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-gray-700 group-hover:text-blue-500 text-xs"></i>
                         </div>
-                        <i class="fas fa-chevron-right text-gray-700 group-hover:text-blue-500 text-xs"></i>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
+                    `;
+                    list.appendChild(div);
+                });
+            } catch (error) {
+                console.error("Error fetching batches:", error);
+                list.innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded-xl">Failed to load batches. Check Firebase permissions.</div>`;
+            }
         }
 
         function selectBatch(id, name, element) {

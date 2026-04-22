@@ -136,8 +136,10 @@
                 await auth.signInAnonymously();
                 isAuthReady = true;
                 console.log("Instructor Session Ready");
+                updateLaunchButtonState(); // Check button state after auth is ready
             } catch (err) {
                 console.warn("Auth/Session Warning:", err.message);
+                updateLaunchButtonState(); // Also check if auth failed, button should remain disabled
             }
         }
 
@@ -193,7 +195,12 @@
             selectedBatchName = name;
             document.querySelectorAll('#batch-list > div').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-600/10'));
             element.classList.add('border-blue-500', 'bg-blue-600/10');
-            document.getElementById('launch-btn').disabled = false;
+            updateLaunchButtonState(); // Check button state after batch is selected
+        }
+
+        function updateLaunchButtonState() {
+            const launchBtn = document.getElementById('launch-btn');
+            launchBtn.disabled = !(selectedBatchId && isAuthReady && currentUser);
         }
 
         async function startLiveSession() {

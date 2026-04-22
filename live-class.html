@@ -51,13 +51,18 @@
         <!-- Professional Sidebar -->
         <aside class="w-80 chat-gradient border-l border-gray-800 flex flex-col">
             <div class="p-4 border-b border-gray-800 flex space-x-4">
-                <button class="text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1">Chat</button>
-                <button class="text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300">Resources</button>
+                <button onclick="toggleSidebar('chat')" class="sidebar-tab text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1 transition-all">Chat</button>
+                <button onclick="toggleSidebar('resources')" class="sidebar-tab text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300 transition-all">Resources</button>
             </div>
 
             <!-- Live Chat Messages -->
             <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 <!-- Messages injected here -->
+            </div>
+
+            <!-- Resources List -->
+            <div id="resources-box" class="hidden flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                <div class="text-center py-10 text-gray-600 text-xs italic">No resources shared yet</div>
             </div>
 
             <!-- Chat Input -->
@@ -110,6 +115,8 @@
                 console.error("Firebase Session Error:", err.message);
                 if (err.code === 'auth/unauthorized-domain') {
                     alert("Security Error: This domain is not authorized in your Firebase settings.");
+                } else if (err.message.includes("signup-are-blocked")) {
+                    alert("Configuration Error: User sign-up is disabled in Firebase Settings. Please contact the administrator.");
                 }
             }
 
@@ -127,6 +134,7 @@
 
             startLiveStream();
             initChat();
+            initResources();
         }
 
         function startLiveStream() {
@@ -151,6 +159,57 @@
             };
             const api = new JitsiMeetExternalAPI(domain, options);
             document.getElementById('video-placeholder').style.display = 'none';
+        }
+
+        function toggleSidebar(tab) {
+            const chatBox = document.getElementById('chat-box');
+            const resBox = document.getElementById('resources-box');
+            const chatInput = document.getElementById('chat-form').parentElement;
+            const btns = document.querySelectorAll('.sidebar-tab');
+
+            if (tab === 'chat') {
+                chatBox.classList.remove('hidden');
+                resBox.classList.add('hidden');
+                chatInput.style.display = 'block';
+                btns[0].className = 'sidebar-tab text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1';
+                btns[1].className = 'sidebar-tab text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300';
+            } else {
+                chatBox.classList.add('hidden');
+                resBox.classList.remove('hidden');
+                chatInput.style.display = 'none';
+                btns[1].className = 'sidebar-tab text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1';
+                btns[0].className = 'sidebar-tab text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300';
+            }
+        }
+
+        function initResources() {
+            const box = document.getElementById('resources-box');
+            db.collection('live_resources').where('batchId', '==', batchId)
+                .orderBy('timestamp', 'desc')
+                .onSnapshot(snapshot => {
+                    if (snapshot.empty) {
+                        box.innerHTML = `<div class="text-center py-10 text-gray-600 text-xs italic">No resources shared yet</div>`;
+                        return;
+                    }
+                    box.innerHTML = '';
+                    snapshot.forEach(doc => {
+                        const res = doc.data();
+                        const div = document.createElement('div');
+                        div.className = "p-3 bg-gray-800/50 border border-gray-700 rounded-xl hover:border-blue-500 transition-all cursor-pointer group";
+                        div.onclick = () => window.open(res.url, '_blank');
+                        div.innerHTML = `
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-600/20 text-blue-400 rounded-lg flex items-center justify-center"><i class="fas fa-file-pdf"></i></div>
+                                <div class="flex-1 overflow-hidden">
+                                    <p class="text-xs font-bold text-gray-200 truncate">${res.title}</p>
+                                    <p class="text-[9px] text-gray-500 uppercase">Shared by Teacher</p>
+                                </div>
+                                <i class="fas fa-download text-gray-700 group-hover:text-blue-500 text-[10px]"></i>
+                            </div>
+                        `;
+                        box.appendChild(div);
+                    });
+                });
         }
 
         function initChat() {

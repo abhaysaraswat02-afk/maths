@@ -1,8 +1,8 @@
-import jwt from 'jsonwebtoken';
-import { serialize } from 'cookie';
-import crypto from 'crypto';
+const jwt = require('jsonwebtoken');
+const { serialize } = require('cookie');
+const crypto = require('crypto');
 // Assuming you have Firebase Admin SDK initialized for Firestore access
-import admin from 'firebase-admin';
+const admin = require('firebase-admin');
 
 const stripQuotes = value => {
   if (!value) return '';
@@ -68,7 +68,7 @@ async function isAuthorizedStaff(email) {
   }
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }

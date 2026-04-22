@@ -152,13 +152,13 @@ function staffPortal() {
         async loadData() {
             this.loading = true;
             try {
-                const [admissionRes, resourceRes, newsRes, scoresRes, staffRes, batchSnap] = await Promise.all([
+                const [admissionRes, resourceRes, newsRes, scoresRes, staffRes, batchRes] = await Promise.all([
                     fetch('/api/admissions'),
                     fetch('/api/resources'),
                     fetch('/api/get-news'),
                     fetch('/api/get-test-scores'),
                     fetch('/api/get-staff'),
-                    firebase.firestore().collection('batches').get()
+                    fetch('/api/get-batches')
                 ]);
 
                 if (!admissionRes.ok) {
@@ -176,13 +176,16 @@ function staffPortal() {
                 if (!staffRes.ok) {
                     throw new Error('Failed to load staff list.');
                 }
+                if (!batchRes.ok) {
+                    throw new Error('Failed to load batches.');
+                }
 
                 this.admissions = await admissionRes.json();
                 this.resources = await resourceRes.json();
                 this.newsList = await newsRes.json();
                 this.recentScores = await scoresRes.json();
                 this.staffList = await staffRes.json();
-                this.batches = batchSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                this.batches = await batchRes.json();
             } catch (err) {
                 console.error('Data load error:', err);
                 this.error = err.message;
@@ -492,17 +495,21 @@ function staffPortal() {
         async addBatch() {
             this.loading = true;
             try {
-                const batchData = {
-                    ...this.batchForm,
-                    price: Number(this.batchForm.price),
-                    originalPrice: Number(this.batchForm.originalPrice),
-                    totalSeats: Number(this.batchForm.totalSeats),
-                    enrolled: 0,
-                    subjects: this.batchForm.subjects.split(',').map(s => s.trim()).filter(Boolean),
-                    status: 'upcoming',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                };
-                await firebase.firestore().collection('batches').add(batchData);
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/add-batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        ...this.batchForm,
+                        staffEmail
+                    })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Failed to create batch');
+                }
+
                 this.batchForm = { name: '', classLevel: '10', price: 0, originalPrice: 0, teacher: 'Sir (MathAntics)', schedule: '', startDate: '', duration: '', subjects: '', totalSeats: 100 };
                 alert('Batch created successfully!');
                 this.loadData();
@@ -517,7 +524,18 @@ function staffPortal() {
             if (!confirm('Are you sure you want to delete this batch? All enrollment links will be broken.')) return;
             this.loading = true;
             try {
-                await firebase.firestore().collection('batches').doc(id).delete();
+                const staffEmail = this.getStaffEmail();
+                const response = await fetch('/api/delete-batch', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id, staffEmail })
+                });
+
+                if (!response.ok) {
+                    const errData = await response.json();
+                    throw new Error(errData.error || 'Failed to delete batch');
+                }
+
                 alert('Batch deleted.');
                 this.loadData();
             } catch (err) {

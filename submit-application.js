@@ -722,6 +722,65 @@ app.post('/api/delete-student', async (req, res) => {
   }
 });
 
+// --- Batch Management APIs ---
+
+app.get('/api/get-batches', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  try {
+    const snap = await db.collection('batches').orderBy('classLevel').get();
+    const batches = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    res.status(200).json(batches);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/add-batch', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const { name, classLevel, price, originalPrice, teacher, schedule, subjects, totalSeats, staffEmail } = req.body;
+
+  if (!(await isAuthorizedStaff(staffEmail))) {
+    return res.status(403).json({ error: 'Unauthorized staff access.' });
+  }
+
+  try {
+    const batchData = {
+      name: name.trim(),
+      classLevel: classLevel,
+      price: Number(price),
+      originalPrice: Number(originalPrice),
+      teacher: teacher || 'Sir (MathAntics)',
+      schedule: schedule,
+      subjects: Array.isArray(subjects) ? subjects : subjects.split(',').map(s => s.trim()).filter(Boolean),
+      totalSeats: Number(totalSeats || 100),
+      enrolled: 0,
+      status: 'upcoming',
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    const docRef = await db.collection('batches').add(batchData);
+    res.status(200).json({ success: true, id: docRef.id });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/delete-batch', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const { id, staffEmail } = req.body;
+
+  if (!(await isAuthorizedStaff(staffEmail))) {
+    return res.status(403).json({ error: 'Unauthorized staff access.' });
+  }
+
+  try {
+    await db.collection('batches').doc(id).delete();
+    res.status(200).json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- Staff Management APIs ---
 
 app.get('/api/get-staff', async (req, res) => {

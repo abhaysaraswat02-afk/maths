@@ -1,779 +1,248 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-950">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        fetch('/api/check-auth').then(r=>r.json()).then(d=>{
-            if(!d.authenticated || d.role !== 'staff') window.location.href='index.html';
-        }).catch(()=>window.location.href='index.html');
-    </script>
-    <title>🎙️ Go Live | Era of MathAntics</title>
+    <title>Instructor Panel | Era of MathAntics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Firebase -->
+    <script src="https://meet.jit.si/external_api.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-
-    <style>
-        :root {
-            --gold:#FFD700; --gold2:#FFA500; --deep:#0a0a1a; --deep2:#0d0d2b;
-            --accent:#00f5ff; --accent2:#7b2fff; --glass:rgba(255,255,255,0.06);
-            --red:#ff3a3a; --green:#00e676;
-        }
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--deep);color:#fff;cursor:none;overflow:hidden;height:100vh;}
-        .cursor{width:18px;height:18px;border:2px solid var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:99999;transition:transform 0.15s;mix-blend-mode:difference;}
-        .cursor-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:99999;}
-        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
-        [x-cloak]{display:none!important;}
-
-        /* === LAYOUT === */
-        .app-layout{display:flex;height:100vh;flex-direction:column;}
-        .topbar{height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;border-bottom:1px solid rgba(255,215,0,0.15);background:rgba(13,13,43,0.95);backdrop-filter:blur(20px);flex-shrink:0;z-index:100;}
-        .main-area{flex:1;display:flex;overflow:hidden;}
-        .stage{flex:1;display:flex;flex-direction:column;position:relative;background:#000;}
-        .right-panel{width:320px;display:flex;flex-direction:column;border-left:1px solid rgba(255,215,0,0.12);background:rgba(13,13,43,0.97);}
-
-        /* === VIDEO === */
-        #localVideo{width:100%;height:100%;object-fit:cover;display:block;}
-        .video-overlay{position:absolute;inset:0;pointer-events:none;}
-        .live-badge{position:absolute;top:20px;left:20px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,58,58,0.5);padding:6px 14px;border-radius:50px;font-size:0.78rem;font-weight:700;color:#ff6b6b;backdrop-filter:blur(8px);}
-        .live-dot{width:8px;height:8px;background:#ff3a3a;border-radius:50%;animation:livePulse 1.2s infinite;}
-        @keyframes livePulse{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,58,58,0.6);}50%{box-shadow:0 0 0 6px rgba(255,58,58,0);}}
-        .viewer-badge{position:absolute;top:20px;right:20px;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,215,0,0.3);padding:6px 14px;border-radius:50px;font-size:0.78rem;font-weight:700;color:var(--gold);backdrop-filter:blur(8px);}
-        .duration-badge{position:absolute;bottom:80px;left:20px;background:rgba(0,0,0,0.7);padding:5px 14px;border-radius:50px;font-size:0.82rem;font-weight:700;font-family:monospace;color:#fff;border:1px solid rgba(255,255,255,0.1);}
-
-        /* === CONTROLS === */
-        .controls-bar{position:absolute;bottom:0;left:0;right:0;padding:16px 24px;background:linear-gradient(transparent,rgba(0,0,0,0.9));display:flex;align-items:center;justify-content:center;gap:12px;}
-        .ctrl{width:48px;height:48px;border-radius:50%;border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:#fff;}
-        .ctrl-grey{background:rgba(255,255,255,0.15);}
-        .ctrl-grey:hover{background:rgba(255,255,255,0.28);}
-        .ctrl-grey.off{background:rgba(255,58,58,0.25);border:1px solid rgba(255,58,58,0.4);}
-        .ctrl-end{background:linear-gradient(135deg,#ff3a3a,#cc0000);width:56px;height:56px;font-size:1.1rem;}
-        .ctrl-end:hover{box-shadow:0 0 20px rgba(255,58,58,0.6);}
-        .ctrl-share{background:linear-gradient(135deg,var(--accent2),#5b21b6);}
-        .ctrl-share:hover{box-shadow:0 0 20px rgba(123,47,255,0.5);}
-        .ctrl-board{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a1a;}
-        .ctrl-board:hover{box-shadow:0 0 20px rgba(255,215,0,0.5);}
-
-        /* === RIGHT PANEL === */
-        .panel-tabs{display:flex;border-bottom:1px solid rgba(255,255,255,0.08);}
-        .panel-tab{flex:1;padding:12px;text-align:center;font-size:0.78rem;font-weight:700;cursor:pointer;color:rgba(255,255,255,0.45);transition:all 0.2s;border-bottom:2px solid transparent;}
-        .panel-tab.active{color:var(--gold);border-bottom-color:var(--gold);}
-        .panel-content{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
-
-        /* === CHAT === */
-        .chat-msgs{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;}
-        .chat-msg{padding:8px 12px;border-radius:10px;font-size:0.8rem;animation:msgIn 0.3s ease;}
-        @keyframes msgIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
-        .chat-msg.student{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);}
-        .chat-msg.teacher{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.2);}
-        .chat-msg.system{background:rgba(0,245,255,0.07);border:1px solid rgba(0,245,255,0.15);text-align:center;font-size:0.72rem;color:rgba(255,255,255,0.5);}
-        .msg-name{font-size:0.68rem;font-weight:700;margin-bottom:3px;}
-        .chat-input-row{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.07);display:flex;gap:8px;}
-        .chat-inp{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,215,0,0.2);border-radius:8px;padding:8px 12px;color:#fff;font-size:0.82rem;outline:none;font-family:inherit;}
-        .chat-inp:focus{border-color:rgba(255,215,0,0.5);}
-        .send-btn{padding:8px 14px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a1a;border:none;border-radius:8px;font-weight:700;cursor:pointer;font-size:0.82rem;}
-
-        /* === STUDENTS LIST === */
-        .student-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.04);}
-        .s-avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent2),var(--accent));display:flex;align-items:center;justify-content:center;font-size:0.8rem;font-weight:700;flex-shrink:0;}
-        .s-name{font-size:0.82rem;font-weight:600;}
-        .s-status{font-size:0.68rem;color:rgba(255,255,255,0.4);margin-top:1px;}
-        .hand-badge{margin-left:auto;font-size:0.72rem;padding:3px 8px;background:rgba(255,215,0,0.15);color:var(--gold);border-radius:50px;border:1px solid rgba(255,215,0,0.3);}
-
-        /* === WHITEBOARD OVERLAY === */
-        .wb-overlay{position:fixed;inset:0;z-index:2000;background:#1a1a2e;display:flex;flex-direction:column;}
-        .wb-topbar{height:52px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid rgba(255,215,0,0.15);}
-        .wb-canvas-wrap{flex:1;position:relative;overflow:hidden;}
-        #wbCanvas{display:block;cursor:crosshair;touch-action:none;}
-        .wb-tools{display:flex;gap:6px;align-items:center;}
-        .wb-tool{width:34px;height:34px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.85rem;transition:all 0.2s;}
-        .wb-tool.active,.wb-tool:hover{background:rgba(255,215,0,0.2);border-color:rgba(255,215,0,0.5);color:var(--gold);}
-        .color-dot{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2px solid rgba(255,255,255,0.3);transition:transform 0.2s;}
-        .color-dot:hover,.color-dot.active{transform:scale(1.25);border-color:#fff;}
-        .wb-size{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;color:#fff;padding:4px 8px;font-size:0.78rem;outline:none;}
-
-        /* === PRE-LIVE SETUP === */
-        .setup-screen{position:absolute;inset:0;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;z-index:10;}
-        .setup-card{background:rgba(13,13,43,0.98);border:1px solid rgba(255,215,0,0.25);border-radius:20px;padding:36px;width:90%;max-width:520px;text-align:center;}
-
-        /* === TOAST === */
-        .toast{position:fixed;bottom:28px;right:28px;z-index:9999;padding:12px 20px;border-radius:10px;font-weight:600;font-size:0.82rem;background:var(--deep2);border:1px solid rgba(0,230,118,0.4);color:var(--green);animation:toastIn 0.35s ease,toastOut 0.35s ease 2.8s forwards;pointer-events:none;}
-        @keyframes toastIn{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
-        @keyframes toastOut{to{opacity:0;transform:translateY(16px);}}
-
-        /* Screen share pip */
-        .pip{position:absolute;bottom:90px;right:12px;width:200px;height:120px;border-radius:10px;overflow:hidden;border:2px solid rgba(255,215,0,0.3);background:#000;}
-        #pipVideo{width:100%;height:100%;object-fit:cover;}
-
-        /* Reactions float */
-        .reaction-float{position:absolute;bottom:90px;left:50%;font-size:1.8rem;animation:floatUp 2s ease forwards;pointer-events:none;}
-        @keyframes floatUp{0%{opacity:1;transform:translateX(-50%) translateY(0);}100%{opacity:0;transform:translateX(calc(-50% + var(--rx)))  translateY(-120px);}}
-
-        .go-live-btn{padding:15px 40px;border-radius:14px;border:none;font-size:1rem;font-weight:800;cursor:pointer;background:linear-gradient(135deg,#ff3a3a,#ff6b6b);color:#fff;letter-spacing:0.5px;transition:all 0.3s;}
-        .go-live-btn:hover{box-shadow:0 10px 30px rgba(255,58,58,0.5);transform:translateY(-2px);}
-        .go-live-btn:disabled{opacity:0.6;cursor:not-allowed;transform:none;}
-        .prep-video{width:100%;border-radius:14px;background:#000;max-height:240px;object-fit:cover;}
-
-        /* Raise hand notification */
-        .hand-notif{position:absolute;top:70px;right:16px;background:rgba(255,215,0,0.15);border:1px solid rgba(255,215,0,0.4);border-radius:10px;padding:10px 14px;font-size:0.8rem;animation:slideLeft 0.3s ease;}
-        @keyframes slideLeft{from{opacity:0;transform:translateX(20px);}to{opacity:1;transform:translateX(0);}}
-    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body x-data="teacherApp()" x-init="init()" x-cloak>
-    <div class="cursor" id="cursor"></div>
-    <div class="cursor-dot" id="cursorDot"></div>
-
-    <!-- Toast -->
-    <div x-show="toast.show" x-cloak class="toast" x-text="toast.msg"></div>
-
-    <!-- Hand-raise notification -->
-    <template x-if="handNotif.show">
-        <div class="hand-notif">✋ <strong x-text="handNotif.name"></strong> raised hand</div>
-    </template>
-
-    <div class="app-layout">
-
-        <!-- ===== TOP BAR ===== -->
-        <div class="topbar">
-            <div class="flex items-center gap-4">
-                <a href="staff.html" class="text-white/50 hover:text-white transition text-sm"><i class="fas fa-arrow-left mr-1"></i> Staff</a>
-                <span class="font-800 text-base" style="background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Era of MathAntics — Teacher Studio</span>
+<body class="h-full text-white flex flex-col overflow-hidden">
+    <!-- Batch Selection Overlay -->
+    <div id="batch-overlay" class="fixed inset-0 z-[100] bg-gray-950 flex items-center justify-center p-4">
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl max-w-md w-full shadow-2xl">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-video"></i></div>
+                <h2 class="text-xl font-bold">Launch Live Studio</h2>
             </div>
-            <div class="flex items-center gap-3">
-                <template x-if="isLive">
-                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-700" style="background:rgba(255,58,58,0.15);border:1px solid rgba(255,58,58,0.35);color:#ff6b6b;">
-                        <span class="live-dot"></span> LIVE · <span x-text="formatDuration(liveDuration)"></span>
-                    </div>
-                </template>
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-700" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:var(--gold);">
-                    <i class="fas fa-users text-xs"></i> <span x-text="viewers"></span> watching
-                </div>
-                <select x-model="activeBatchId" class="text-xs px-3 py-1.5 rounded-full border outline-none font-600" style="background:rgba(255,255,255,0.07);border-color:rgba(255,215,0,0.25);color:#fff;">
-                    <option value="">Select Batch…</option>
-                    <template x-for="b in batches" :key="b.id"><option :value="b.id" x-text="b.name"></option></template>
-                </select>
+            <p class="text-gray-400 text-sm mb-6">Which batch are you teaching today? Students in the selected batch will be notified.</p>
+            <div id="batch-list" class="space-y-2 mb-8 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                <div class="animate-pulse text-gray-700 text-xs">Fetching active batches...</div>
             </div>
-        </div>
-
-        <!-- ===== MAIN ===== -->
-        <div class="main-area">
-
-            <!-- ===== STAGE ===== -->
-            <div class="stage">
-
-                <!-- PRE-LIVE SETUP SCREEN -->
-                <div class="setup-screen" x-show="!isLive" x-cloak>
-                    <div class="setup-card">
-                        <div class="text-3xl mb-3">🎙️</div>
-                        <div class="text-xl font-800 mb-1">Ready to Go Live?</div>
-                        <div class="text-sm mb-6" style="color:rgba(255,255,255,0.45);">Preview your camera & mic, then start the class.</div>
-                        <video id="previewVideo" class="prep-video mb-6" autoplay muted playsinline></video>
-                        <div class="flex gap-3 justify-center mb-6">
-                            <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                <input type="checkbox" x-model="setupCam" class="accent-yellow-400"> Camera
-                            </label>
-                            <label class="flex items-center gap-2 text-sm cursor-pointer">
-                                <input type="checkbox" x-model="setupMic" class="accent-yellow-400"> Microphone
-                            </label>
-                        </div>
-                        <div class="mb-5">
-                            <input type="text" x-model="classTitle" placeholder="Class topic e.g. Trigonometry — Day 3" class="w-full px-4 py-2.5 rounded-10 text-sm outline-none font-600" style="background:rgba(255,255,255,0.07);border:1px solid rgba(255,215,0,0.25);color:#fff;border-radius:10px;">
-                        </div>
-                        <button class="go-live-btn" @click="startLive()" :disabled="starting || !activeBatchId">
-                            <template x-if="!starting"><span><i class="fas fa-broadcast-tower mr-2"></i> Go Live Now</span></template>
-                            <template x-if="starting"><span><i class="fas fa-spinner fa-spin mr-2"></i> Starting…</span></template>
-                        </button>
-                        <p x-show="!activeBatchId" class="text-xs mt-3" style="color:rgba(255,58,58,0.8);">⚠ Please select a batch first (top right)</p>
-                    </div>
-                </div>
-
-                <!-- LIVE VIDEO -->
-                <video id="localVideo" autoplay muted playsinline x-show="isLive"></video>
-
-                <!-- Screen share PiP -->
-                <div class="pip" x-show="isSharing && isLive">
-                    <video id="pipVideo" autoplay muted playsinline></video>
-                </div>
-
-                <!-- Whiteboard overlay -->
-                <div class="wb-overlay" x-show="wbOpen" x-cloak>
-                    <div class="wb-topbar">
-                        <button @click="wbOpen=false" class="wb-tool"><i class="fas fa-times"></i></button>
-                        <span class="text-sm font-700 mr-4" style="color:var(--gold);">Whiteboard</span>
-                        <div class="wb-tools">
-                            <button class="wb-tool" :class="wbTool==='pen'?'active':''" @click="wbTool='pen'" title="Pen"><i class="fas fa-pen"></i></button>
-                            <button class="wb-tool" :class="wbTool==='eraser'?'active':''" @click="wbTool='eraser'" title="Eraser"><i class="fas fa-eraser"></i></button>
-                            <button class="wb-tool" :class="wbTool==='line'?'active':''" @click="wbTool='line'" title="Line"><i class="fas fa-minus"></i></button>
-                            <button class="wb-tool" :class="wbTool==='rect'?'active':''" @click="wbTool='rect'" title="Rectangle"><i class="far fa-square"></i></button>
-                            <button class="wb-tool" :class="wbTool==='circle'?'active':''" @click="wbTool='circle'" title="Circle"><i class="far fa-circle"></i></button>
-                            <button class="wb-tool" :class="wbTool==='text'?'active':''" @click="wbTool='text'" title="Text"><i class="fas fa-font"></i></button>
-                            <div style="width:1px;height:24px;background:rgba(255,255,255,0.15);margin:0 4px;"></div>
-                            <template x-for="c in wbColors">
-                                <div class="color-dot" :class="wbColor===c?'active':''" :style="'background:'+c" @click="wbColor=c; wbTool='pen'"></div>
-                            </template>
-                            <div style="width:1px;height:24px;background:rgba(255,255,255,0.15);margin:0 4px;"></div>
-                            <select x-model="wbSize" class="wb-size">
-                                <option value="2">Thin</option>
-                                <option value="4" selected>Medium</option>
-                                <option value="8">Thick</option>
-                                <option value="16">Bold</option>
-                            </select>
-                        </div>
-                        <div class="ml-auto flex gap-2">
-                            <button class="wb-tool text-xs px-3" @click="clearWb()">Clear</button>
-                            <button class="wb-tool text-xs px-3" @click="saveWbImage()"><i class="fas fa-download mr-1"></i>Save</button>
-                        </div>
-                    </div>
-                    <div class="wb-canvas-wrap">
-                        <canvas id="wbCanvas"></canvas>
-                    </div>
-                </div>
-
-                <!-- Floating reactions -->
-                <template x-for="r in floatingReactions" :key="r.id">
-                    <div class="reaction-float" :style="'--rx:'+r.rx+'px'" x-text="r.emoji"></div>
-                </template>
-
-                <!-- Live overlays -->
-                <div class="video-overlay" x-show="isLive">
-                    <div class="live-badge"><span class="live-dot"></span> LIVE</div>
-                    <div class="viewer-badge"><i class="fas fa-eye mr-1"></i><span x-text="viewers"></span></div>
-                    <div class="duration-badge" x-text="formatDuration(liveDuration)"></div>
-                </div>
-
-                <!-- Controls -->
-                <div class="controls-bar" x-show="isLive">
-                    <button class="ctrl ctrl-grey" :class="!micOn?'off':''" @click="toggleMic()" :title="micOn?'Mute Mic':'Unmute Mic'">
-                        <i :class="micOn?'fas fa-microphone':'fas fa-microphone-slash'"></i>
-                    </button>
-                    <button class="ctrl ctrl-grey" :class="!camOn?'off':''" @click="toggleCam()" :title="camOn?'Stop Camera':'Start Camera'">
-                        <i :class="camOn?'fas fa-video':'fas fa-video-slash'"></i>
-                    </button>
-                    <button class="ctrl ctrl-board" @click="openWhiteboard()" title="Whiteboard">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                    </button>
-                    <button class="ctrl ctrl-share" :class="isSharing?'ring-2 ring-purple-400':''" @click="toggleScreenShare()" title="Share Screen">
-                        <i class="fas fa-desktop"></i>
-                    </button>
-                    <button class="ctrl ctrl-end" @click="endLive()" title="End Class">
-                        <i class="fas fa-phone-slash"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- ===== RIGHT PANEL ===== -->
-            <div class="right-panel">
-                <div class="panel-tabs">
-                    <div class="panel-tab" :class="rTab==='chat'?'active':''" @click="rTab='chat'">💬 Chat <span x-show="unreadChat>0" class="ml-1 text-xs px-1.5 rounded-full" style="background:var(--red);color:#fff;" x-text="unreadChat"></span></div>
-                    <div class="panel-tab" :class="rTab==='students'?'active':''" @click="rTab='students'; unreadChat=0">👥 Students (<span x-text="viewers"></span>)</div>
-                    <div class="panel-tab" :class="rTab==='poll'?'active':''" @click="rTab='poll'">📊 Poll</div>
-                </div>
-
-                <!-- CHAT -->
-                <div class="panel-content" x-show="rTab==='chat'">
-                    <div class="chat-msgs" id="teacherChatMsgs">
-                        <template x-for="msg in chatMessages" :key="msg.id">
-                            <div class="chat-msg" :class="msg.type">
-                                <template x-if="msg.type!=='system'">
-                                    <div class="msg-name" :style="msg.type==='teacher'?'color:var(--gold)':'color:rgba(255,255,255,0.5)'" x-text="msg.name + (msg.type==='teacher'?' (You)':'')"></div>
-                                </template>
-                                <span x-text="msg.text"></span>
-                            </div>
-                        </template>
-                    </div>
-                    <div class="chat-input-row">
-                        <input class="chat-inp" x-model="chatInput" @keydown.enter="sendTeacherMessage()" placeholder="Message students…" maxlength="300">
-                        <button class="send-btn" @click="sendTeacherMessage()"><i class="fas fa-paper-plane"></i></button>
-                    </div>
-                </div>
-
-                <!-- STUDENTS -->
-                <div class="panel-content" x-show="rTab==='students'" style="overflow-y:auto;">
-                    <template x-for="s in presentStudents" :key="s.uid">
-                        <div class="student-item">
-                            <div class="s-avatar" x-text="s.name.charAt(0).toUpperCase()"></div>
-                            <div>
-                                <div class="s-name" x-text="s.name"></div>
-                                <div class="s-status">Watching live</div>
-                            </div>
-                            <div class="hand-badge" x-show="s.handRaised">✋ Hand up</div>
-                        </div>
-                    </template>
-                    <div x-show="presentStudents.length===0" class="text-center py-10 text-sm" style="color:rgba(255,255,255,0.3);">
-                        <i class="fas fa-user-slash text-2xl mb-2 block"></i>Waiting for students…
-                    </div>
-                </div>
-
-                <!-- POLL -->
-                <div class="panel-content p-4" x-show="rTab==='poll'" style="overflow-y:auto;">
-                    <div class="text-sm font-700 mb-3" style="color:var(--gold);">Quick Poll</div>
-                    <template x-if="!activePoll">
-                        <div>
-                            <input type="text" x-model="newPoll.question" placeholder="Poll question…" class="chat-inp w-full mb-3" style="width:100%;">
-                            <template x-for="(opt,i) in newPoll.options" :key="i">
-                                <div class="flex gap-2 mb-2">
-                                    <input type="text" :placeholder="'Option '+(i+1)" x-model="newPoll.options[i]" class="chat-inp flex-1">
-                                    <button @click="newPoll.options.splice(i,1)" class="wb-tool text-red-400 text-xs">✕</button>
-                                </div>
-                            </template>
-                            <button @click="newPoll.options.push('')" class="text-xs text-white/50 hover:text-white mb-4 block">+ Add option</button>
-                            <button @click="launchPoll()" class="send-btn w-full text-center rounded-10" style="border-radius:10px;width:100%;padding:10px;">🚀 Launch Poll</button>
-                        </div>
-                    </template>
-                    <template x-if="activePoll">
-                        <div>
-                            <div class="text-sm font-700 mb-3" x-text="activePoll.question"></div>
-                            <template x-for="(opt,i) in activePoll.options" :key="i">
-                                <div class="mb-3">
-                                    <div class="flex justify-between text-xs mb-1">
-                                        <span x-text="opt"></span>
-                                        <span x-text="(activePoll.votes[i]||0)+' votes'"></span>
-                                    </div>
-                                    <div style="height:6px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;">
-                                        <div style="height:100%;border-radius:3px;background:linear-gradient(90deg,var(--gold),var(--accent));transition:width 0.5s;" :style="'width:'+getPollPct(i)+'%'"></div>
-                                    </div>
-                                </div>
-                            </template>
-                            <button @click="activePoll=null" class="text-xs mt-2 text-white/40 hover:text-white">Close poll</button>
-                        </div>
-                    </template>
-                </div>
-            </div>
+            <button id="launch-btn" disabled onclick="startLiveSession()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 disabled:text-gray-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-900/20">
+                GO LIVE NOW
+            </button>
         </div>
     </div>
 
-<script>
-// ============ FIREBASE CONFIG — PASTE YOURS ============
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
+    <!-- Header -->
+    <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <div class="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <i class="fas fa-chalkboard-teacher text-xl"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight">Teaching Studio</h1>
+                <p id="batch-info" class="text-xs text-gray-500">Live Session Dashboard</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <div class="flex items-center bg-gray-800 rounded-full px-3 py-1 border border-gray-700">
+                <div class="h-2 w-2 bg-green-500 rounded-full mr-2"></div>
+                <span class="text-xs text-gray-300">Server Stable</span>
+            </div>
+            <button onclick="endSession()" class="text-sm text-gray-400 hover:text-white transition hover:text-red-400">Exit Studio</button>
+        </div>
+    </header>
 
-let firebaseApp, db, fsdb, auth;
-try {
-    firebaseApp = firebase.initializeApp(firebaseConfig);
-    db   = firebase.database();   // Realtime DB for signaling & chat
-    fsdb = firebase.firestore();  // Firestore for batch data
-    auth = firebase.auth();
-} catch(e) { console.warn('Firebase not configured yet:', e.message); }
+    <main class="flex-1 flex p-4 gap-4 overflow-hidden">
+        <!-- Main Stream Control -->
+        <div class="flex-1 flex flex-col space-y-4">
+            <div id="instructor-meet" class="flex-1 bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+                <!-- Jitsi will load here -->
+            </div>
+            <!-- Teacher Toolbox -->
+            <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 flex justify-between items-center">
+                <div class="flex space-x-3">
+                    <button class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-sm font-medium transition flex items-center"><i class="fas fa-file-upload mr-2"></i> Share PDF</button>
+                    <button class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-sm font-medium transition flex items-center"><i class="fas fa-poll-h mr-2"></i> Create Poll</button>
+                </div>
+                <button onclick="endSession()" class="bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white px-6 py-2 rounded-lg font-bold transition">END SESSION</button>
+            </div>
+        </div>
 
-// ============================================================
+        <!-- Moderation Sidebar -->
+        <aside class="w-96 flex flex-col space-y-4">
+            <!-- Student Chat -->
+            <div class="flex-1 bg-gray-900 rounded-xl border border-gray-800 flex flex-col overflow-hidden">
+                <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
+                    <h3 class="font-bold text-sm tracking-wide">STUDENT INTERACTION</h3>
+                    <span class="text-[10px] bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded uppercase font-bold">Real-time</span>
+                </div>
+                <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 text-sm scrollbar-thin scrollbar-thumb-gray-800">
+                    <!-- Messages -->
+                </div>
+                <div class="p-3 bg-gray-950">
+                    <form id="chat-form" class="flex space-x-2">
+                        <input type="text" id="chat-input" placeholder="Announce to class..." 
+                            class="flex-1 bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
+                        <button class="bg-blue-600 px-4 py-2 rounded-lg"><i class="fas fa-paper-plane text-xs"></i></button>
+                    </form>
+                </div>
+            </div>
+        </aside>
+    </main>
 
-function teacherApp() {
-    return {
-        // State
-        isLive: false,
-        starting: false,
-        setupCam: true,
-        setupMic: true,
-        classTitle: '',
-        activeBatchId: '',
-        batches: [],
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",
+            authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
+            projectId: "era-of-mathantics-8b6d1",
+            storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
+            messagingSenderId: "521238168559",
+            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        const rtdb = firebase.database();
 
-        micOn: true,
-        camOn: true,
-        isSharing: false,
-        liveDuration: 0,
-        viewers: 0,
-        rTab: 'chat',
-        unreadChat: 0,
+        let currentUser = null;
+        let selectedBatchId = null;
+        let selectedBatchName = "";
+        let jitsiApi = null;
 
-        chatMessages: [],
-        chatInput: '',
-        presentStudents: [],
-
-        wbOpen: false,
-        wbTool: 'pen',
-        wbColor: '#FFD700',
-        wbColors: ['#FFD700','#00f5ff','#ff3a3a','#00e676','#ffffff','#7b2fff','#ff9800'],
-        wbSize: 4,
-
-        newPoll: { question:'', options:['',''] },
-        activePoll: null,
-
-        toast: { show:false, msg:'' },
-        handNotif: { show:false, name:'' },
-        floatingReactions: [],
-
-        // Streams
-        localStream: null,
-        screenStream: null,
-        liveRef: null,
-        liveKey: null,
-        durationTimer: null,
-        viewerTimer: null,
-
-        async init() {
-            this.initCursor();
-            await this.loadBatches();
-            await this.setupPreview();
-        },
-
-        async loadBatches() {
-            // Load from Firestore
-            try {
-                const snap = await fsdb.collection('batches').orderBy('name').get();
-                this.batches = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-            } catch(e) {
-                // Demo fallback
-                this.batches = [
-                    { id:'batch_10', name:'Class 10 — Boards Mastery' },
-                    { id:'batch_9',  name:'Class 9 — Foundation' },
-                    { id:'batch_12', name:'Class 12 — JEE Foundation' },
-                    { id:'batch_11', name:'Class 11 — Deep Dive' },
-                    { id:'batch_8',  name:'Class 8 — Fast Track' },
-                ];
+        async function init() {
+            const res = await fetch('/api/check-auth');
+            const data = await res.json();
+            if (!data.authenticated || data.role !== 'staff') {
+                window.location.href = '/index.html';
+                return;
             }
-        },
-
-        async setupPreview() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-                document.getElementById('previewVideo').srcObject = stream;
-                this.localStream = stream;
-            } catch(e) { this.showToast('⚠ Camera/mic permission denied'); }
-        },
-
-        async startLive() {
-            if (!this.activeBatchId) return;
-            this.starting = true;
-            try {
-                if (!this.localStream) {
-                    this.localStream = await navigator.mediaDevices.getUserMedia({
-                        video: this.setupCam, audio: this.setupMic
-                    });
-                }
-                document.getElementById('localVideo').srcObject = this.localStream;
-                this.micOn = this.setupMic;
-                this.camOn = this.setupCam;
-
-                // Write live session to Firebase Realtime DB
-                this.liveRef = db.ref(`liveSessions/${this.activeBatchId}`);
-                await this.liveRef.set({
-                    isLive: true,
-                    teacherName: 'Sir (MathAntics)',
-                    classTitle: this.classTitle || 'Live Class',
-                    startedAt: Date.now(),
-                    viewers: 0,
-                    batchId: this.activeBatchId
-                });
-
-                // Listen for viewers/students
-                db.ref(`liveViewers/${this.activeBatchId}`).on('value', snap => {
-                    const data = snap.val() || {};
-                    this.viewers = Object.keys(data).length;
-                    this.presentStudents = Object.values(data);
-                    // Check hand raises
-                    const raisedHand = Object.values(data).find(s => s.handRaised && !s._notified);
-                    if (raisedHand) {
-                        this.handNotif = { show: true, name: raisedHand.name };
-                        setTimeout(()=>{ this.handNotif.show=false; }, 4000);
-                    }
-                    // Update viewer count on session
-                    this.liveRef.update({ viewers: this.viewers });
-                });
-
-                // Listen for chat
-                db.ref(`liveChat/${this.activeBatchId}`).limitToLast(100).on('child_added', snap => {
-                    const msg = snap.val();
-                    this.chatMessages.push({ id: snap.key, ...msg });
-                    if (this.rTab !== 'chat') this.unreadChat++;
-                    this.$nextTick(() => {
-                        const el = document.getElementById('teacherChatMsgs');
-                        if(el) el.scrollTop = el.scrollHeight;
-                    });
-                });
-
-                // Listen for poll votes
-                db.ref(`livePoll/${this.activeBatchId}/votes`).on('value', snap => {
-                    if (this.activePoll && snap.val()) {
-                        this.activePoll.votes = snap.val();
-                    }
-                });
-
-                // Listen for reactions
-                db.ref(`liveReactions/${this.activeBatchId}`).limitToLast(1).on('child_added', snap => {
-                    this.showReaction(snap.val().emoji);
-                });
-
-                // Duration timer
-                this.durationTimer = setInterval(() => this.liveDuration++, 1000);
-
-                this.isLive = true;
-                this.starting = false;
-                this.showToast('🔴 You are LIVE! Students can now join.');
-                this.addSystemMessage(`Class started: ${this.classTitle || 'Live Class'}`);
-
-            } catch(e) {
-                console.error(e);
-                this.starting = false;
-                this.showToast('❌ Failed to go live: ' + e.message);
-            }
-        },
-
-        async endLive() {
-            if (!confirm('End the live class? Students will be disconnected.')) return;
-            clearInterval(this.durationTimer);
-
-            // Update Firebase
-            if (this.liveRef) {
-                await this.liveRef.update({ isLive: false, endedAt: Date.now() });
-                db.ref(`liveViewers/${this.activeBatchId}`).off();
-                db.ref(`liveChat/${this.activeBatchId}`).off();
-            }
-
-            // Stop streams
-            if (this.localStream) this.localStream.getTracks().forEach(t=>t.stop());
-            if (this.screenStream) this.screenStream.getTracks().forEach(t=>t.stop());
-
-            this.isLive = false;
-            this.liveDuration = 0;
-            this.chatMessages = [];
-            this.presentStudents = [];
-            this.viewers = 0;
-
-            // Save session record to Firestore
-            try {
-                await fsdb.collection('classHistory').add({
-                    batchId: this.activeBatchId,
-                    title: this.classTitle,
-                    duration: this.liveDuration,
-                    viewerCount: this.viewers,
-                    date: new Date()
-                });
-            } catch(e) {}
-
-            this.showToast('Class ended. See you next time!');
-            await this.setupPreview();
-        },
-
-        toggleMic() {
-            this.micOn = !this.micOn;
-            if (this.localStream) {
-                this.localStream.getAudioTracks().forEach(t => t.enabled = this.micOn);
-            }
-            this.showToast(this.micOn ? '🎤 Mic ON' : '🔇 Mic MUTED');
-        },
-
-        toggleCam() {
-            this.camOn = !this.camOn;
-            if (this.localStream) {
-                this.localStream.getVideoTracks().forEach(t => t.enabled = this.camOn);
-            }
-            this.showToast(this.camOn ? '📹 Camera ON' : '📷 Camera OFF');
-        },
-
-        async toggleScreenShare() {
-            if (this.isSharing) {
-                this.screenStream.getTracks().forEach(t=>t.stop());
-                this.isSharing = false;
-                document.getElementById('pipVideo').srcObject = null;
-                this.showToast('Screen share stopped');
-            } else {
-                try {
-                    this.screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
-                    document.getElementById('pipVideo').srcObject = this.screenStream;
-                    // Swap main video to screen
-                    document.getElementById('localVideo').srcObject = this.screenStream;
-                    this.isSharing = true;
-                    this.showToast('🖥️ Screen sharing started');
-                    this.screenStream.getVideoTracks()[0].addEventListener('ended', () => {
-                        this.isSharing = false;
-                        document.getElementById('localVideo').srcObject = this.localStream;
-                    });
-                } catch(e) { this.showToast('Screen share cancelled'); }
-            }
-        },
-
-        sendTeacherMessage() {
-            if (!this.chatInput.trim()) return;
-            const msg = {
-                name: 'Sir (MathAntics)',
-                text: this.chatInput,
-                type: 'teacher',
-                time: Date.now()
-            };
-            if (db && this.activeBatchId) {
-                db.ref(`liveChat/${this.activeBatchId}`).push(msg);
-            } else {
-                this.chatMessages.push({ id: Date.now(), ...msg });
-            }
-            this.chatInput = '';
-        },
-
-        addSystemMessage(text) {
-            this.chatMessages.push({ id: Date.now(), text, type: 'system' });
-        },
-
-        launchPoll() {
-            if (!this.newPoll.question || this.newPoll.options.filter(Boolean).length < 2) {
-                return this.showToast('Add question + at least 2 options');
-            }
-            const poll = {
-                question: this.newPoll.question,
-                options: this.newPoll.options.filter(Boolean),
-                votes: {},
-                active: true,
-                createdAt: Date.now()
-            };
-            if (db && this.activeBatchId) {
-                db.ref(`livePoll/${this.activeBatchId}`).set(poll);
-            }
-            this.activePoll = { ...poll, votes: {} };
-            this.newPoll = { question:'', options:['',''] };
-            this.showToast('📊 Poll launched to students!');
-        },
-
-        getPollPct(i) {
-            if (!this.activePoll) return 0;
-            const votes = Object.values(this.activePoll.votes || {});
-            const total = votes.length;
-            if (!total) return 0;
-            const count = votes.filter(v => v === i).length;
-            return Math.round(count / total * 100);
-        },
-
-        showReaction(emoji) {
-            const id = Date.now() + Math.random();
-            const rx = (Math.random() - 0.5) * 60;
-            this.floatingReactions.push({ id, emoji, rx });
-            setTimeout(() => {
-                this.floatingReactions = this.floatingReactions.filter(r => r.id !== id);
-            }, 2100);
-        },
-
-        // === WHITEBOARD ===
-        openWhiteboard() {
-            this.wbOpen = true;
-            this.$nextTick(() => this.initWhiteboard());
-        },
-
-        initWhiteboard() {
-            const canvas = document.getElementById('wbCanvas');
-            const wrap = canvas.parentElement;
-            canvas.width = wrap.clientWidth;
-            canvas.height = wrap.clientHeight;
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            let drawing = false, sx=0, sy=0, snapshot;
-
-            const getPos = e => {
-                const r = canvas.getBoundingClientRect();
-                const t = e.touches ? e.touches[0] : e;
-                return { x: t.clientX - r.left, y: t.clientY - r.top };
-            };
-
-            const startDraw = e => {
-                e.preventDefault();
-                drawing = true;
-                const p = getPos(e);
-                sx=p.x; sy=p.y;
-                snapshot = ctx.getImageData(0, 0, canvas.width, canvas.height);
-                if (this.wbTool === 'pen' || this.wbTool === 'eraser') {
-                    ctx.beginPath();
-                    ctx.moveTo(sx, sy);
-                }
-                if (this.wbTool === 'text') {
-                    const txt = prompt('Enter text:');
-                    if (txt) {
-                        ctx.font = `${this.wbSize * 5 + 14}px Plus Jakarta Sans`;
-                        ctx.fillStyle = this.wbColor;
-                        ctx.fillText(txt, sx, sy);
-                    }
-                    drawing = false;
-                }
-            };
-
-            const draw = e => {
-                if (!drawing) return;
-                e.preventDefault();
-                const p = getPos(e);
-                ctx.lineWidth = this.wbTool === 'eraser' ? this.wbSize * 5 : this.wbSize;
-                ctx.strokeStyle = this.wbTool === 'eraser' ? '#1a1a2e' : this.wbColor;
-                ctx.lineCap = 'round';
-                ctx.lineJoin = 'round';
-
-                if (this.wbTool === 'pen' || this.wbTool === 'eraser') {
-                    ctx.lineTo(p.x, p.y);
-                    ctx.stroke();
-                } else {
-                    ctx.putImageData(snapshot, 0, 0);
-                    ctx.beginPath();
-                    if (this.wbTool === 'line') {
-                        ctx.moveTo(sx, sy); ctx.lineTo(p.x, p.y); ctx.stroke();
-                    } else if (this.wbTool === 'rect') {
-                        ctx.strokeRect(sx, sy, p.x-sx, p.y-sy);
-                    } else if (this.wbTool === 'circle') {
-                        const r = Math.hypot(p.x-sx, p.y-sy);
-                        ctx.arc(sx, sy, r, 0, Math.PI*2); ctx.stroke();
-                    }
-                }
-            };
-
-            const stopDraw = () => { drawing = false; ctx.beginPath(); };
-
-            canvas.addEventListener('mousedown', startDraw);
-            canvas.addEventListener('mousemove', draw);
-            canvas.addEventListener('mouseup', stopDraw);
-            canvas.addEventListener('touchstart', startDraw, { passive:false });
-            canvas.addEventListener('touchmove', draw, { passive:false });
-            canvas.addEventListener('touchend', stopDraw);
-
-            // Watch tool/color reactivity
-            this.$watch('wbTool', () => { ctx.beginPath(); });
-        },
-
-        clearWb() {
-            const canvas = document.getElementById('wbCanvas');
-            const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-        },
-
-        saveWbImage() {
-            const canvas = document.getElementById('wbCanvas');
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL('image/png');
-            a.download = 'whiteboard-' + Date.now() + '.png';
-            a.click();
-        },
-
-        formatDuration(s) {
-            const h = Math.floor(s/3600);
-            const m = Math.floor((s%3600)/60);
-            const sec = s%60;
-            return (h?String(h).padStart(2,'0')+':':'') + String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
-        },
-
-        showToast(msg) {
-            this.toast = { show:true, msg };
-            setTimeout(()=>{ this.toast.show=false; }, 3100);
-        },
-
-        initCursor() {
-            const cursor=document.getElementById('cursor');
-            const dot=document.getElementById('cursorDot');
-            let cx=0,cy=0,dx=0,dy=0;
-            document.addEventListener('mousemove',e=>{dx=e.clientX;dy=e.clientY;dot.style.left=dx-3+'px';dot.style.top=dy-3+'px';});
-            (function anim(){cx+=(dx-cx)*0.12;cy+=(dy-cy)*0.12;cursor.style.left=cx-9+'px';cursor.style.top=cy-9+'px';requestAnimationFrame(anim);})();
+            currentUser = data;
+            loadBatches();
         }
-    }
-}
-</script>
+
+        async function loadBatches() {
+            const snapshot = await db.collection('batches').get();
+            const list = document.getElementById('batch-list');
+            list.innerHTML = '';
+
+            snapshot.forEach(doc => {
+                const batch = doc.data();
+                const div = document.createElement('div');
+                div.className = "p-4 bg-gray-800/50 border border-gray-700 rounded-xl cursor-pointer hover:border-blue-500 transition-all group";
+                div.onclick = () => selectBatch(doc.id, batch.name, div);
+                div.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <p class="font-bold text-sm group-hover:text-blue-400 transition-colors">${batch.name}</p>
+                            <p class="text-[10px] text-gray-500 uppercase tracking-wider">Class ${batch.classLevel} • ${batch.schedule}</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-700 group-hover:text-blue-500 text-xs"></i>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function selectBatch(id, name, element) {
+            selectedBatchId = id;
+            selectedBatchName = name;
+            document.querySelectorAll('#batch-list > div').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-600/10'));
+            element.classList.add('border-blue-500', 'bg-blue-600/10');
+            document.getElementById('launch-btn').disabled = false;
+        }
+
+        async function startLiveSession() {
+            if (!selectedBatchId) return;
+            
+            // Signal the Live state to students in RTDB
+            await rtdb.ref(`liveSessions/${selectedBatchId}`).set({
+                isLive: true,
+                classTitle: selectedBatchName,
+                startedAt: firebase.database.ServerValue.TIMESTAMP,
+                instructor: currentUser.email
+            });
+
+            document.getElementById('batch-overlay').style.display = 'none';
+            document.getElementById('batch-info').innerText = `Batch: ${selectedBatchName} | Active Instructor: ${currentUser.email}`;
+
+            launchInstructorMedia();
+            initStaffChat();
+        }
+
+        async function endSession() {
+            if (!selectedBatchId) { window.location.href = '/staff.html'; return; }
+            if (confirm("Are you sure you want to end the session? This will remove the LIVE status for students.")) {
+                await rtdb.ref(`liveSessions/${selectedBatchId}`).remove();
+                if (jitsiApi) jitsiApi.dispose();
+                window.location.href = '/staff.html';
+            }
+        }
+
+        function launchInstructorMedia() {
+            const domain = 'meet.jit.si';
+            const options = {
+                roomName: `EraOfMathAntics_Live_${selectedBatchId}`,
+                width: '100%',
+                height: '100%',
+                parentNode: document.querySelector('#instructor-meet'),
+                configOverwrite: {
+                    startWithAudioMuted: false,
+                    disableModeratorIndicator: false,
+                    makeJsonRpcRequests: true,
+                    prejoinPageEnabled: false
+                },
+                interfaceConfigOverwrite: {
+                    TOOLBAR_BUTTONS: [
+                        'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
+                        'fms', 'hangup', 'profile', 'chat', 'recording',
+                        'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
+                        'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
+                        'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
+                        'security'
+                    ],
+                },
+                userInfo: { email: currentUser.email, displayName: "Instructor" }
+            };
+            jitsiApi = new JitsiMeetExternalAPI(domain, options);
+        }
+
+        function initStaffChat() {
+            const chatBox = document.getElementById('chat-box');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+
+            db.collection('live_chats').doc(selectedBatchId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .limitToLast(100)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const msg = change.doc.data();
+                            const isStaff = msg.email === currentUser.email;
+                            const div = document.createElement('div');
+                            div.className = `p-2 rounded-lg ${isStaff ? 'bg-blue-600/10 border border-blue-600/20' : 'bg-gray-800'}`;
+                            div.innerHTML = `
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="font-bold text-[10px] text-blue-400 uppercase">${msg.email.split('@')[0]}</span>
+                                </div>
+                                <p class="text-gray-300 leading-relaxed">${msg.text}</p>
+                            `;
+                            chatBox.appendChild(div);
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                        }
+                    });
+                });
+
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (!text) return;
+                chatInput.value = '';
+                await db.collection('live_chats').doc(selectedBatchId).collection('messages').add({
+                    text: text,
+                    email: currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+        }
+        init();
+    </script>
 </body>
 </html>

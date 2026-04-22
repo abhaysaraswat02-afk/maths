@@ -983,6 +983,45 @@ app.post('/api/broadcast-whatsapp', async (req, res) => {
   }
 });
 
+// --- Payment Verification & Enrollment ---
+app.post('/api/verify-payment', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'Server database error.' });
+  
+  const { razorpay_payment_id, batchId } = req.body;
+  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const sessionCookie = cookies[COOKIE_NAME];
+
+  if (!sessionCookie) return res.status(401).json({ error: 'Unauthorized.' });
+
+  try {
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    const studentEmail = decoded.email.toLowerCase();
+
+    // Store enrollment in Firestore
+    await db.collection('enrollments').add({
+      email: studentEmail,
+      batchId: batchId,
+      razorpayId: razorpay_payment_id,
+      enrolledAt: admin.firestore.FieldValue.serverTimestamp()
+    });
+
+    // Increment batch enrollment count atomically
+    const batchRef = db.collection('batches').doc(batchId);
+    await db.runTransaction(async (t) => {
+      const doc = await t.get(batchRef);
+      if (doc.exists) {
+        const newEnrolled = (doc.data().enrolled || 0) + 1;
+        t.update(batchRef, { enrolled: newEnrolled });
+      }
+    });
+
+    res.status(200).json({ success: true, message: 'Payment verified and enrolled successfully.' });
+  } catch (error) {
+    console.error('Payment verification error:', error);
+    res.status(500).json({ error: 'Failed to verify payment.' });
+  }
+});
+
 // Export the Express app for Vercel to use as a serverless function
 module.exports = app;
 

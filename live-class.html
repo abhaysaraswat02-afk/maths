@@ -1,713 +1,171 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full bg-gray-900">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        fetch('/api/check-auth').then(r=>r.json()).then(d=>{
-            if(!d.authenticated || (d.role!=='student'&&d.role!=='staff')) window.location.href='index.html';
-        }).catch(()=>window.location.href='index.html');
-    </script>
-    <title>Live Class | Era of MathAntics</title>
+    <title>Live Classroom | Era of MathAntics</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-    <!-- Firebase -->
+    <script src="https://meet.jit.si/external_api.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <!-- Razorpay -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root{--gold:#FFD700;--gold2:#FFA500;--deep:#0a0a1a;--deep2:#0d0d2b;--accent:#00f5ff;--accent2:#7b2fff;--glass:rgba(255,255,255,0.06);--red:#ff3a3a;--green:#00e676;}
-        *{box-sizing:border-box;margin:0;padding:0;}
-        body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--deep);color:#fff;cursor:none;overflow-x:hidden;}
-        .cursor{width:18px;height:18px;border:2px solid var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:99999;transition:transform 0.15s;mix-blend-mode:difference;}
-        .cursor-dot{width:6px;height:6px;background:var(--gold);border-radius:50%;position:fixed;top:0;left:0;pointer-events:none;z-index:99999;}
-        ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:var(--gold);border-radius:2px;}
-        [x-cloak]{display:none!important;}
-        canvas#particles{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
-
-        /* === NAV === */
-        .nav{position:fixed;top:0;width:100%;z-index:1000;background:rgba(10,10,26,0.95);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,215,0,0.15);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;}
-
-        /* === BATCH GRID === */
-        .page-wrap{padding-top:72px;min-height:100vh;position:relative;z-index:10;}
-        .section-head{text-align:center;padding:48px 24px 36px;}
-        .section-badge{display:inline-flex;align-items:center;gap:8px;padding:5px 16px;border-radius:50px;border:1px solid rgba(255,215,0,0.35);background:rgba(255,215,0,0.08);font-size:0.72rem;letter-spacing:3px;text-transform:uppercase;color:var(--gold);margin-bottom:18px;}
-        .live-dot{width:8px;height:8px;background:#ff3a3a;border-radius:50%;animation:lp 1.2s infinite;}
-        @keyframes lp{0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(255,58,58,0.6);}50%{box-shadow:0 0 0 6px rgba(255,58,58,0);}}
-        .hero-h{font-size:clamp(2rem,4.5vw,3.5rem);font-weight:800;line-height:1.2;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.7) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-        .grad{background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-
-        /* === BATCH CARD === */
-        .batch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:20px;max-width:1100px;margin:0 auto;padding:0 20px 60px;}
-        .batch-card{background:var(--glass);border:1px solid rgba(255,215,0,0.18);border-radius:20px;backdrop-filter:blur(12px);overflow:hidden;transition:all 0.4s cubic-bezier(0.175,0.885,0.32,1.275);position:relative;}
-        .batch-card:hover{transform:translateY(-8px);border-color:rgba(255,215,0,0.4);box-shadow:0 30px 60px rgba(0,0,0,0.5),0 0 40px rgba(255,215,0,0.07);}
-        .bc-top{height:3px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
-        .bc-live-bar{background:rgba(255,58,58,0.1);border-bottom:1px solid rgba(255,58,58,0.2);padding:6px 18px;display:flex;align-items:center;gap:8px;font-size:0.75rem;font-weight:700;color:#ff6b6b;}
-        .bc-body{padding:20px;}
-        .bc-tag{display:inline-block;padding:3px 11px;border-radius:50px;font-size:0.68rem;font-weight:700;letter-spacing:2px;text-transform:uppercase;}
-        .tag-live{background:rgba(255,58,58,0.15);color:#ff6b6b;border:1px solid rgba(255,58,58,0.3);}
-        .tag-soon{background:rgba(255,215,0,0.1);color:var(--gold);border:1px solid rgba(255,215,0,0.25);}
-        .tag-done{background:rgba(0,245,255,0.08);color:var(--accent);border:1px solid rgba(0,245,255,0.2);}
-        .bc-name{font-size:1.15rem;font-weight:800;margin:10px 0 5px;line-height:1.3;}
-        .bc-desc{font-size:0.82rem;color:rgba(255,255,255,0.48);margin-bottom:14px;line-height:1.5;}
-        .bc-meta{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;}
-        .meta{display:flex;align-items:center;gap:5px;font-size:0.75rem;color:rgba(255,255,255,0.5);}
-        .meta i{color:var(--gold);font-size:0.7rem;}
-        .seats-row{margin-bottom:14px;}
-        .seats-label{display:flex;justify-content:space-between;font-size:0.72rem;color:rgba(255,255,255,0.35);margin-bottom:4px;}
-        .seats-track{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;}
-        .seats-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--accent));transition:width 0.8s ease;}
-        .bc-price{font-size:1.5rem;font-weight:800;color:var(--gold);}
-        .bc-price small{font-size:0.82rem;font-weight:400;color:rgba(255,255,255,0.35);text-decoration:line-through;margin-left:8px;}
-        .subjects{display:flex;flex-wrap:wrap;gap:5px;margin:12px 0;}
-        .subj{padding:3px 9px;background:rgba(123,47,255,0.12);border:1px solid rgba(123,47,255,0.25);border-radius:50px;font-size:0.7rem;color:rgba(255,255,255,0.75);}
-        .btn{width:100%;padding:12px;border-radius:11px;font-weight:700;font-size:0.88rem;border:none;cursor:pointer;transition:all 0.3s;margin-top:14px;font-family:inherit;}
-        .btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a1a;}
-        .btn-gold:hover{box-shadow:0 8px 25px rgba(255,215,0,0.4);transform:translateY(-2px);}
-        .btn-join{background:linear-gradient(135deg,#ff3a3a,#ff6b6b);color:#fff;}
-        .btn-join:hover{box-shadow:0 8px 25px rgba(255,58,58,0.4);transform:translateY(-2px);}
-        .btn-enrolled{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.35);color:var(--green);cursor:default;}
-        .btn-replay{background:rgba(0,245,255,0.1);border:1px solid rgba(0,245,255,0.25);color:var(--accent);}
-        .btn-replay:hover{background:rgba(0,245,255,0.18);}
-
-        /* === LIVE CLASS ROOM === */
-        .room-overlay{position:fixed;inset:0;z-index:5000;background:#000;display:flex;flex-direction:column;}
-        .room-header{height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid rgba(255,215,0,0.12);background:rgba(13,13,43,0.98);flex-shrink:0;}
-        .room-body{flex:1;display:flex;overflow:hidden;}
-        .video-wrap{flex:1;position:relative;background:#000;display:flex;align-items:center;justify-content:center;}
-        #remoteVideo{width:100%;height:100%;object-fit:contain;display:block;}
-        .video-off-msg{text-align:center;color:rgba(255,255,255,0.35);}
-        .video-off-msg i{font-size:3.5rem;margin-bottom:12px;color:rgba(255,215,0,0.3);}
-        .chat-panel{width:300px;display:flex;flex-direction:column;border-left:1px solid rgba(255,215,0,0.1);background:rgba(13,13,43,0.98);}
-        .chat-head{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.07);font-weight:700;font-size:0.85rem;display:flex;align-items:center;gap:8px;}
-        .chat-body{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:8px;}
-        .c-msg{padding:8px 12px;border-radius:10px;font-size:0.8rem;animation:msgIn 0.3s ease;}
-        @keyframes msgIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-        .c-msg.student{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.07);}
-        .c-msg.teacher{background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);}
-        .c-msg.self{background:rgba(0,245,255,0.07);border:1px solid rgba(0,245,255,0.18);}
-        .c-msg.system{background:transparent;text-align:center;font-size:0.72rem;color:rgba(255,255,255,0.3);border:none;}
-        .c-name{font-size:0.68rem;font-weight:700;margin-bottom:3px;}
-        .reaction-strip{display:flex;gap:5px;padding:8px 12px;border-top:1px solid rgba(255,255,255,0.06);}
-        .r-btn{padding:4px 9px;border-radius:50px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);cursor:pointer;font-size:0.88rem;transition:all 0.2s;color:#fff;}
-        .r-btn:hover{background:rgba(255,215,0,0.15);border-color:rgba(255,215,0,0.35);}
-        .chat-foot{padding:10px 12px;border-top:1px solid rgba(255,255,255,0.07);display:flex;gap:8px;}
-        .c-inp{flex:1;background:rgba(255,255,255,0.06);border:1px solid rgba(255,215,0,0.2);border-radius:8px;padding:8px 11px;color:#fff;font-size:0.8rem;outline:none;font-family:inherit;}
-        .c-inp:focus{border-color:rgba(255,215,0,0.5);}
-        .c-send{padding:8px 13px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a1a;border:none;border-radius:8px;font-weight:700;cursor:pointer;}
-        
-        /* Controls */
-        .room-ctrl-bar{position:absolute;bottom:0;left:0;right:0;padding:14px;background:linear-gradient(transparent,rgba(0,0,0,0.9));display:flex;align-items:center;justify-content:center;gap:10px;}
-        .rc{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:0.95rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:#fff;}
-        .rc-grey{background:rgba(255,255,255,0.15);}
-        .rc-grey:hover{background:rgba(255,255,255,0.25);}
-        .rc-red{background:rgba(255,58,58,0.85);}
-        .rc-red:hover{box-shadow:0 0 18px rgba(255,58,58,0.6);}
-        .rc.off{background:rgba(255,58,58,0.2);border:1px solid rgba(255,58,58,0.4);}
-
-        /* Viewer / live overlays */
-        .ov-live{position:absolute;top:16px;left:16px;display:flex;align-items:center;gap:7px;background:rgba(0,0,0,0.65);border:1px solid rgba(255,58,58,0.45);padding:5px 13px;border-radius:50px;font-size:0.75rem;font-weight:700;color:#ff6b6b;backdrop-filter:blur(6px);}
-        .ov-viewers{position:absolute;top:16px;right:16px;background:rgba(0,0,0,0.65);border:1px solid rgba(255,215,0,0.3);padding:5px 13px;border-radius:50px;font-size:0.75rem;font-weight:700;color:var(--gold);backdrop-filter:blur(6px);}
-        .ov-title{position:absolute;bottom:66px;left:16px;background:rgba(0,0,0,0.65);border:1px solid rgba(255,255,255,0.1);padding:5px 14px;border-radius:50px;font-size:0.78rem;color:rgba(255,255,255,0.8);backdrop-filter:blur(6px);}
-
-        /* HAND RAISED */
-        .hand-btn{width:44px;height:44px;border-radius:50%;border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:all 0.2s;background:rgba(255,255,255,0.12);}
-        .hand-btn.raised{background:rgba(255,215,0,0.2);border:1px solid rgba(255,215,0,0.5);animation:handPulse 1.5s infinite;}
-        @keyframes handPulse{0%,100%{box-shadow:0 0 0 0 rgba(255,215,0,0.4);}50%{box-shadow:0 0 0 8px rgba(255,215,0,0);}}
-
-        /* POLL OVERLAY */
-        .poll-overlay{position:absolute;bottom:70px;left:50%;transform:translateX(-50%);background:rgba(13,13,43,0.97);border:1px solid rgba(255,215,0,0.3);border-radius:16px;padding:20px 24px;min-width:300px;max-width:400px;animation:pollPop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);}
-        @keyframes pollPop{from{opacity:0;transform:translateX(-50%) translateY(20px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
-        .poll-q{font-size:0.92rem;font-weight:700;margin-bottom:14px;color:var(--gold);}
-        .poll-opt{padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);cursor:pointer;transition:all 0.2s;margin-bottom:8px;font-size:0.85rem;display:flex;align-items:center;gap:10px;}
-        .poll-opt:hover,.poll-opt.voted{background:rgba(255,215,0,0.12);border-color:rgba(255,215,0,0.35);}
-        .poll-bar{height:4px;border-radius:2px;background:linear-gradient(90deg,var(--gold),var(--accent));margin-top:4px;transition:width 0.6s;}
-
-        /* BUY MODAL */
-        .modal-bg{position:fixed;inset:0;z-index:4000;background:rgba(0,0,0,0.85);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);}
-        .modal-box{background:var(--deep2);border:1px solid rgba(255,215,0,0.25);border-radius:22px;padding:34px;max-width:440px;width:90%;animation:mpop 0.4s cubic-bezier(0.175,0.885,0.32,1.275);}
-        @keyframes mpop{from{opacity:0;transform:scale(0.88);}to{opacity:1;transform:scale(1);}}
-        .modal-price{font-size:2.2rem;font-weight:800;color:var(--gold);}
-        .m-feat{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,0.05);font-size:0.85rem;}
-        .m-feat i{color:var(--green);width:16px;font-size:0.78rem;}
-        .btn-pay{width:100%;padding:14px;border-radius:13px;border:none;font-size:0.95rem;font-weight:800;cursor:pointer;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0a0a1a;margin-top:22px;transition:all 0.3s;}
-        .btn-pay:hover{box-shadow:0 10px 28px rgba(255,215,0,0.4);transform:translateY(-2px);}
-
-        /* TOAST */
-        .toast{position:fixed;bottom:28px;right:28px;z-index:9999;padding:12px 20px;border-radius:10px;font-weight:600;font-size:0.82rem;background:var(--deep2);border:1px solid rgba(0,230,118,0.4);color:var(--green);animation:ti 0.35s ease,to 0.35s ease 2.8s forwards;pointer-events:none;}
-        @keyframes ti{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-        @keyframes to{to{opacity:0;transform:translateY(14px);}}
-
-        /* Reaction floaters */
-        .rfloat{position:fixed;bottom:100px;font-size:1.8rem;animation:rfloatUp 2.2s ease forwards;pointer-events:none;z-index:9998;}
-        @keyframes rfloatUp{0%{opacity:1;transform:translateY(0);}100%{opacity:0;transform:translateY(-140px) translateX(var(--rx));}}
-
-        /* WAITING SCREEN */
-        .waiting-screen{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;height:100%;text-align:center;padding:40px;}
-        .pulse-ring{width:80px;height:80px;border-radius:50%;border:3px solid rgba(255,58,58,0.4);position:relative;animation:pring 2s ease-in-out infinite;}
-        .pulse-ring::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:2px solid rgba(255,58,58,0.15);animation:pring 2s ease-in-out 0.4s infinite;}
-        @keyframes pring{0%,100%{transform:scale(1);opacity:0.6;}50%{transform:scale(1.12);opacity:1;}}
-        .pulse-inner{position:absolute;inset:8px;border-radius:50%;background:linear-gradient(135deg,#ff3a3a,#ff6b6b);display:flex;align-items:center;justify-content:center;font-size:1.5rem;}
-
-        @media(max-width:640px){.chat-panel{display:none;}.batch-grid{grid-template-columns:1fr;padding:0 12px 40px;}}
+        #video-container iframe { border-radius: 0.5rem; }
+        .chat-gradient { background: linear-gradient(to bottom, #1f2937, #111827); }
     </style>
 </head>
-<body x-data="studentApp()" x-init="init()" x-cloak>
-    <div class="cursor" id="cursor"></div>
-    <div class="cursor-dot" id="cursorDot"></div>
-    <canvas id="particles"></canvas>
-
-    <!-- Toast -->
-    <div x-show="toast.show" x-cloak class="toast" x-text="toast.msg"></div>
-
-    <!-- Reaction floaters -->
-    <template x-for="r in floatReactions" :key="r.id">
-        <div class="rfloat" :style="'right:'+r.right+'px;--rx:'+r.rx+'px'" x-text="r.emoji"></div>
-    </template>
-
-    <!-- === NAV === -->
-    <nav class="nav">
-        <div class="flex items-center gap-4">
-            <a href="student.html" class="text-white/50 hover:text-white transition text-sm"><i class="fas fa-arrow-left mr-1"></i> My Portal</a>
-            <span class="font-800 text-base" style="background:linear-gradient(135deg,var(--gold),var(--accent));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Live Classes</span>
+<body class="h-full text-white flex flex-col overflow-hidden">
+    <!-- Top Navigation -->
+    <header class="bg-gray-800 border-b border-gray-700 px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center space-x-4">
+            <a href="/student.html" class="text-gray-400 hover:text-white transition"><i class="fas fa-arrow-left"></i></a>
+            <h1 id="batch-name" class="font-bold text-lg tracking-tight">Loading Live Class...</h1>
+            <span class="bg-red-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded animate-pulse">Live</span>
         </div>
-        <div class="flex items-center gap-3">
-            <template x-if="anyLive">
-                <div class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-700" style="background:rgba(255,58,58,0.15);border:1px solid rgba(255,58,58,0.3);color:#ff6b6b;">
-                    <span class="live-dot"></span> Class Live Now
+        <div class="flex items-center space-x-6 text-sm">
+            <span id="user-display" class="text-gray-400"></span>
+            <button onclick="window.location.href='/student.html'" class="bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded-lg transition">Back to Portal</button>
+        </div>
+    </header>
+
+    <main class="flex-1 flex overflow-hidden">
+        <!-- Video Area -->
+        <div class="flex-1 bg-black relative flex flex-col">
+            <div id="video-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-600">
+                <div class="text-center">
+                    <i class="fas fa-circle-notch fa-spin text-4xl mb-4"></i>
+                    <p>Connecting to secure stream...</p>
                 </div>
-            </template>
-            <span class="text-sm font-600" style="color:rgba(255,255,255,0.5);" x-text="studentName"></span>
-        </div>
-    </nav>
-
-    <!-- === MAIN PAGE === -->
-    <div class="page-wrap" x-show="!inRoom">
-        <div class="section-head">
-            <div class="section-badge"><span class="live-dot"></span> Live Learning</div>
-            <h1 class="hero-h">Your <span class="grad">Live</span> Batches</h1>
-            <p class="mt-3 text-sm" style="color:rgba(255,255,255,0.45);max-width:500px;margin:12px auto 0;">Join live classes, buy new batches, and watch recorded replays — all in one place.</p>
-        </div>
-
-        <!-- Filter tabs -->
-        <div class="flex justify-center gap-3 flex-wrap pb-8 px-4">
-            <button class="filter-tab" :class="filter==='all'?'active':''" @click="filter='all'" style="padding:7px 20px;border-radius:50px;border:1px solid rgba(255,215,0,0.2);background:transparent;color:rgba(255,255,255,0.55);font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;" :style="filter==='all'?'background:rgba(255,215,0,0.12);border-color:rgba(255,215,0,0.5);color:var(--gold);':''">All Batches</button>
-            <button @click="filter='live'" style="padding:7px 20px;border-radius:50px;border:1px solid rgba(255,215,0,0.2);background:transparent;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;" :style="filter==='live'?'background:rgba(255,58,58,0.12);border-color:rgba(255,58,58,0.4);color:#ff6b6b;':'color:rgba(255,255,255,0.55);'">🔴 Live Now</button>
-            <button @click="filter='enrolled'" style="padding:7px 20px;border-radius:50px;border:1px solid rgba(255,215,0,0.2);background:transparent;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;" :style="filter==='enrolled'?'background:rgba(0,230,118,0.1);border-color:rgba(0,230,118,0.4);color:var(--green);':'color:rgba(255,255,255,0.55);'">✅ My Batches</button>
-            <button @click="filter='upcoming'" style="padding:7px 20px;border-radius:50px;border:1px solid rgba(255,215,0,0.2);background:transparent;font-size:0.82rem;font-weight:600;cursor:pointer;transition:all 0.2s;font-family:inherit;" :style="filter==='upcoming'?'background:rgba(255,215,0,0.1);border-color:rgba(255,215,0,0.4);color:var(--gold);':'color:rgba(255,255,255,0.55);'">📅 Upcoming</button>
-        </div>
-
-        <div class="batch-grid">
-            <template x-for="batch in filteredBatches" :key="batch.id">
-                <div class="batch-card">
-                    <div class="bc-top"></div>
-                    <div class="bc-live-bar" x-show="batch.isLive">
-                        <span class="live-dot"></span> LIVE NOW — <span x-text="batch.currentTitle||'Class in progress'"></span>
-                        <span class="ml-auto" x-text="batch.viewers+' watching'"></span>
-                    </div>
-                    <div class="bc-body">
-                        <div class="flex justify-between items-start mb-1">
-                            <span class="bc-tag" :class="batch.isLive?'tag-live':batch.status==='upcoming'?'tag-soon':'tag-done'" x-text="batch.isLive?'🔴 LIVE':batch.status==='upcoming'?'📅 UPCOMING':'🎬 RECORDED'"></span>
-                            <span class="text-xs px-2 py-0.5 rounded-full font-700" style="background:rgba(0,230,118,0.1);color:var(--green);border:1px solid rgba(0,230,118,0.2);" x-text="'Class '+batch.classLevel"></span>
-                        </div>
-                        <div class="bc-name" x-text="batch.name"></div>
-                        <div class="bc-desc" x-text="batch.description"></div>
-                        <div class="bc-meta">
-                            <span class="meta"><i class="fas fa-user-tie"></i><span x-text="batch.teacher"></span></span>
-                            <span class="meta"><i class="fas fa-clock"></i><span x-text="batch.schedule"></span></span>
-                            <span class="meta"><i class="fas fa-calendar"></i><span x-text="batch.startDate"></span></span>
-                        </div>
-                        <div class="subjects">
-                            <template x-for="s in batch.subjects"><span class="subj" x-text="s"></span></template>
-                        </div>
-                        <div class="seats-row">
-                            <div class="seats-label"><span>Seats</span><span x-text="batch.enrolled+'/'+batch.totalSeats+' filled'"></span></div>
-                            <div class="seats-track"><div class="seats-fill" :style="'width:'+Math.round(batch.enrolled/batch.totalSeats*100)+'%'"></div></div>
-                        </div>
-                        <div class="flex items-end justify-between">
-                            <div>
-                                <div class="bc-price">₹<span x-text="batch.price.toLocaleString('en-IN')"></span><small>₹<span x-text="batch.originalPrice.toLocaleString('en-IN')"></span></small></div>
-                                <div class="text-xs mt-0.5" style="color:rgba(0,230,118,0.8);font-weight:600;" x-text="'Save ₹'+(batch.originalPrice-batch.price).toLocaleString('en-IN')"></div>
-                            </div>
-                            <span class="text-xs px-2 py-1 rounded" style="background:rgba(255,215,0,0.08);color:var(--gold);" x-text="batch.duration"></span>
-                        </div>
-
-                        <!-- CTA -->
-                        <template x-if="batch.enrolled_by_me && batch.isLive">
-                            <button class="btn btn-join" @click="joinRoom(batch)"><i class="fas fa-play-circle mr-2"></i>Join Live Class Now</button>
-                        </template>
-                        <template x-if="batch.enrolled_by_me && !batch.isLive && batch.status==='recorded'">
-                            <button class="btn btn-replay" @click="showToast('📺 Replay section coming soon!')"><i class="fas fa-play mr-2"></i>Watch Replay</button>
-                        </template>
-                        <template x-if="batch.enrolled_by_me && !batch.isLive && batch.status!=='recorded'">
-                            <button class="btn btn-enrolled" disabled><i class="fas fa-check mr-2"></i>Enrolled — Next class soon</button>
-                        </template>
-                        <template x-if="!batch.enrolled_by_me">
-                            <button class="btn btn-gold" @click="openBuy(batch)"><i class="fas fa-bolt mr-2"></i>Buy This Batch</button>
-                        </template>
-                    </div>
-                </div>
-            </template>
-        </div>
-    </div>
-
-    <!-- === LIVE ROOM === -->
-    <div class="room-overlay" x-show="inRoom" x-cloak>
-        <!-- Header -->
-        <div class="room-header">
-            <div class="flex items-center gap-3">
-                <span class="live-dot"></span>
-                <span class="font-700 text-sm" x-text="currentBatch?.name"></span>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="flex items-center gap-2 px-3 py-1 rounded-full text-xs font-700" style="background:rgba(255,215,0,0.1);border:1px solid rgba(255,215,0,0.25);color:var(--gold);">
-                    <i class="fas fa-eye text-xs"></i> <span x-text="currentBatch?.viewers||'--'"></span> watching
-                </div>
-                <button @click="leaveRoom()" class="rc rc-grey text-sm px-4 h-9 w-auto rounded-full" style="font-family:inherit;font-size:0.8rem;font-weight:700;padding:0 16px;width:auto;border-radius:50px;">Leave Class</button>
-            </div>
+            <div id="jitsi-container" class="w-full h-full z-10"></div>
         </div>
 
-        <!-- Body -->
-        <div class="room-body">
-            <!-- VIDEO AREA -->
-            <div class="video-wrap">
-                <!-- Waiting for teacher -->
-                <div class="waiting-screen" x-show="!teacherLive">
-                    <div class="pulse-ring"><div class="pulse-inner">🎙️</div></div>
-                    <div class="text-xl font-800">Waiting for Sir to start…</div>
-                    <div class="text-sm" style="color:rgba(255,255,255,0.4);">The class will begin shortly. Stay on this page.</div>
-                    <div class="text-xs mt-2 px-4 py-2 rounded-full" style="background:rgba(255,215,0,0.08);color:var(--gold);border:1px solid rgba(255,215,0,0.2);">
-                        <i class="fas fa-users mr-1"></i><span x-text="currentBatch?.viewers||0"></span> students waiting
-                    </div>
-                </div>
+        <!-- Professional Sidebar -->
+        <aside class="w-80 chat-gradient border-l border-gray-800 flex flex-col">
+            <div class="p-4 border-b border-gray-800 flex space-x-4">
+                <button class="text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1">Chat</button>
+                <button class="text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300">Resources</button>
+            </div>
 
-                <!-- Live video -->
-                <!-- NOTE: In production, replace this with WebRTC peer connection to teacher's stream -->
-                <!-- For HLS/RTMP approach: use hls.js to play teacher's stream from media server -->
-                <video id="remoteVideo" autoplay playsinline x-show="teacherLive" style="width:100%;height:100%;object-fit:contain;"></video>
+            <!-- Live Chat Messages -->
+            <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-gray-700">
+                <!-- Messages injected here -->
+            </div>
 
-                <!-- Live overlays -->
-                <div class="ov-live" x-show="teacherLive"><span class="live-dot"></span> LIVE</div>
-                <div class="ov-viewers" x-show="teacherLive"><i class="fas fa-eye mr-1"></i><span x-text="currentBatch?.viewers||'--'"></span></div>
-                <div class="ov-title" x-show="teacherLive && currentBatch?.currentTitle" x-text="currentBatch?.currentTitle"></div>
-
-                <!-- Active poll -->
-                <div class="poll-overlay" x-show="activePoll && !pollVoted">
-                    <div class="poll-q" x-text="activePoll?.question"></div>
-                    <template x-for="(opt,i) in (activePoll?.options||[])" :key="i">
-                        <div class="poll-opt" :class="pollChoice===i?'voted':''" @click="votePoll(i)">
-                            <i class="fas fa-circle text-xs" :style="pollChoice===i?'color:var(--gold)':'color:rgba(255,255,255,0.2)'"></i>
-                            <span x-text="opt"></span>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Poll results -->
-                <div class="poll-overlay" x-show="activePoll && pollVoted">
-                    <div class="poll-q">📊 <span x-text="activePoll?.question"></span></div>
-                    <template x-for="(opt,i) in (activePoll?.options||[])" :key="i">
-                        <div class="mb-2">
-                            <div class="flex justify-between text-xs mb-1" style="color:rgba(255,255,255,0.6);">
-                                <span x-text="opt"></span>
-                                <span x-text="getPct(i)+'%'"></span>
-                            </div>
-                            <div class="poll-bar" :style="'width:'+getPct(i)+'%'"></div>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Controls -->
-                <div class="room-ctrl-bar">
-                    <button class="rc rc-grey" :class="!myMicOn?'off':''" @click="toggleMyMic()">
-                        <i :class="myMicOn?'fas fa-microphone':'fas fa-microphone-slash'"></i>
+            <!-- Chat Input -->
+            <div class="p-4 bg-gray-800">
+                <form id="chat-form" class="flex items-center space-x-2">
+                    <input type="text" id="chat-input" placeholder="Ask a question..." 
+                        class="flex-1 bg-gray-900 border border-gray-700 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    <button type="submit" class="bg-blue-600 p-2 rounded-full hover:bg-blue-700 transition">
+                        <i class="fas fa-paper-plane"></i>
                     </button>
-                    <button class="hand-btn" :class="handRaised?'raised':''" @click="toggleHand()">✋</button>
-                    <button class="rc rc-grey" @click="chatPanelOpen=!chatPanelOpen" title="Toggle Chat">
-                        <i class="fas fa-comment-dots"></i>
-                        <span x-show="unread>0" style="position:absolute;top:-2px;right:-2px;background:var(--red);border-radius:50%;width:14px;height:14px;font-size:0.6rem;display:flex;align-items:center;justify-content:center;" x-text="unread"></span>
-                    </button>
-                    <button class="rc rc-red" @click="leaveRoom()"><i class="fas fa-phone-slash"></i></button>
-                </div>
+                </form>
             </div>
+        </aside>
+    </main>
 
-            <!-- CHAT PANEL -->
-            <div class="chat-panel" x-show="chatPanelOpen">
-                <div class="chat-head">
-                    <i class="fas fa-comments" style="color:var(--gold);"></i> Live Chat
-                    <span class="ml-auto text-xs" style="color:rgba(255,255,255,0.3);" x-text="chatMessages.length+' msgs'"></span>
-                </div>
-                <div class="reaction-strip">
-                    <template x-for="e in ['👍','❤️','🔥','😮','👏','🤔']">
-                        <button class="r-btn" @click="sendReaction(e)" x-text="e"></button>
-                    </template>
-                </div>
-                <div class="chat-body" id="chatBody">
-                    <template x-for="m in chatMessages" :key="m.id">
-                        <div class="c-msg" :class="m.type">
-                            <template x-if="m.type!=='system'">
-                                <div class="c-name" :style="m.type==='teacher'?'color:var(--gold)':m.type==='self'?'color:var(--accent)':'color:rgba(255,255,255,0.45)'" x-text="m.name+(m.type==='teacher'?' 👨‍🏫':m.type==='self'?' (You)':'')"></div>
-                            </template>
-                            <span x-text="m.text"></span>
-                        </div>
-                    </template>
-                </div>
-                <div class="chat-foot">
-                    <input class="c-inp" x-model="chatInput" @keydown.enter="sendChat()" placeholder="Ask a doubt…" maxlength="280">
-                    <button class="c-send" @click="sendChat()"><i class="fas fa-paper-plane"></i></button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",
+            authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
+            projectId: "era-of-mathantics-8b6d1",
+            storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
+            messagingSenderId: "521238168559",
+            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-    <!-- === BUY MODAL === -->
-    <div class="modal-bg" x-show="buyModal.open" x-cloak @click.self="buyModal.open=false">
-        <div class="modal-box">
-            <div class="flex justify-between items-start mb-3">
-                <div>
-                    <span class="bc-tag tag-soon text-xs" x-text="selectedBatch?'Class '+selectedBatch.classLevel:''"></span>
-                    <div class="text-xl font-800 mt-2" x-text="selectedBatch?.name"></div>
-                    <div class="text-sm mt-1" style="color:rgba(255,255,255,0.4);" x-text="selectedBatch?.description"></div>
-                </div>
-                <button @click="buyModal.open=false" class="text-white/40 hover:text-white text-xl ml-4">✕</button>
-            </div>
-            <div class="modal-price mt-4">₹<span x-text="selectedBatch?.price?.toLocaleString('en-IN')"></span> <span class="text-lg font-400 line-through" style="color:rgba(255,255,255,0.3);">₹<span x-text="selectedBatch?.originalPrice?.toLocaleString('en-IN')"></span></span></div>
-            <div class="mt-1 text-sm font-700" style="color:rgba(0,230,118,0.8);" x-text="selectedBatch?'You save ₹'+(selectedBatch.originalPrice-selectedBatch.price).toLocaleString('en-IN'):''"></div>
-            <div class="mt-5 space-y-0">
-                <div class="m-feat"><i class="fas fa-video"></i> Live classes with teacher in real-time</div>
-                <div class="m-feat"><i class="fas fa-comment-dots"></i> Ask doubts in live chat</div>
-                <div class="m-feat"><i class="fas fa-film"></i> Full class replay access</div>
-                <div class="m-feat"><i class="fas fa-file-pdf"></i> PDF notes + daily practice problems</div>
-                <div class="m-feat"><i class="fas fa-chart-bar"></i> Weekly tests + score tracking</div>
-                <div class="m-feat"><i class="fas fa-certificate"></i> Completion certificate</div>
-            </div>
-            <button class="btn-pay" @click="buyBatch()" :disabled="buyModal.paying">
-                <template x-if="!buyModal.paying"><span><i class="fas fa-lock mr-2"></i>Pay Securely · Instant Access</span></template>
-                <template x-if="buyModal.paying"><span><i class="fas fa-spinner fa-spin mr-2"></i>Processing…</span></template>
-            </button>
-            <p class="text-center text-xs mt-3" style="color:rgba(255,255,255,0.25);">🔒 Razorpay secured · GST included</p>
-        </div>
-    </div>
+        let currentUser = null;
+        const urlParams = new URLSearchParams(window.location.search);
+        const batchId = urlParams.get('batch') || 'general_class';
 
-<script>
-// ============ FIREBASE CONFIG — PASTE YOURS ============
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_SENDER_ID",
-    appId: "YOUR_APP_ID"
-};
-
-let db, fsdb, auth;
-try {
-    firebase.initializeApp(firebaseConfig);
-    db   = firebase.database();
-    fsdb = firebase.firestore();
-    auth = firebase.auth();
-} catch(e) { console.warn('Firebase not configured:', e.message); }
-// =======================================================
-
-function studentApp() {
-    return {
-        studentName: 'Student',
-        studentUid: null,
-        filter: 'all',
-        batches: [],
-        anyLive: false,
-
-        inRoom: false,
-        currentBatch: null,
-        teacherLive: false,
-        chatPanelOpen: true,
-
-        chatMessages: [],
-        chatInput: '',
-        unread: 0,
-
-        handRaised: false,
-        myMicOn: false,
-
-        activePoll: null,
-        pollVoted: false,
-        pollChoice: null,
-        pollVotes: {},
-
-        floatReactions: [],
-        toast: { show:false, msg:'' },
-        buyModal: { open:false, paying:false },
-        selectedBatch: null,
-
-        localStream: null,
-
-        get filteredBatches() {
-            let list = this.batches;
-            if (this.filter==='live') list = list.filter(b=>b.isLive);
-            else if (this.filter==='enrolled') list = list.filter(b=>b.enrolled_by_me);
-            else if (this.filter==='upcoming') list = list.filter(b=>b.status==='upcoming'&&!b.isLive);
-            return list;
-        },
-
-        async init() {
-            this.initCursor();
-            this.initParticles();
-            await this.loadStudentData();
-            await this.loadBatches();
-            this.listenAllLiveSessions();
-        },
-
-        async loadStudentData() {
-            try {
-                const res = await fetch('/api/check-auth');
-                const d = await res.json();
-                this.studentName = d.name || 'Student';
-                this.studentUid = d.uid || ('s_' + Date.now());
-            } catch(e) {
-                this.studentUid = 'guest_' + Math.random().toString(36).slice(2, 8);
+        async function init() {
+            const res = await fetch('/api/check-auth');
+            const data = await res.json();
+            if (!data.authenticated) {
+                window.location.href = '/index.html';
+                return;
             }
-        },
+            currentUser = data;
+            document.getElementById('user-display').innerText = `Student: ${data.name || data.email.split('@')[0]}`;
 
-        async loadBatches() {
-            try {
-                const snap = await fsdb.collection('batches').orderBy('classLevel').get();
-                this.batches = snap.docs.map(d => {
-                    const data = d.data();
-                    return { id: d.id, ...data, isLive: false, currentTitle: '', viewers: 0 };
-                });
-                // Load enrollments
-                const eSnap = await fsdb.collection('enrollments').where('uid','==',this.studentUid).get();
-                const enrolledIds = eSnap.docs.map(d=>d.data().batchId);
-                this.batches.forEach(b => { b.enrolled_by_me = enrolledIds.includes(b.id); });
-            } catch(e) {
-                // Demo data fallback
-                this.batches = [
-                    { id:'batch_10', name:'Class 10 — Boards Mastery', description:'Complete CBSE syllabus with live problem solving',classLevel:'10',status:'live',teacher:'Sir (MathAntics)',schedule:'Mon·Wed·Fri 7–9 PM',startDate:'Jun 2025',duration:'6 Months',price:2999,originalPrice:5999,subjects:['Algebra','Geometry','Trigonometry','Stats'],enrolled:180,totalSeats:200,enrolled_by_me:true,isLive:true,viewers:247,currentTitle:'Trigonometry — sin²x + cos²x = 1' },
-                    { id:'batch_9', name:'Class 9 — Foundation Batch', description:'Build strong NCERT fundamentals with daily practice',classLevel:'9',status:'upcoming',teacher:'Sir (MathAntics)',schedule:'Tue·Thu·Sat 6–8 PM',startDate:'Jul 2025',duration:'8 Months',price:1999,originalPrice:3999,subjects:['Polynomials','Number System','Geometry'],enrolled:75,totalSeats:150,enrolled_by_me:false,isLive:false,viewers:0,currentTitle:'' },
-                    { id:'batch_12', name:'Class 12 — JEE Foundation', description:'Advanced concepts + JEE problem solving strategy',classLevel:'12',status:'upcoming',teacher:'Sir (MathAntics)',schedule:'Mon–Sat 8–10 PM',startDate:'Jul 2025',duration:'10 Months',price:4999,originalPrice:9999,subjects:['Calculus','Vectors','3D Geometry','Probability'],enrolled:110,totalSeats:120,enrolled_by_me:false,isLive:false,viewers:0,currentTitle:'' },
-                    { id:'batch_8', name:'Class 8 — Fast Track', description:'Entire Class 8 syllabus at an accelerated pace',classLevel:'8',status:'recorded',teacher:'Sir (MathAntics)',schedule:'Mon·Wed·Fri 5–6:30 PM',startDate:'Completed',duration:'4 Months',price:999,originalPrice:1999,subjects:['Linear Equations','Mensuration'],enrolled:140,totalSeats:150,enrolled_by_me:false,isLive:false,viewers:0,currentTitle:'' },
-                    { id:'batch_11', name:'Class 11 — Deep Dive', description:'Full Class 11 NCERT + extra problems',classLevel:'11',status:'upcoming',teacher:'Sir (MathAntics)',schedule:'Mon·Wed·Fri 7–9 PM',startDate:'Aug 2025',duration:'9 Months',price:3499,originalPrice:6999,subjects:['Sets','Sequences','Trigonometry','Conics'],enrolled:40,totalSeats:100,enrolled_by_me:false,isLive:false,viewers:0,currentTitle:'' },
-                ];
-                this.anyLive = this.batches.some(b=>b.isLive);
-            }
-        },
+            const batchDoc = await db.collection('batches').doc(batchId).get();
+            const batchData = batchDoc.data();
+            document.getElementById('batch-name').innerText = `Live Class: ${batchData ? batchData.name : 'Mathematics'}`;
 
-        listenAllLiveSessions() {
-            if (!db) return;
-            db.ref('liveSessions').on('value', snap => {
-                const sessions = snap.val() || {};
-                this.batches.forEach(batch => {
-                    const session = sessions[batch.id];
-                    batch.isLive = session?.isLive === true;
-                    batch.currentTitle = session?.classTitle || '';
-                    batch.viewers = session?.viewers || 0;
-                });
-                this.anyLive = this.batches.some(b=>b.isLive);
-                // Update current room
-                if (this.inRoom && this.currentBatch) {
-                    const s = sessions[this.currentBatch.id];
-                    this.teacherLive = s?.isLive === true;
-                    if (this.currentBatch) this.currentBatch.viewers = s?.viewers || 0;
-                }
-            });
-        },
-
-        async joinRoom(batch) {
-            if (!batch.enrolled_by_me) return this.openBuy(batch);
-            this.currentBatch = batch;
-            this.inRoom = true;
-            this.teacherLive = batch.isLive;
-            this.chatMessages = [];
-            this.handRaised = false;
-            this.activePoll = null;
-            this.pollVoted = false;
-
-            // Register presence
-            if (db) {
-                const presRef = db.ref(`liveViewers/${batch.id}/${this.studentUid}`);
-                presRef.set({ uid: this.studentUid, name: this.studentName, handRaised: false, joinedAt: Date.now() });
-                presRef.onDisconnect().remove();
-            }
-
-            // Listen to chat
-            if (db) {
-                db.ref(`liveChat/${batch.id}`).limitToLast(100).on('child_added', snap => {
-                    const m = snap.val();
-                    const type = m.type === 'teacher' ? 'teacher' : m.uid === this.studentUid ? 'self' : 'student';
-                    this.chatMessages.push({ id: snap.key, ...m, type });
-                    if (!this.chatPanelOpen) this.unread++;
-                    this.$nextTick(() => {
-                        const el = document.getElementById('chatBody');
-                        if(el) el.scrollTop = el.scrollHeight;
-                    });
-                });
-
-                // Listen to poll
-                db.ref(`livePoll/${batch.id}`).on('value', snap => {
-                    const p = snap.val();
-                    if (p && p.active) {
-                        if (!this.activePoll || this.activePoll.question !== p.question) {
-                            this.activePoll = p;
-                            this.pollVoted = false;
-                            this.pollChoice = null;
-                            this.pollVotes = p.votes || {};
-                        } else {
-                            this.pollVotes = p.votes || {};
-                        }
-                    } else {
-                        this.activePoll = null;
-                    }
-                });
-
-                // Listen to reactions
-                db.ref(`liveReactions/${batch.id}`).limitToLast(1).on('child_added', snap => {
-                    const r = snap.val();
-                    if (r.uid !== this.studentUid) this.showReactionFloat(r.emoji);
-                });
-            }
-        },
-
-        leaveRoom() {
-            if (db && this.currentBatch) {
-                db.ref(`liveViewers/${this.currentBatch.id}/${this.studentUid}`).remove();
-                db.ref(`liveChat/${this.currentBatch.id}`).off();
-                db.ref(`livePoll/${this.currentBatch.id}`).off();
-                db.ref(`liveReactions/${this.currentBatch.id}`).off();
-            }
-            this.inRoom = false;
-            this.currentBatch = null;
-            this.teacherLive = false;
-            this.chatMessages = [];
-            this.unread = 0;
-        },
-
-        sendChat() {
-            if (!this.chatInput.trim()) return;
-            const msg = { uid: this.studentUid, name: this.studentName, text: this.chatInput, type: 'student', time: Date.now() };
-            if (db && this.currentBatch) {
-                db.ref(`liveChat/${this.currentBatch.id}`).push(msg);
-            } else {
-                this.chatMessages.push({ id: Date.now(), ...msg, type:'self' });
-            }
-            this.chatInput = '';
-            this.unread = 0;
-        },
-
-        sendReaction(emoji) {
-            if (db && this.currentBatch) {
-                db.ref(`liveReactions/${this.currentBatch.id}`).push({ uid: this.studentUid, emoji, time: Date.now() });
-            }
-            this.showReactionFloat(emoji);
-        },
-
-        showReactionFloat(emoji) {
-            const id = Date.now() + Math.random();
-            const right = 350 + Math.random() * 200;
-            const rx = (Math.random()-0.5)*60+'px';
-            this.floatReactions.push({ id, emoji, right, rx });
-            setTimeout(()=>{ this.floatReactions = this.floatReactions.filter(r=>r.id!==id); }, 2300);
-        },
-
-        toggleHand() {
-            this.handRaised = !this.handRaised;
-            if (db && this.currentBatch) {
-                db.ref(`liveViewers/${this.currentBatch.id}/${this.studentUid}`).update({ handRaised: this.handRaised });
-            }
-            this.showToast(this.handRaised ? '✋ Hand raised! Sir will call on you.' : 'Hand lowered.');
-        },
-
-        toggleMyMic() {
-            this.myMicOn = !this.myMicOn;
-            if (this.localStream) this.localStream.getAudioTracks().forEach(t => t.enabled = this.myMicOn);
-            this.showToast(this.myMicOn ? '🎤 Mic on' : '🔇 Mic off');
-        },
-
-        votePoll(i) {
-            this.pollChoice = i;
-            this.pollVoted = true;
-            if (db && this.currentBatch) {
-                db.ref(`livePoll/${this.currentBatch.id}/votes/${this.studentUid}`).set(i);
-            }
-        },
-
-        getPct(i) {
-            const votes = Object.values(this.pollVotes);
-            if (!votes.length) return 0;
-            return Math.round(votes.filter(v=>v===i).length/votes.length*100);
-        },
-
-        openBuy(batch) {
-            this.selectedBatch = batch;
-            this.buyModal = { open:true, paying:false };
-        },
-
-        buyBatch() {
-            this.buyModal.paying = true;
-            // ====== RAZORPAY ======
-            /*
-            const options = {
-                key: 'YOUR_RAZORPAY_KEY_ID',
-                amount: this.selectedBatch.price * 100,
-                currency: 'INR',
-                name: 'Era of MathAntics',
-                description: this.selectedBatch.name,
-                handler: async (response) => {
-                    // Verify on backend, then save enrollment to Firestore
-                    await fsdb.collection('enrollments').add({
-                        uid: this.studentUid,
-                        batchId: this.selectedBatch.id,
-                        razorpayId: response.razorpay_payment_id,
-                        enrolledAt: new Date(),
-                        amount: this.selectedBatch.price
-                    });
-                    this.finishEnrollment();
-                },
-                prefill: { name: this.studentName },
-                theme: { color: '#FFD700' }
-            };
-            new Razorpay(options).open();
-            */
-            // Demo (remove when Razorpay is live):
-            setTimeout(() => {
-                this.finishEnrollment();
-            }, 1800);
-        },
-
-        finishEnrollment() {
-            const b = this.batches.find(x=>x.id===this.selectedBatch.id);
-            if(b){ b.enrolled_by_me=true; b.enrolled++; }
-            this.buyModal = { open:false, paying:false };
-            this.showToast('🎉 Enrolled! Welcome to '+this.selectedBatch.name);
-        },
-
-        showToast(msg) {
-            this.toast = { show:true, msg };
-            setTimeout(()=>{ this.toast.show=false; }, 3100);
-        },
-
-        initCursor() {
-            const c=document.getElementById('cursor'), d=document.getElementById('cursorDot');
-            let cx=0,cy=0,dx=0,dy=0;
-            document.addEventListener('mousemove',e=>{dx=e.clientX;dy=e.clientY;d.style.left=dx-3+'px';d.style.top=dy-3+'px';});
-            (function a(){cx+=(dx-cx)*0.12;cy+=(dy-cy)*0.12;c.style.left=cx-9+'px';c.style.top=cy-9+'px';requestAnimationFrame(a);})();
-        },
-
-        initParticles() {
-            const cv=document.getElementById('particles'), ctx=cv.getContext('2d');
-            cv.width=window.innerWidth; cv.height=window.innerHeight;
-            window.addEventListener('resize',()=>{cv.width=window.innerWidth;cv.height=window.innerHeight;});
-            const pts=Array.from({length:60},()=>({x:Math.random()*cv.width,y:Math.random()*cv.height,r:Math.random()*1.2+0.3,dx:(Math.random()-0.5)*0.3,dy:(Math.random()-0.5)*0.3,alpha:Math.random()*0.35+0.08,color:Math.random()>0.6?'255,215,0':Math.random()>0.5?'0,245,255':'255,255,255'}));
-            (function draw(){ctx.clearRect(0,0,cv.width,cv.height);pts.forEach(p=>{p.x+=p.dx;p.y+=p.dy;if(p.x<0||p.x>cv.width)p.dx*=-1;if(p.y<0||p.y>cv.height)p.dy*=-1;ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(${p.color},${p.alpha})`;ctx.fill();});requestAnimationFrame(draw);})();
+            startLiveStream();
+            initChat();
         }
-    }
-}
-</script>
+
+        function startLiveStream() {
+            const domain = 'meet.jit.si';
+            const options = {
+                roomName: `EraOfMathAntics_Live_${batchId}`,
+                width: '100%',
+                height: '100%',
+                parentNode: document.querySelector('#jitsi-container'),
+                configOverwrite: {
+                    startWithAudioMuted: true,
+                    disableModeratorIndicator: true,
+                    startScreenSharing: false,
+                    enableWelcomePage: false,
+                    prejoinPageEnabled: false
+                },
+                interfaceConfigOverwrite: {
+                    TOOLBAR_BUTTONS: ['microphone', 'camera', 'fullscreen', 'hangup', 'chat', 'raisehand', 'tileview'],
+                    MOBILE_APP_PROMO: false
+                },
+                userInfo: { email: currentUser.email, displayName: currentUser.email.split('@')[0] }
+            };
+            const api = new JitsiMeetExternalAPI(domain, options);
+            document.getElementById('video-placeholder').style.display = 'none';
+        }
+
+        function initChat() {
+            const chatBox = document.getElementById('chat-box');
+            const chatForm = document.getElementById('chat-form');
+            const chatInput = document.getElementById('chat-input');
+
+            // Listen for messages
+            db.collection('live_chats').doc(batchId).collection('messages')
+                .orderBy('timestamp', 'asc')
+                .limitToLast(50)
+                .onSnapshot(snapshot => {
+                    snapshot.docChanges().forEach(change => {
+                        if (change.type === 'added') {
+                            const msg = change.doc.data();
+                            const div = document.createElement('div');
+                            const isMe = msg.email === currentUser.email;
+                            div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
+                            div.innerHTML = `
+                                <span class="text-[10px] text-gray-500 mb-1">${msg.email ? msg.email.split('@')[0] : 'User'}</span>
+                                <div class="px-3 py-2 rounded-2xl text-xs ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}">
+                                    ${msg.text}
+                                </div>
+                            `;
+                            chatBox.appendChild(div);
+                            chatBox.scrollTop = chatBox.scrollHeight;
+                        }
+                    });
+                });
+
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = chatInput.value.trim();
+                if (!text) return;
+
+                chatInput.value = '';
+                await db.collection('live_chats').doc(batchId).collection('messages').add({
+                    text: text,
+                    email: currentUser.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+        }
+
+        init();
+    </script>
 </body>
 </html>

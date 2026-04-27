@@ -557,6 +557,123 @@ function staffPortal() {
             });
         },
 
+
+        // ── SCHOLARSHIP TEST FUNCTIONS ─────────────────────────────────────
+
+        addQuestion() {
+            this.scholForm.questions.push({ question: '', options: ['', '', '', ''], correctIndex: 0 });
+        },
+
+        removeQuestion(index) {
+            this.scholForm.questions.splice(index, 1);
+        },
+
+        async createScholarshipTest() {
+            if (!this.scholForm.title || this.scholForm.questions.length === 0) {
+                alert('Please add a title and at least one question.');
+                return;
+            }
+            for (let i = 0; i < this.scholForm.questions.length; i++) {
+                const q = this.scholForm.questions[i];
+                if (!q.question.trim()) { alert('Q' + (i+1) + ': Question text is empty.'); return; }
+                for (let j = 0; j < 4; j++) {
+                    if (!q.options[j].trim()) { alert('Q' + (i+1) + ': Option ' + ['A','B','C','D'][j] + ' is empty.'); return; }
+                }
+            }
+            this.loading = true;
+            try {
+                const res = await fetch('/api/scholarship/create-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: this.scholForm.title,
+                        durationMinutes: this.scholForm.durationMinutes,
+                        marksCorrect: this.scholForm.marksCorrect,
+                        marksWrong: this.scholForm.marksWrong,
+                        questions: this.scholForm.questions
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed');
+                alert('Test saved! Test ID: ' + data.testId);
+                this.scholForm = { title: '', durationMinutes: 60, marksCorrect: 4, marksWrong: 1, questions: [] };
+                this.loadScholarshipTests();
+            } catch(e) {
+                alert('Error: ' + e.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async loadScholarshipTests() {
+            try {
+                const res = await fetch('/api/scholarship/tests');
+                const data = await res.json();
+                if (data.success) this.scholarshipTests = data.tests;
+            } catch(e) {
+                console.error('Failed to load scholarship tests', e);
+            }
+        },
+
+        async assignToken() {
+            if (!this.assignForm.testId || !this.assignForm.studentEmail) return;
+            this.loading = true;
+            this.assignResult = null;
+            try {
+                const res = await fetch('/api/scholarship/assign-token', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        testId: this.assignForm.testId,
+                        studentEmail: this.assignForm.studentEmail.trim().toLowerCase()
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed');
+                this.assignResult = { success: true, message: 'Code sent to ' + this.assignForm.studentEmail + '! Token: ' + data.token };
+                this.assignForm.studentEmail = '';
+            } catch(e) {
+                this.assignResult = { success: false, message: 'Error: ' + e.message };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async viewTestResults(testId) {
+            this.loading = true;
+            try {
+                const res = await fetch('/api/scholarship/results/' + testId);
+                const data = await res.json();
+                if (data.success) {
+                    this.testResults = data.results;
+                    this.showResultsModal = true;
+                }
+            } catch(e) {
+                alert('Could not load results.');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async deleteScholarshipTest(id) {
+            if (!confirm('Delete this test? All tokens for this test will become invalid.')) return;
+            this.loading = true;
+            try {
+                const res = await fetch('/api/scholarship/delete-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ testId: id })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error);
+                this.loadScholarshipTests();
+            } catch(e) {
+                alert('Failed to delete: ' + e.message);
+            } finally {
+                this.loading = false;
+            }
+        },
+
         exportData() {
             const data = this.admissions;
             if (data.length === 0) return alert("No data available to export.");

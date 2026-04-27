@@ -72,6 +72,9 @@
                     <button @click="activeTab = 'manage-staff'" :class="activeTab === 'manage-staff' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-users-cog w-6"></i> Manage Staff
                     </button>
+                    <button @click="activeTab = 'scholarship'; loadScholarshipTests()" :class="activeTab === 'scholarship' ? 'bg-yellow-500 text-slate-900' : 'text-yellow-400 hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors font-bold">
+                        <i class="fas fa-trophy w-6 mr-1"></i> Scholarship Tests
+                    </button>
                 </nav>
                 <div class="absolute bottom-0 w-64 p-6">
                     <button @click="logout" class="text-slate-400 hover:text-white flex items-center transition-colors">

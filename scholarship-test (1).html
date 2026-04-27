@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scholarship Test | Era of MathAntics</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; user-select: none; }
+        * { -webkit-user-select: none; }
+        .option-btn { transition: all 0.2s; }
+        .option-btn:hover { transform: translateX(4px); }
+        .option-btn.selected { background: #2563eb; color: white; border-color: #2563eb; }
+        #timer-bar { transition: width 1s linear; }
+        @keyframes pulse-red { 0%,100%{background:#fee2e2} 50%{background:#fca5a5} }
+        .timer-warning { animation: pulse-red 1s infinite; }
+        #fullscreen-overlay {
+            position: fixed; inset: 0; background: #1e293b; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen" oncontextmenu="return false">
+
+<!-- ── Fullscreen Gate ─────────────────────────────────────────────────────── -->
+<div id="fullscreen-overlay">
+    <div class="text-center max-w-md px-6">
+        <div class="text-6xl mb-4">🎓</div>
+        <h1 class="text-2xl font-bold mb-2">Era of MathAntics</h1>
+        <h2 class="text-lg text-blue-400 font-semibold mb-4">Scholarship Test</h2>
+
+        <div id="auth-section">
+            <p class="text-slate-300 mb-5 text-sm">Enter the test code you received in your email. Your webcam will be active throughout the test.</p>
+
+            <!-- Webcam -->
+            <div class="mb-5">
+                <video id="webcam-setup" autoplay muted
+                    style="width:200px;height:150px;object-fit:cover;border-radius:12px;border:3px solid #3b82f6;margin:0 auto;display:block;"></video>
+                <p id="cam-status" class="text-xs text-yellow-400 text-center mt-2">Requesting camera access...</p>
+            </div>
+
+            <!-- Token input -->
+            <input id="test-token" type="text" placeholder="Enter your Test Code (from email)"
+                class="w-full px-4 py-3 rounded-xl bg-slate-700 border border-slate-600 text-white placeholder-slate-400 mb-3 text-sm text-center focus:outline-none focus:border-blue-400 uppercase tracking-widest"
+                maxlength="8" oninput="this.value=this.value.toUpperCase()">
+
+            <div id="gate-error" class="text-red-400 text-xs mb-3 hidden bg-red-900/40 rounded-lg px-3 py-2"></div>
+            <div id="gate-loading" class="text-blue-300 text-xs mb-3 hidden">
+                <i class="fas fa-spinner fa-spin mr-1"></i> Verifying your code...
+            </div>
+
+            <button onclick="startTest()" id="btn-start"
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl transition">
+                <i class="fas fa-shield-alt mr-2"></i>Verify & Enter Fullscreen
+            </button>
+            <p class="text-slate-500 text-xs mt-4">Switching tabs or exiting fullscreen will flag your attempt.</p>
+        </div>
+    </div>
+</div>
+
+<!-- ── Test UI ─────────────────────────────────────────────────────────────── -->
+<div id="test-container" class="hidden">
+    <!-- Header -->
+    <div class="bg-slate-900 text-white px-4 py-2 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center gap-3">
+            <span class="font-bold text-blue-400 italic">Era of MathAntics</span>
+            <span class="text-slate-400 text-sm">|</span>
+            <span class="text-sm font-semibold" id="test-title-bar">Scholarship Test</span>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="flag-counter" class="hidden"
+                style="background:#fef3c7;color:#92400e;font-size:11px;padding:2px 8px;border-radius:12px;font-weight:600;">
+                <i class="fas fa-flag mr-1"></i><span id="flag-count">0</span> Flags
+            </div>
+            <div class="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-lg">
+                <i class="fas fa-clock text-yellow-400 text-sm"></i>
+                <span id="timer-display" class="font-mono font-bold text-sm">--:--</span>
+            </div>
+            <div class="text-xs text-slate-400" id="q-counter">Q 1/0</div>
+            <video id="webcam-live" autoplay muted
+                style="width:80px;height:60px;object-fit:cover;border-radius:6px;border:2px solid #10b981;"></video>
+        </div>
+    </div>
+
+    <!-- Timer bar -->
+    <div class="h-1 bg-slate-200">
+        <div id="timer-bar" class="h-1 bg-blue-500" style="width:100%"></div>
+    </div>
+
+    <!-- Warning banner -->
+    <div id="warning-banner" class="hidden bg-red-600 text-white text-center py-2 text-sm font-bold">
+        <i class="fas fa-exclamation-triangle mr-2"></i><span id="warning-text">Warning!</span>
+    </div>
+
+    <!-- Main test area -->
+    <div class="max-w-3xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-2xl shadow-sm border p-6 mb-6">
+            <div class="flex items-start justify-between mb-4">
+                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-full" id="q-label">Question 1</span>
+                <span class="text-xs text-slate-400" id="q-marks">+4 | -1</span>
+            </div>
+            <div id="question-text" class="text-lg font-semibold text-slate-800 leading-relaxed mb-6">Loading...</div>
+            <div id="options-container" class="space-y-3"></div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="flex justify-between items-center">
+            <button onclick="prevQ()" id="btn-prev"
+                class="px-6 py-2.5 rounded-xl border border-slate-300 font-semibold text-slate-600 hover:bg-slate-100 transition text-sm">
+                <i class="fas fa-arrow-left mr-2"></i>Previous
+            </button>
+            <div class="flex gap-2 flex-wrap justify-center max-w-xs" id="q-palette"></div>
+            <button onclick="nextQ()" id="btn-next"
+                class="px-6 py-2.5 rounded-xl bg-blue-600 text-white font-semibold hover:bg-blue-700 transition text-sm">
+                Next<i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+
+        <button onclick="confirmSubmit()"
+            class="w-full mt-6 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl transition">
+            <i class="fas fa-paper-plane mr-2"></i>Submit Test
+        </button>
+    </div>
+</div>
+
+<!-- ── Result Screen ───────────────────────────────────────────────────────── -->
+<div id="result-screen" class="hidden min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-6">
+    <div class="bg-white rounded-3xl shadow-xl p-8 max-w-md w-full text-center">
+        <div id="result-emoji" class="text-6xl mb-4">🎉</div>
+        <h2 class="text-2xl font-bold text-slate-800 mb-1">Test Submitted!</h2>
+        <p class="text-slate-500 text-sm mb-6">Era of MathAntics Scholarship Test</p>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-blue-50 rounded-xl p-4">
+                <div class="text-2xl font-bold text-blue-600" id="r-score">0</div>
+                <div class="text-xs text-slate-500 mt-1">Your Score</div>
+            </div>
+            <div class="bg-green-50 rounded-xl p-4">
+                <div class="text-2xl font-bold text-green-600" id="r-total">0</div>
+                <div class="text-xs text-slate-500 mt-1">Total Marks</div>
+            </div>
+            <div class="bg-yellow-50 rounded-xl p-4">
+                <div class="text-2xl font-bold text-yellow-600" id="r-correct">0</div>
+                <div class="text-xs text-slate-500 mt-1">Correct</div>
+            </div>
+            <div class="bg-red-50 rounded-xl p-4">
+                <div class="text-2xl font-bold text-red-500" id="r-wrong">0</div>
+                <div class="text-xs text-slate-500 mt-1">Wrong</div>
+            </div>
+        </div>
+        <div id="r-flags" class="text-xs text-amber-700 bg-amber-50 rounded-lg px-3 py-2 mb-4 hidden">
+            <i class="fas fa-flag mr-1"></i><span id="r-flag-text"></span>
+        </div>
+        <p class="text-slate-500 text-sm mb-4">Results will be announced after the test window closes. Check your student portal for your rank.</p>
+        <a href="student.html" class="block w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition">
+            Go to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- ── Disqualified Screen ────────────────────────────────────────────────── -->
+<div id="dq-screen" class="hidden min-h-screen bg-red-900 flex items-center justify-center p-6">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full text-center">
+        <div class="text-5xl mb-4">🚫</div>
+        <h2 class="text-2xl font-bold text-red-700 mb-2">Test Terminated</h2>
+        <p class="text-slate-600 text-sm mb-4" id="dq-reason">Too many violations detected.</p>
+        <p class="text-slate-500 text-xs">Your activity has been logged and sent to the admin for review.</p>
+        <a href="student.html" class="block w-full mt-6 py-3 bg-slate-800 text-white font-bold rounded-xl hover:bg-slate-900 transition">Return to Portal</a>
+    </div>
+</div>
+
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let testData = null, questions = [], answers = {}, currentQ = 0;
+let timerInterval = null, totalSeconds = 0, elapsedSeconds = 0;
+let flags = 0, webcamStream = null, snapshotInterval = null;
+let tabSwitches = 0, fsExits = 0, testToken = '', studentEmail = '';
+let submitted = false;
+
+// ─── STARTUP ──────────────────────────────────────────────────────────────────
+window.addEventListener('load', initWebcam);
+
+async function initWebcam() {
+    try {
+        webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        document.getElementById('webcam-setup').srcObject = webcamStream;
+        document.getElementById('webcam-live').srcObject = webcamStream;
+        document.getElementById('cam-status').textContent = '✅ Camera ready';
+        document.getElementById('cam-status').className = 'text-xs text-green-400 text-center mt-2';
+    } catch(e) {
+        document.getElementById('cam-status').textContent = '⚠️ Camera denied — test may still proceed but will be flagged';
+        document.getElementById('cam-status').className = 'text-xs text-red-400 text-center mt-2';
+    }
+}
+
+// ─── START TEST (validates token against backend) ─────────────────────────────
+async function startTest() {
+    const token = document.getElementById('test-token').value.trim().toUpperCase();
+    if (!token) { showGateError('Please enter your test code.'); return; }
+    if (token.length < 6) { showGateError('Invalid test code format.'); return; }
+
+    showGateLoading(true);
+    hideGateError();
+
+    try {
+        const res = await fetch('/api/scholarship/validate-token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token })
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.success) {
+            showGateLoading(false);
+            showGateError(data.message || 'Invalid or expired test code.');
+            return;
+        }
+
+        testData = data.test;
+        questions = data.questions;
+        studentEmail = data.studentEmail;
+        testToken = token;
+        totalSeconds = (testData.durationMinutes || 60) * 60;
+
+        await requestFullscreen();
+        launchTest();
+
+    } catch(e) {
+        showGateLoading(false);
+        showGateError('Could not connect to server. Please check your internet connection.');
+    }
+}
+
+function showGateError(msg) {
+    const el = document.getElementById('gate-error');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+}
+function hideGateError() {
+    document.getElementById('gate-error').classList.add('hidden');
+}
+function showGateLoading(show) {
+    document.getElementById('gate-loading').classList.toggle('hidden', !show);
+    document.getElementById('btn-start').disabled = show;
+}
+
+async function requestFullscreen() {
+    try { await document.documentElement.requestFullscreen(); } catch(e) {}
+}
+
+function launchTest() {
+    document.getElementById('fullscreen-overlay').style.display = 'none';
+    document.getElementById('test-container').classList.remove('hidden');
+    document.getElementById('test-title-bar').textContent = testData.title || 'Scholarship Test';
+    setupAntiCheat();
+    startTimer();
+    startSnapshotCapture();
+    renderQuestion();
+    buildPalette();
+}
+
+// ─── ANTI-CHEAT ───────────────────────────────────────────────────────────────
+function setupAntiCheat() {
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && !submitted) {
+            tabSwitches++;
+            addFlag('tab_switch', 'Left the test tab');
+            showWarning(`⚠️ Tab switch detected! (${tabSwitches}/3 allowed)`);
+            if (tabSwitches >= 3) disqualify('Left the test tab too many times.');
+        }
+    });
+
+    document.addEventListener('fullscreenchange', () => {
+        if (!document.fullscreenElement && !submitted) {
+            fsExits++;
+            addFlag('fullscreen_exit', 'Exited fullscreen');
+            showWarning(`⚠️ Fullscreen exited! (${fsExits}/3 allowed)`);
+            if (fsExits >= 3) disqualify('Exited fullscreen too many times.');
+            else setTimeout(() => requestFullscreen(), 2000);
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        const blocked = ['F12','F5','F11'];
+        if (blocked.includes(e.key) ||
+            (e.ctrlKey && ['c','v','a','u','s','p','f'].includes(e.key.toLowerCase())) ||
+            (e.altKey && e.key === 'Tab')) {
+            e.preventDefault(); e.stopPropagation();
+        }
+    });
+
+    document.addEventListener('contextmenu', e => e.preventDefault());
+}
+
+function addFlag(type, detail) {
+    flags++;
+    document.getElementById('flag-counter').classList.remove('hidden');
+    document.getElementById('flag-count').textContent = flags;
+
+    // Log flag to server (non-blocking)
+    fetch('/api/scholarship/log-flag', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: testToken, type, detail, timestamp: new Date().toISOString() })
+    }).catch(() => {});
+}
+
+function showWarning(msg) {
+    const el = document.getElementById('warning-banner');
+    document.getElementById('warning-text').textContent = msg;
+    el.classList.remove('hidden');
+    setTimeout(() => el.classList.add('hidden'), 5000);
+}
+
+// Webcam snapshots every 60s (stored locally — not sent to server to save bandwidth)
+function startSnapshotCapture() {
+    if (!webcamStream) return;
+    snapshotInterval = setInterval(() => {
+        if (submitted) return;
+        const video = document.getElementById('webcam-live');
+        const canvas = document.createElement('canvas');
+        canvas.width = 160; canvas.height = 120;
+        canvas.getContext('2d').drawImage(video, 0, 0, 160, 120);
+        // Snapshot held in memory only
+    }, 60000);
+}
+
+// ─── TIMER ────────────────────────────────────────────────────────────────────
+function startTimer() {
+    const bar = document.getElementById('timer-bar');
+    const display = document.getElementById('timer-display');
+    const remaining = () => totalSeconds - elapsedSeconds;
+
+    timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        const rem = remaining();
+        if (rem <= 0) { autoSubmit(); return; }
+
+        const m = Math.floor(rem / 60), s = rem % 60;
+        display.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        bar.style.width = ((rem / totalSeconds) * 100) + '%';
+
+        if (rem <= 300) { bar.style.background = '#ef4444'; display.style.color = '#ef4444'; }
+        else if (rem <= 600) { bar.style.background = '#f59e0b'; }
+    }, 1000);
+}
+
+// ─── QUESTIONS ────────────────────────────────────────────────────────────────
+function renderQuestion() {
+    if (!questions.length) return;
+    const q = questions[currentQ];
+    document.getElementById('q-label').textContent = `Question ${currentQ + 1} of ${questions.length}`;
+    document.getElementById('q-counter').textContent = `Q ${currentQ+1}/${questions.length}`;
+    document.getElementById('q-marks').textContent = `+${testData.marksCorrect || 4} | -${testData.marksWrong || 1}`;
+    document.getElementById('question-text').textContent = q.question;
+
+    const opts = document.getElementById('options-container');
+    opts.innerHTML = '';
+    const labels = ['A', 'B', 'C', 'D'];
+    (q.options || []).forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn w-full text-left px-5 py-3 rounded-xl border-2 border-slate-200 text-slate-700 font-medium text-sm flex items-center gap-3';
+        if (answers[currentQ] === i) btn.classList.add('selected');
+        btn.innerHTML = `<span class="w-7 h-7 rounded-full border-2 ${answers[currentQ]===i ? 'border-white bg-white/30' : 'border-slate-300'} flex items-center justify-center text-xs font-bold flex-shrink-0">${labels[i]}</span>${opt}`;
+        btn.onclick = () => selectOption(i);
+        opts.appendChild(btn);
+    });
+
+    document.getElementById('btn-prev').disabled = currentQ === 0;
+    document.getElementById('btn-prev').style.opacity = currentQ === 0 ? '0.4' : '1';
+    updatePalette();
+}
+
+function selectOption(i) { answers[currentQ] = i; renderQuestion(); }
+function prevQ() { if (currentQ > 0) { currentQ--; renderQuestion(); } }
+function nextQ() { if (currentQ < questions.length - 1) { currentQ++; renderQuestion(); } }
+
+function buildPalette() {
+    const p = document.getElementById('q-palette');
+    p.innerHTML = '';
+    questions.forEach((_, i) => {
+        const btn = document.createElement('button');
+        btn.id = `p-${i}`;
+        btn.textContent = i + 1;
+        btn.onclick = () => { currentQ = i; renderQuestion(); };
+        p.appendChild(btn);
+    });
+    updatePalette();
+}
+
+function updatePalette() {
+    questions.forEach((_, i) => {
+        const btn = document.getElementById(`p-${i}`);
+        if (!btn) return;
+        if (i === currentQ) {
+            btn.className = 'w-7 h-7 rounded-md text-xs font-bold border transition bg-blue-600 text-white border-blue-600';
+        } else if (answers[i] !== undefined) {
+            btn.className = 'w-7 h-7 rounded-md text-xs font-bold border transition bg-green-500 text-white border-green-500';
+        } else {
+            btn.className = 'w-7 h-7 rounded-md text-xs font-bold border transition bg-white text-slate-600 border-slate-300';
+        }
+    });
+}
+
+// ─── SUBMISSION ───────────────────────────────────────────────────────────────
+function confirmSubmit() {
+    const unanswered = questions.length - Object.keys(answers).length;
+    const msg = unanswered > 0
+        ? `You have ${unanswered} unanswered question(s). Submit anyway?`
+        : 'Submit the test?';
+    if (confirm(msg)) autoSubmit();
+}
+
+async function autoSubmit() {
+    if (submitted) return;
+    submitted = true;
+    clearInterval(timerInterval);
+    clearInterval(snapshotInterval);
+
+    // Client-side scoring (using _correctText from server shuffle)
+    const marksC = testData.marksCorrect || 4;
+    const marksW = testData.marksWrong || 1;
+    let score = 0, correct = 0, wrong = 0;
+
+    questions.forEach((q, i) => {
+        if (answers[i] === undefined) return;
+        if (q.options[answers[i]] === q._correctText) { score += marksC; correct++; }
+        else { score -= marksW; wrong++; }
+    });
+    score = Math.max(0, score);
+    const total = questions.length * marksC;
+
+    try {
+        await fetch('/api/scholarship/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token: testToken,
+                answers,
+                flags,
+                tabSwitches,
+                fsExits,
+                timeTaken: elapsedSeconds,
+                clientScore: score,
+                clientCorrect: correct,
+                clientWrong: wrong
+            })
+        });
+    } catch(e) {
+        // Even on network error, show the result screen
+        console.warn('Submit request failed:', e);
+    }
+
+    showResult({ score, total, correct, wrong });
+    try { document.exitFullscreen(); } catch(e) {}
+    stopWebcam();
+}
+
+function showResult(data) {
+    document.getElementById('test-container').classList.add('hidden');
+    document.getElementById('result-screen').classList.remove('hidden');
+    document.getElementById('r-score').textContent = data.score;
+    document.getElementById('r-total').textContent = data.total;
+    document.getElementById('r-correct').textContent = data.correct;
+    document.getElementById('r-wrong').textContent = data.wrong;
+
+    if (flags > 0) {
+        document.getElementById('r-flags').classList.remove('hidden');
+        document.getElementById('r-flag-text').textContent = `${flags} suspicious activity flag(s) recorded.`;
+    }
+
+    const pct = data.total > 0 ? (data.score / data.total) * 100 : 0;
+    document.getElementById('result-emoji').textContent = pct >= 75 ? '🏆' : pct >= 50 ? '🎉' : '📚';
+}
+
+async function disqualify(reason) {
+    if (submitted) return;
+    submitted = true;
+    clearInterval(timerInterval);
+    clearInterval(snapshotInterval);
+    stopWebcam();
+
+    try {
+        await fetch('/api/scholarship/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                token: testToken, answers, flags, tabSwitches, fsExits,
+                timeTaken: elapsedSeconds, disqualified: true, dqReason: reason,
+                clientScore: 0, clientCorrect: 0, clientWrong: 0
+            })
+        });
+    } catch(e) {}
+
+    document.getElementById('test-container').classList.add('hidden');
+    document.getElementById('fullscreen-overlay').style.display = 'none';
+    document.getElementById('dq-screen').classList.remove('hidden');
+    document.getElementById('dq-reason').textContent = reason;
+    try { document.exitFullscreen(); } catch(e) {}
+}
+
+function stopWebcam() {
+    if (webcamStream) webcamStream.getTracks().forEach(t => t.stop());
+}
+</script>
+</body>
+</html>

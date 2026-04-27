@@ -93,6 +93,7 @@ const superAdmins = [
 async function isAuthorizedStaff(email) {
   if (!email) return false;
   if (superAdmins.includes(email.toLowerCase())) return true;
+  if (!db) return false;
   
   try {
     const snap = await db.collection('staff').where('email', '==', email.toLowerCase()).get();
@@ -317,7 +318,7 @@ app.post('/api/verify-otp', async (req, res) => {
 // --- Auth Check & Logout Endpoints ---
 
 app.get('/api/check-auth', async (req, res) => {
-  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
   const sessionCookie = cookies[COOKIE_NAME];
   
   if (!sessionCookie) return res.status(200).json({ authenticated: false });
@@ -397,7 +398,7 @@ app.post('/api/save-student-profile', async (req, res) => {
 
 app.get('/api/get-student-profile', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
-  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
   const sessionCookie = cookies[COOKIE_NAME];
   if (!sessionCookie) {
     return res.status(401).json({ error: 'Unauthorized: No session found.' });
@@ -549,7 +550,7 @@ app.post('/api/delete-test-score', async (req, res) => {
 
 app.get('/api/get-student-test-scores', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
-  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
   const sessionCookie = cookies[COOKIE_NAME];
   if (!sessionCookie) {
     return res.status(401).json({ error: 'Unauthorized: No session found.' });
@@ -985,7 +986,7 @@ app.post('/api/verify-payment', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'Server database error.' });
   
   const { razorpay_payment_id, batchId } = req.body;
-  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
   const sessionCookie = cookies[COOKIE_NAME];
 
   if (!sessionCookie) return res.status(401).json({ error: 'Unauthorized.' });

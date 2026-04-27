@@ -602,13 +602,22 @@ function staffPortal() {
                         questions: this.scholForm.questions
                     })
                 });
-                const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed');
-                alert('Test saved! Test ID: ' + data.testId);
+                
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    const data = await res.json();
+                    if (!res.ok) throw new Error(data.error || 'Failed to save test');
+                    alert('Test saved! Test ID: ' + data.testId);
+                } else {
+                    const text = await res.text();
+                    console.error('Server returned non-JSON response:', text);
+                    throw new Error('Server error: Received HTML instead of JSON. Check backend logs.');
+                }
+
                 this.scholForm = { title: '', durationMinutes: 60, marksCorrect: 4, marksWrong: 1, questions: [] };
                 this.loadScholarshipTests();
             } catch(e) {
-                alert('Error: ' + e.message);
+                alert('Failed to create test: ' + e.message);
             } finally {
                 this.loading = false;
             }

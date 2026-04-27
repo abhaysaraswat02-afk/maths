@@ -1039,11 +1039,11 @@ async function requireStaff(req, res, next) {
     req.user = { email };
     next();
   } catch(e) {
-    res.status(401).json({ error: 'Unauthorized.' });
+    res.status(401).json({ error: 'Unauthorized: ' + e.message });
   }
 }
 
-// POST /api/scholarship/create-test  — staff creates a test
+// POST /scholarship/create-test  — staff creates a test
 app.post('/api/scholarship/create-test', requireStaff, async (req, res) => {
   try {
     const { title, durationMinutes, marksCorrect, marksWrong, questions } = req.body;
@@ -1408,13 +1408,10 @@ app.post('/api/scholarship/delete-test', requireStaff, async (req, res) => {
   }
 });
 
-// --- 404 Handler for API routes ---
-app.use('/api', (req, res) => {
+// --- Global 404 Handler (Ensures JSON is returned for all missing routes) ---
+app.use((req, res) => {
   res.status(404).json({ error: 'API endpoint not found: ' + req.method + ' ' + req.path });
 });
-
-// --- Serve Static Files (AFTER all API routes) ---
-app.use(express.static(__dirname));
 
 // --- Global Error Handler (AFTER everything) ---
 app.use((err, req, res, next) => {

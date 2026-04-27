@@ -102,9 +102,6 @@ async function isAuthorizedStaff(email) {
   }
 }
 
-// Serve static files (HTML, CSS, JS) from the current folder
-app.use(express.static(__dirname));
-
 // --- Nodemailer Transporter ---
 
 const GMAIL_USER = stripQuotes(process.env.GMAIL_USER || '');
@@ -130,10 +127,13 @@ transporter.verify((error, success) => {
   }
 });
 
-// --- Security and Middleware ---
+// --- Security and Middleware (BEFORE Routes) ---
 
 // Enable CORS. Vercel handles this well, but it's good practice.
 app.use(cors({ origin: true }));
+
+// Middleware to parse JSON request bodies (MUST be before routes)
+app.use(express.json());
 
 // Basic rate-limiting to prevent spam and abuse.
 // Global limit for all endpoints and a stricter limit for OTP requests.
@@ -153,9 +153,6 @@ const otpLimiter = rateLimit({
 
 app.use(globalLimiter);
 app.use('/api/send-otp', otpLimiter);
-
-// Middleware to parse JSON request bodies
-app.use(express.json());
 
 // --- Stateless OTP Logic ---
 const OTP_SECRET = stripQuotes(process.env.OTP_SECRET || 'k9j8h7g6f5e4dll3b1a0z9y8x7w6v5u4t3s2r1q0p9o8n7m6l5k4j3i2h1g0f9e8');
@@ -1411,6 +1408,29 @@ app.post('/api/scholarship/delete-test', requireStaff, async (req, res) => {
   }
 });
 
+// --- 404 Handler for API routes ---
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found: ' + req.method + ' ' + req.path });
+});
+
+// --- Serve Static Files (AFTER all API routes) ---
+app.use(express.static(__dirname));
+
+// --- Global Error Handler (AFTER everything) ---
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  
+  // If response already started, pass to default handler
+  if (res.headersSent) {
+    return next(err);
+  }
+  
+  // Always return JSON for errors
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal Server Error',
+    type: err.type || 'ERROR'
+  });
+});
 
 // Export the Express app for Vercel to use as a serverless function
 module.exports = app;

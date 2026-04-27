@@ -42,6 +42,12 @@ function staffPortal() {
         testScoreForm: { studentEmail: '', testName: '', classGrade: 'All', score: '', total: 100, percentage: 0, date: '' },
         staffEmails: ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'],
         userEmail: '',
+        scholarshipTests: [],
+        scholForm: { title: '', durationMinutes: 60, marksCorrect: 4, marksWrong: 1, questions: [] },
+        assignForm: { testId: '', studentEmail: '' },
+        assignResult: null,
+        testResults: [],
+        showResultsModal: false,
 
         async init() {
             this.loading = true;
@@ -144,7 +150,8 @@ function staffPortal() {
                 'docs': 'Resource Library Management',
                 'scores': 'Manage Offline Test Scores',
                 'manage-staff': 'Manage Team & Access',
-                'batches': 'Manage Course Batches'
+                'batches': 'Manage Course Batches',
+                'scholarship': 'Scholarship Test Management'
             };
             return titles[this.activeTab];
         },

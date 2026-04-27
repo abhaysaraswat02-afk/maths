@@ -405,6 +405,163 @@
                     </div>
                 </div>
 
+                <!-- Scholarship Tests Section -->
+                <div x-show="activeTab === 'scholarship'" class="space-y-8">
+                    <!-- Create New Test -->
+                    <div class="bg-white p-8 rounded-xl shadow-sm border hover-3d">
+                        <div class="flex items-center gap-2 mb-6">
+                            <h3 class="text-lg font-bold">Create Scholarship Test</h3>
+                            <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">New Test</span>
+                        </div>
+                        <form @submit.prevent="createScholarshipTest">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Test Title</label>
+                                    <input type="text" x-model="scholForm.title" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-500" placeholder="e.g., Scholarship Entrance Exam" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Duration (Minutes)</label>
+                                    <input type="number" x-model.number="scholForm.durationMinutes" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-500" min="5" value="60" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Questions Count</label>
+                                    <input type="number" x-model.number="scholForm.questions.length" class="w-full px-4 py-2 border rounded-lg bg-slate-50 outline-none" :value="scholForm.questions.length" readonly>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Marks for Correct Answer</label>
+                                    <input type="number" x-model.number="scholForm.marksCorrect" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-500" min="1" value="4" required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold mb-2">Negative Marks (Wrong)</label>
+                                    <input type="number" x-model.number="scholForm.marksWrong" class="w-full px-4 py-2 border rounded-lg outline-none focus:ring-2 focus:ring-yellow-500" min="0" value="1" required>
+                                </div>
+                            </div>
+
+                            <!-- Questions Section -->
+                            <div class="mb-6 border-t pt-6">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h4 class="font-bold text-gray-800">Questions</h4>
+                                    <button type="button" @click="addQuestion()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all">
+                                        <i class="fas fa-plus mr-2"></i>Add Question
+                                    </button>
+                                </div>
+
+                                <template x-for="(question, qIndex) in scholForm.questions" :key="qIndex">
+                                    <div class="mb-6 p-4 bg-slate-50 border rounded-lg">
+                                        <div class="flex justify-between items-start mb-4">
+                                            <label class="block text-sm font-bold text-gray-700">Question <span x-text="qIndex + 1"></span></label>
+                                            <button type="button" @click="removeQuestion(qIndex)" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                        <textarea x-model="scholForm.questions[qIndex].question" class="w-full px-3 py-2 border rounded-lg mb-3 outline-none focus:ring-2 focus:ring-yellow-500" rows="2" placeholder="Enter the question text" required></textarea>
+
+                                        <div class="space-y-2">
+                                            <label class="text-xs font-bold text-gray-600">Options (Select correct answer)</label>
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                                                <template x-for="(option, oIndex) in ['A', 'B', 'C', 'D']" :key="oIndex">
+                                                    <div class="flex items-center gap-2">
+                                                        <input type="radio" :name="'correct-q' + qIndex" :value="oIndex" x-model.number="scholForm.questions[qIndex].correctIndex" class="w-4 h-4 cursor-pointer">
+                                                        <label class="text-xs font-semibold" x-text="option"></label>
+                                                        <input type="text" x-model="scholForm.questions[qIndex].options[oIndex]" class="flex-1 px-3 py-1.5 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-yellow-500" :placeholder="'Option ' + option" required>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-lg font-bold shadow-md transition-all">
+                                <i class="fas fa-check-circle mr-2"></i>Create & Save Test
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Existing Tests & Token Assignment -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <!-- Tests List -->
+                        <div class="lg:col-span-2 space-y-4">
+                            <div class="bg-white p-6 rounded-xl shadow-sm border">
+                                <h3 class="text-lg font-bold mb-4">Active Tests</h3>
+                                <div x-show="scholarshipTests.length === 0" class="text-center py-8 text-gray-500">
+                                    <p class="text-sm"><i class="fas fa-inbox text-2xl mb-2 block"></i>No tests created yet.</p>
+                                </div>
+                                <div class="space-y-3">
+                                    <template x-for="test in scholarshipTests" :key="test.id">
+                                        <div class="p-4 bg-gradient-to-r from-yellow-50 to-amber-50 border border-yellow-200 rounded-lg hover:shadow-md transition-shadow">
+                                            <div class="flex items-start justify-between mb-3">
+                                                <div class="flex-1">
+                                                    <h4 class="font-bold text-gray-800" x-text="test.title"></h4>
+                                                    <p class="text-xs text-gray-600 mt-1"><i class="fas fa-id-badge mr-1"></i>ID: <span x-text="test.id" class="font-mono"></span></p>
+                                                </div>
+                                                <div class="text-right">
+                                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded" x-text="test.questions.length + ' Q'"></span>
+                                                </div>
+                                            </div>
+                                            <div class="grid grid-cols-3 gap-2 text-xs mb-3">
+                                                <div class="bg-white/60 p-2 rounded text-center">
+                                                    <div class="font-bold text-gray-700" x-text="test.durationMinutes"></div>
+                                                    <div class="text-gray-600">min</div>
+                                                </div>
+                                                <div class="bg-white/60 p-2 rounded text-center">
+                                                    <div class="font-bold text-green-600" x-text="'+' + test.marksCorrect"></div>
+                                                    <div class="text-gray-600">correct</div>
+                                                </div>
+                                                <div class="bg-white/60 p-2 rounded text-center">
+                                                    <div class="font-bold text-red-600" x-text="'-' + test.marksWrong"></div>
+                                                    <div class="text-gray-600">wrong</div>
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-2">
+                                                <button @click="viewTestResults(test.id)" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all">
+                                                    <i class="fas fa-chart-bar mr-1"></i>View Results
+                                                </button>
+                                                <button @click="deleteScholarshipTest(test.id)" class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Token Assignment -->
+                        <div class="bg-white p-6 rounded-xl shadow-sm border h-fit">
+                            <h3 class="text-lg font-bold mb-4">Assign Test Tokens</h3>
+                            <p class="text-xs text-gray-600 mb-4">Send test access code to students</p>
+                            <form @submit.prevent="assignToken" class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Select Test</label>
+                                    <select x-model="assignForm.testId" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-yellow-500" required>
+                                        <option value="">Choose a test...</option>
+                                        <template x-for="test in scholarshipTests" :key="test.id">
+                                            <option :value="test.id" x-text="test.title"></option>
+                                        </template>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 mb-1">Student Email</label>
+                                    <input type="email" x-model="assignForm.studentEmail" class="w-full px-3 py-2 border rounded-lg text-sm outline-none focus:ring-2 focus:ring-yellow-500" placeholder="student@example.com" required>
+                                </div>
+                                <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-bold text-sm transition-all">
+                                    <i class="fas fa-paper-plane mr-1"></i>Send Token
+                                </button>
+                            </form>
+
+                            <!-- Result message -->
+                            <div x-show="assignResult" :class="assignResult.success ? 'bg-green-100 border-green-300 text-green-800' : 'bg-red-100 border-red-300 text-red-800'" class="mt-4 p-3 border rounded-lg text-xs">
+                                <i :class="assignResult.success ? 'fas fa-check-circle' : 'fas fa-exclamation-circle'" class="mr-2"></i>
+                                <span x-text="assignResult.message"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Manage Staff Section -->
                 <div x-show="activeTab === 'manage-staff'" class="space-y-8">
                     <div class="max-w-2xl bg-white p-8 rounded-xl shadow-sm border hover-3d">
@@ -485,6 +642,44 @@
         <div class="bg-white p-6 rounded-xl flex items-center shadow-2xl">
             <div class="animate-spin rounded-full h-8 w-8 border-4 border-blue-600 border-t-transparent mr-4"></div>
             <span class="font-bold text-gray-700">Processing...</span>
+        </div>
+    </div>
+
+    <!-- Test Results Modal -->
+    <div x-show="showResultsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-gradient-to-r from-yellow-500 to-amber-500 text-white p-6 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Test Results</h2>
+                <button @click="showResultsModal = false" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times text-2xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div x-show="testResults.length === 0" class="text-center py-8 text-gray-500">
+                    <p class="text-sm"><i class="fas fa-chart-line text-3xl mb-2 block text-gray-300"></i>No submissions yet.</p>
+                </div>
+                <div class="space-y-4">
+                    <template x-for="result in testResults" :key="result.id">
+                        <div class="border rounded-lg p-4 hover:bg-slate-50 transition-colors">
+                            <div class="flex items-start justify-between mb-3">
+                                <div>
+                                    <h4 class="font-bold text-gray-800" x-text="result.studentEmail"></h4>
+                                    <p class="text-xs text-gray-600 mt-1">Submitted: <span x-text="formatDate(result.submittedAt)"></span></p>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold" :class="result.percentage >= 80 ? 'text-green-600' : result.percentage >= 60 ? 'text-yellow-600' : 'text-red-600'" x-text="Math.round(result.percentage) + '%'"></div>
+                                    <p class="text-xs text-gray-600">Score: <span x-text="Math.round(result.score)"></span>/<span x-text="result.totalMarks"></span></p>
+                                </div>
+                            </div>
+                            <div class="text-xs text-gray-600">
+                                <p><i class="fas fa-check text-green-600 mr-1"></i>Correct: <span x-text="result.correctAnswers"></span></p>
+                                <p><i class="fas fa-times text-red-600 mr-1"></i>Wrong: <span x-text="result.wrongAnswers"></span></p>
+                                <p><i class="fas fa-skip text-gray-400 mr-1"></i>Skipped: <span x-text="result.skipped"></span></p>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
         </div>
     </div>
 

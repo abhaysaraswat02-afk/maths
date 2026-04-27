@@ -2,9 +2,9 @@
   "name": "pplm-college-backend",
   "version": "1.0.0",
   "description": "Backend API for PPLM College Website",
-  "main": "submit-application.js",
+  "main": "submit-application (1).js",
   "scripts": {
-    "start": "node submit-application.js"
+    "start": "node \"submit-application (1).js\""
   },
   "private": true,
   "dependencies": {

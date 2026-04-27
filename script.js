@@ -46,6 +46,8 @@ function staffPortal() {
         scholForm: { title: '', durationMinutes: 60, marksCorrect: 4, marksWrong: 1, questions: [] },
         assignForm: { testId: '', studentEmail: '' },
         assignResult: null,
+        broadcastForm: { testId: '' },
+        broadcastResult: null,
         testResults: [],
         showResultsModal: false,
 
@@ -641,6 +643,40 @@ function staffPortal() {
                 this.assignForm.studentEmail = '';
             } catch(e) {
                 this.assignResult = { success: false, message: 'Error: ' + e.message };
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        async broadcastTest() {
+            if (!this.broadcastForm.testId) {
+                this.broadcastResult = { success: false, message: 'Please select a test first.' };
+                return;
+            }
+            
+            if (!confirm('This will send the test code to ALL approved students. Continue?')) {
+                return;
+            }
+            
+            this.loading = true;
+            this.broadcastResult = null;
+            try {
+                const res = await fetch('/api/scholarship/broadcast-test', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        testId: this.broadcastForm.testId
+                    })
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to broadcast');
+                this.broadcastResult = { 
+                    success: true, 
+                    message: `✅ Test broadcasted successfully!\n\n📧 Emails sent: ${data.emailsSent}/${data.totalStudents}\n${data.emailsFailed > 0 ? '⚠️ Failed: ' + data.emailsFailed : ''}`
+                };
+                this.broadcastForm.testId = '';
+            } catch(e) {
+                this.broadcastResult = { success: false, message: 'Error: ' + e.message };
             } finally {
                 this.loading = false;
             }

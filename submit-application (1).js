@@ -1286,6 +1286,119 @@ app.get('/api/scholarship/results/:testId', requireStaff, async (req, res) => {
   }
 });
 
+// GET /api/scholarship/approved-students-count  — get count of approved students for broadcast preview
+app.get('/api/scholarship/approved-students-count', requireStaff, async (req, res) => {
+  try {
+    const snap = await db.collection('admissions').where('status', '==', 'Approved').get();
+    res.json({ success: true, count: snap.size, students: snap.docs.map(doc => ({ email: doc.data().email, name: doc.data().name })) });
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// POST /api/scholarship/broadcast-test  — staff broadcasts test to ALL students at once
+app.post('/api/scholarship/broadcast-test', requireStaff, async (req, res) => {
+  try {
+    const { testId } = req.body;
+    if (!testId) return res.status(400).json({ error: 'testId required.' });
+
+    // Verify test exists
+    const testDoc = await db.collection('scholarship_tests').doc(testId).get();
+    if (!testDoc.exists) return res.status(404).json({ error: 'Test not found.' });
+    const testData = testDoc.data();
+
+    // Get all approved/active students from admissions collection
+    const studentSnap = await db.collection('admissions')
+      .where('status', '==', 'Approved')
+      .get();
+
+    const students = studentSnap.docs.map(doc => ({
+      email: doc.data().email,
+      name: doc.data().name || 'Student'
+    }));
+
+    if (students.length === 0) {
+      return res.status(400).json({ error: 'No approved students found to broadcast to.' });
+    }
+
+    const tokens = [];
+    const emailsSent = [];
+    const emailsFailed = [];
+
+    // Assign a token to each student and send emails in batches
+    for (const student of students) {
+      try {
+        // Generate unique 8-char token
+        const token = (Math.random().toString(36).substring(2, 6) + Math.random().toString(36).substring(2, 6)).toUpperCase();
+
+        // Save token to database
+        await db.collection('scholarship_tokens').doc(token).set({
+          testId,
+          studentEmail: student.email.toLowerCase().trim(),
+          used: false,
+          assignedAt: new Date().toISOString(),
+          assignedBy: req.user.email,
+          broadcastId: testId + '_' + Date.now() // For tracking batch broadcasts
+        });
+
+        tokens.push({ email: student.email, token });
+
+        // Send email with test code
+        await transporter.sendMail({
+          from: `"Era of MathAntics" <${GMAIL_USER}>`,
+          to: student.email,
+          subject: `Your Scholarship Test Code — ${testData.title}`,
+          text: `Hello ${student.name},\n\nYour scholarship test code is: ${token}\n\nTest: ${testData.title}\nDuration: ${testData.durationMinutes} minutes\n\nGo to: scholarship-test.html and enter this code to begin.\n\nThis code is single-use and assigned specifically to you. Do not share it.\n\n— Era of MathAntics`,
+          html: `
+            <div style="font-family: 'Segoe UI', sans-serif; max-width: 520px; margin: auto; background: #f8fafc; border-radius: 16px; overflow: hidden; border: 1px solid #e2e8f0;">
+              <div style="background: linear-gradient(135deg, #1e293b 0%, #1e40af 100%); padding: 32px; text-align: center;">
+                <h1 style="color: white; font-size: 22px; margin: 0; font-style: italic;">Era of <span style="color: #60a5fa;">MathAntics</span></h1>
+                <p style="color: #94a3b8; margin: 6px 0 0; font-size: 13px;">Scholarship Test Access Code</p>
+              </div>
+              <div style="padding: 32px;">
+                <p style="color: #475569; font-size: 15px; margin-bottom: 8px;">Hello <strong>${student.name}</strong>,</p>
+                <p style="color: #475569; font-size: 15px; margin-bottom: 8px;">You have been selected to attempt:</p>
+                <h2 style="color: #1e293b; font-size: 18px; margin: 0 0 24px;">${testData.title}</h2>
+                <div style="background: white; border: 2px dashed #3b82f6; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+                  <p style="color: #64748b; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">Your Test Code</p>
+                  <h1 style="color: #1e40af; font-size: 42px; letter-spacing: 10px; font-family: monospace; margin: 0;">${token}</h1>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; font-size: 13px; color: #64748b; margin-bottom: 24px;">
+                  <tr><td style="padding: 6px 0;">⏱️ Duration</td><td style="font-weight: bold; color: #1e293b;">${testData.durationMinutes} minutes</td></tr>
+                  <tr><td style="padding: 6px 0;">✅ Correct answer</td><td style="font-weight: bold; color: #16a34a;">+${testData.marksCorrect} marks</td></tr>
+                  <tr><td style="padding: 6px 0;">❌ Wrong answer</td><td style="font-weight: bold; color: #dc2626;">-${testData.marksWrong} mark</td></tr>
+                </table>
+                <p style="background: #fef3c7; color: #92400e; border-radius: 8px; padding: 12px 16px; font-size: 13px; margin-bottom: 24px;">
+                  ⚠️ This code is single-use and assigned only to you. Do not share it with other students.
+                </p>
+                <p style="color: #94a3b8; font-size: 12px; text-align: center;">Open the scholarship test page and enter your code to begin the test.</p>
+              </div>
+            </div>
+          `
+        });
+        emailsSent.push(student.email);
+      } catch(emailError) {
+        console.error('Failed to send email to', student.email, ':', emailError.message);
+        emailsFailed.push({ email: student.email, error: emailError.message });
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Test broadcasted to ${emailsSent.length} students`,
+      totalStudents: students.length,
+      emailsSent: emailsSent.length,
+      emailsFailed: emailsFailed.length,
+      failedEmails: emailsFailed,
+      testId: testId,
+      broadcastTime: new Date().toISOString()
+    });
+  } catch(e) {
+    console.error('broadcast-test error:', e);
+    res.status(500).json({ error: 'Failed to broadcast test: ' + e.message });
+  }
+});
+
 // POST /api/scholarship/delete-test  — staff deletes a test
 app.post('/api/scholarship/delete-test', requireStaff, async (req, res) => {
   try {

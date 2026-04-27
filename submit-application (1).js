@@ -20,7 +20,7 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 const twilio = require('twilio');
 const jwt = require('jsonwebtoken');
-const { serialize } = require('cookie');
+const { serialize, parse } = require('cookie');
 
 const stripQuotes = value => {
   if (!value) return '';
@@ -1026,26 +1026,40 @@ app.post('/api/verify-payment', async (req, res) => {
 
 // Helper: require staff session (re-uses JWT cookie from existing auth)
 async function requireStaff(req, res, next) {
-  const superAdminEmails = ['admin@mathantics.com', 'teacher@mathantics.com', 'jay83856@gmail.com', 'crackamubyabhay@gmail.com'];
   try {
-    const cookie = req.headers.cookie || '';
-    const sessionMatch = cookie.match(/session=([^;]+)/);
-    if (!sessionMatch) return res.status(401).json({ error: 'Not authenticated.' });
-    const decoded = jwt.verify(sessionMatch[1], JWT_SECRET);
-    const email = decoded.email.toLowerCase();
-    const isSuper = superAdminEmails.includes(email);
-    const staffSnap = await db.collection('staff').where('email', '==', email).get();
-    if (!isSuper && staffSnap.empty) return res.status(403).json({ error: 'Staff access required.' });
+    // Check if Firebase is initialized
+    if (!db) {
+      console.error('Firebase not initialized in requireStaff middleware');
+      return res.status(500).json({ error: 'Server database not initialized. Check Firebase credentials.' });
+    }
+
+    const cookies = req.headers.cookie ? parse(req.headers.cookie) : {};
+    const sessionCookie = cookies[COOKIE_NAME];
+
+    if (!sessionCookie) return res.status(401).json({ error: 'Not authenticated.' });
+
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    const email = decoded.email ? decoded.email.toLowerCase() : '';
+
+    if (!(await isAuthorizedStaff(email))) {
+      return res.status(403).json({ error: 'Staff access required.' });
+    }
+
     req.user = { email };
-    next();
+    return next();
   } catch(e) {
-    res.status(401).json({ error: 'Unauthorized: ' + e.message });
+    console.error('requireStaff error:', e.message);
+    return res.status(401).json({ error: 'Unauthorized: ' + e.message });
   }
 }
 
 // POST /scholarship/create-test  — staff creates a test
 app.post('/api/scholarship/create-test', requireStaff, async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: 'Server database not initialized. Check Firebase credentials.' });
+    }
+
     const { title, durationMinutes, marksCorrect, marksWrong, questions } = req.body;
     if (!title || !questions || !questions.length) return res.status(400).json({ error: 'Title and questions required.' });
 
@@ -1061,24 +1075,34 @@ app.post('/api/scholarship/create-test', requireStaff, async (req, res) => {
     });
     res.json({ success: true, testId: testRef.id });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    console.error('create-test error:', e);
+    res.status(500).json({ error: 'Failed to create test: ' + e.message });
   }
 });
 
 // GET /api/scholarship/tests  — staff lists all tests
 app.get('/api/scholarship/tests', requireStaff, async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: 'Server database not initialized. Check Firebase credentials.' });
+    }
+
     const snap = await db.collection('scholarship_tests').orderBy('createdAt', 'desc').get();
     const tests = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     res.json({ success: true, tests });
   } catch(e) {
-    res.status(500).json({ error: e.message });
+    console.error('get tests error:', e);
+    res.status(500).json({ error: 'Failed to load tests: ' + e.message });
   }
 });
 
 // POST /api/scholarship/assign-token  — staff assigns test to student + sends email
 app.post('/api/scholarship/assign-token', requireStaff, async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ error: 'Server database not initialized. Check Firebase credentials.' });
+    }
+
     const { testId, studentEmail } = req.body;
     if (!testId || !studentEmail) return res.status(400).json({ error: 'testId and studentEmail required.' });
 
@@ -1141,6 +1165,10 @@ app.post('/api/scholarship/assign-token', requireStaff, async (req, res) => {
 // POST /api/scholarship/validate-token  — student validates token to start test
 app.post('/api/scholarship/validate-token', async (req, res) => {
   try {
+    if (!db) {
+      return res.status(500).json({ success: false, message: 'Server database not initialized. Check Firebase credentials.' });
+    }
+
     const { token } = req.body;
     if (!token) return res.status(400).json({ success: false, message: 'Token required.' });
 
@@ -1179,7 +1207,8 @@ app.post('/api/scholarship/validate-token', async (req, res) => {
       questions: shuffled
     });
   } catch(e) {
-    res.status(500).json({ success: false, message: 'Server error.' });
+    console.error('validate-token error:', e);
+    res.status(500).json({ success: false, message: 'Server error: ' + e.message });
   }
 });
 

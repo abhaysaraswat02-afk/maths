@@ -626,7 +626,14 @@ function staffPortal() {
         async loadScholarshipTests() {
             try {
                 const res = await fetch('/api/scholarship/tests');
-                const data = await res.json();
+                const contentType = res.headers.get("content-type");
+                let data;
+                if (contentType && contentType.indexOf("application/json") !== -1) {
+                    data = await res.json();
+                } else {
+                    const text = await res.text();
+                    throw new Error("Server returned HTML instead of JSON. Check backend routing.");
+                }
                 if (data.success) this.scholarshipTests = data.tests;
             } catch(e) {
                 console.error('Failed to load scholarship tests', e);

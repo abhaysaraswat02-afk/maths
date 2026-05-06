@@ -1,394 +1,576 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-950">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instructor Panel | Era of MathAntics</title>
+    <title>Teaching Studio | Era of MathAntics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
     <style>
-        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
-        #instructor-meet iframe { border-radius: 1rem; }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        :root {
+            --bg:#0b0d12;--surface:#111420;--surface2:#181c28;--surface3:#1e2235;
+            --border:rgba(255,255,255,0.07);--blue:#3b82f6;--blue2:#1d4ed8;
+            --gold:#f59e0b;--green:#22c55e;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;
+        }
+        *{box-sizing:border-box;margin:0;padding:0}
+        html,body{height:100%;overflow:hidden}
+        body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column}
+        h1,h2,h3,h4{font-family:'Syne',sans-serif}
+
+        /* BATCH OVERLAY */
+        .overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;padding:24px}
+        .overlay-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:36px;max-width:460px;width:100%;box-shadow:0 40px 100px rgba(0,0,0,0.5)}
+        .overlay-box h2{font-size:1.4rem;margin-bottom:6px}
+        .overlay-box p{color:var(--muted);font-size:0.85rem;margin-bottom:24px}
+
+        /* BATCH LIST */
+        .batch-item{display:flex;align-items:center;gap:12px;padding:14px;border-radius:14px;border:2px solid var(--border);cursor:pointer;transition:all 0.2s;margin-bottom:8px}
+        .batch-item:hover{border-color:var(--blue);background:rgba(59,130,246,0.05)}
+        .batch-item.selected{border-color:var(--blue);background:rgba(59,130,246,0.1)}
+        .batch-icon{width:40px;height:40px;border-radius:12px;background:var(--blue2);display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:800;color:#fff;flex-shrink:0}
+        .launch-btn{width:100%;padding:16px;border-radius:14px;border:none;background:var(--blue);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:background 0.2s;margin-top:20px;display:flex;align-items:center;justify-content:center;gap:10px}
+        .launch-btn:hover{background:var(--blue2)}
+        .launch-btn:disabled{background:var(--surface3);color:var(--muted);cursor:not-allowed}
+
+        /* HEADER */
+        .header{height:56px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
+        .header-left{display:flex;align-items:center;gap:14px}
+        .live-badge{background:var(--red);color:#fff;font-family:'Syne',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;padding:3px 10px;border-radius:100px;animation:pulse 1.5s infinite;display:flex;align-items:center;gap:5px}
+        .live-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:#fff}
+        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+        .timer{font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;color:var(--green);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2);padding:5px 12px;border-radius:8px}
+        .viewer-pill{display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--muted)}
+
+        /* MAIN */
+        .main{flex:1;display:flex;overflow:hidden;gap:0}
+
+        /* VIDEO */
+        .video-col{flex:1;display:flex;flex-direction:column;background:#000;position:relative}
+        #jitsi-container{flex:1;width:100%}
+
+        /* TOOLBAR */
+        .toolbar{background:var(--surface);border-top:1px solid var(--border);padding:12px 20px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+        .tool-group{display:flex;gap:8px;align-items:center}
+        .tool-btn{display:flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:0.8rem;font-weight:600;cursor:pointer;transition:all 0.2s}
+        .tool-btn:hover{border-color:var(--blue);color:var(--blue)}
+        .tool-btn.danger{border-color:rgba(239,68,68,0.3);color:var(--red)}
+        .tool-btn.danger:hover{background:rgba(239,68,68,0.1)}
+        .tool-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+        .tool-btn.primary:hover{background:var(--blue2)}
+
+        /* SIDEBAR */
+        .sidebar{width:360px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0}
+        .sidebar-tabs{display:flex;border-bottom:1px solid var(--border);flex-shrink:0}
+        .stab{flex:1;padding:11px 6px;font-family:'Syne',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:all 0.2s;border-bottom:2px solid transparent}
+        .stab.active{color:var(--blue);border-bottom-color:var(--blue)}
+        .tab-content{display:none;flex:1;overflow:hidden;flex-direction:column}
+        .tab-content.active{display:flex}
+
+        /* CHAT */
+        .chat-area{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+        .chat-area::-webkit-scrollbar{width:3px}
+        .chat-area::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:2px}
+        .msg{display:flex;gap:8px;animation:fadeUp 0.25s ease}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+        .msg-avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.7rem}
+        .msg-body{flex:1}
+        .msg-name{font-size:0.7rem;font-weight:700;margin-bottom:3px;display:flex;align-items:center;gap:6px}
+        .msg-text{font-size:0.82rem;color:var(--text);background:var(--surface2);padding:8px 12px;border-radius:0 12px 12px 12px;line-height:1.4;word-break:break-word}
+        .msg.hand .msg-text{border:1px solid rgba(245,158,11,0.4);background:rgba(245,158,11,0.05)}
+        .hand-alert{background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.3);border-radius:10px;padding:10px 14px;font-size:0.8rem;color:var(--gold);display:flex;align-items:center;justify-content:space-between;gap:8px}
+        .hand-dismiss{font-size:0.7rem;background:rgba(245,158,11,0.2);border:none;color:var(--gold);padding:4px 10px;border-radius:6px;cursor:pointer}
+
+        /* ANNOUNCE */
+        .chat-footer{padding:12px;border-top:1px solid var(--border);flex-shrink:0}
+        .announce-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:0.82rem;color:var(--text);outline:none;font-family:'DM Sans',sans-serif;transition:border-color 0.2s}
+        .announce-input:focus{border-color:var(--blue)}
+        .announce-row{display:flex;gap:8px;margin-top:8px}
+        .send-btn{flex:1;padding:9px;border-radius:10px;background:var(--blue);border:none;color:#fff;font-weight:700;font-size:0.82rem;cursor:pointer;transition:background 0.2s}
+        .send-btn:hover{background:var(--blue2)}
+        .pin-btn{padding:9px 14px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);color:var(--gold);font-size:0.82rem;cursor:pointer;transition:all 0.2s}
+        .pin-btn:hover{border-color:var(--gold)}
+
+        /* STUDENTS */
+        .student-panel{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:6px}
+        .student-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border)}
+        .s-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:0.78rem;flex-shrink:0}
+        .s-info{flex:1}
+        .s-name{font-size:0.82rem;font-weight:600}
+        .s-email{font-size:0.7rem;color:var(--muted)}
+        .s-hand{color:var(--gold)}
+        .online-badge{width:8px;height:8px;border-radius:50%;background:var(--green)}
+
+        /* POLL CREATOR */
+        .poll-creator{padding:16px;flex:1;overflow-y:auto}
+        .poll-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:0.82rem;color:var(--text);outline:none;font-family:'DM Sans',sans-serif;transition:border-color 0.2s;margin-bottom:8px}
+        .poll-input:focus{border-color:var(--blue)}
+        .poll-opt-input{display:flex;gap:8px;margin-bottom:8px;align-items:center}
+        .opt-label{font-family:'Syne',sans-serif;font-size:0.7rem;font-weight:700;color:var(--muted);min-width:20px}
+        .add-opt-btn{display:flex;align-items:center;gap:6px;font-size:0.78rem;color:var(--blue);background:transparent;border:none;cursor:pointer;padding:6px 0;font-weight:600}
+        .launch-poll-btn{width:100%;padding:12px;border-radius:10px;background:var(--blue);border:none;color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:0.85rem;cursor:pointer;margin-top:12px;transition:background 0.2s}
+        .launch-poll-btn:hover{background:var(--blue2)}
+        .end-poll-btn{width:100%;padding:10px;border-radius:10px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red);font-family:'Syne',sans-serif;font-weight:700;font-size:0.82rem;cursor:pointer;margin-top:8px;transition:all 0.2s}
+        .end-poll-btn:hover{background:rgba(239,68,68,0.2)}
+
+        /* DPP UPLOADER */
+        .dpp-creator{padding:16px;flex:1;overflow-y:auto}
+        .upload-zone{border:2px dashed var(--border);border-radius:14px;padding:28px;text-align:center;color:var(--muted);cursor:pointer;transition:all 0.2s;margin-bottom:12px}
+        .upload-zone:hover{border-color:var(--blue);color:var(--blue)}
+        .upload-zone i{font-size:2rem;margin-bottom:8px;display:block}
+        .upload-zone p{font-size:0.82rem}
+
+        /* TOAST */
+        .toast-wrap{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:999;display:flex;flex-direction:column;align-items:center;gap:8px;pointer-events:none}
+        .toast{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:10px 18px;font-size:0.82rem;font-weight:600;color:var(--text);animation:toastIn 0.3s ease;box-shadow:0 8px 30px rgba(0,0,0,0.4)}
+        @keyframes toastIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+        .toast.green{border-color:rgba(34,197,94,0.4);color:var(--green)}
+        .toast.red{border-color:rgba(239,68,68,0.4);color:var(--red)}
     </style>
 </head>
-<body class="h-full text-white flex flex-col overflow-hidden">
-    <!-- Batch Selection Overlay -->
-    <div id="batch-overlay" class="fixed inset-0 z-[100] bg-gray-950 flex items-center justify-center p-4">
-        <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl max-w-md w-full shadow-2xl">
-            <div class="flex items-center space-x-3 mb-6">
-                <div class="h-10 w-10 bg-blue-600 rounded-xl flex items-center justify-center"><i class="fas fa-video"></i></div>
-                <h2 class="text-xl font-bold">Launch Live Studio</h2>
+<body>
+
+<!-- BATCH OVERLAY -->
+<div class="overlay" id="batch-overlay">
+    <div class="overlay-box">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px">
+            <div style="width:44px;height:44px;background:var(--blue);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.2rem">🎙️</div>
+            <div>
+                <h2>Launch Teaching Studio</h2>
+                <p style="margin-bottom:0">Select a batch to begin live session</p>
             </div>
-            <p class="text-gray-400 text-sm mb-6">Which batch are you teaching today? Students in the selected batch will be notified.</p>
-            <div id="batch-list" class="space-y-2 mb-8 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                <div class="animate-pulse text-gray-700 text-xs">Fetching active batches...</div>
+        </div>
+        <div id="batch-list"><div style="color:var(--muted);font-size:0.82rem">Loading batches…</div></div>
+        <button class="launch-btn" id="launch-btn" disabled onclick="startSession()">
+            <i class="fas fa-video"></i> Go Live
+        </button>
+    </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="header-left">
+        <a href="staff.html" style="color:var(--muted);font-size:0.82rem;text-decoration:none;display:flex;align-items:center;gap:6px">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem" id="batch-header-name">Teaching Studio</div>
+            <div class="viewer-pill"><i class="fas fa-circle" style="color:var(--green);font-size:0.5rem"></i> <span id="viewer-count">0</span> students watching</div>
+        </div>
+        <div class="live-badge">LIVE</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+        <div class="timer" id="class-timer">00:00</div>
+        <button class="tool-btn danger" onclick="confirmEndSession()">
+            <i class="fas fa-stop-circle"></i> End Session
+        </button>
+    </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+    <!-- VIDEO COL -->
+    <div class="video-col">
+        <div id="jitsi-container" style="flex:1;width:100%"></div>
+
+        <!-- TOOLBAR -->
+        <div class="toolbar">
+            <div class="tool-group">
+                <button class="tool-btn" onclick="document.getElementById('dpp-file-input').click()">
+                    <i class="fas fa-file-upload"></i> Share DPP
+                </button>
+                <input type="file" id="dpp-file-input" style="display:none" accept=".pdf,.doc,.docx" onchange="uploadDPP(this)">
+                <button class="tool-btn" onclick="switchTab('poll',document.querySelectorAll('.stab')[2])">
+                    <i class="fas fa-poll-h"></i> Create Poll
+                </button>
+                <button class="tool-btn" onclick="shareYouTubeLink()">
+                    <i class="fab fa-youtube"></i> Share Video
+                </button>
             </div>
-            <button id="launch-btn" disabled onclick="startLiveSession()"
-                class="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-800 disabled:text-gray-600 text-white font-bold py-4 rounded-2xl transition-all shadow-lg shadow-blue-900/20">
-                INITIALIZING...
-            </button>
+            <div class="tool-group">
+                <button class="tool-btn primary" onclick="pinAnnouncement()">
+                    <i class="fas fa-thumbtack"></i> Pin Message
+                </button>
+                <button class="tool-btn danger" onclick="confirmEndSession()">
+                    <i class="fas fa-stop-circle"></i> End Session
+                </button>
+            </div>
         </div>
     </div>
 
-    <!-- Header -->
-    <header class="bg-gray-900 border-b border-gray-800 px-6 py-4 flex justify-between items-center">
-        <div class="flex items-center space-x-4">
-            <div class="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                <i class="fas fa-chalkboard-teacher text-xl"></i>
-            </div>
-            <div>
-                <h1 class="font-bold text-lg leading-tight">Teaching Studio</h1>
-                <p id="batch-info" class="text-xs text-gray-500">Live Session Dashboard</p>
-            </div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-tabs">
+            <button class="stab active" onclick="switchTab('chat',this)"><i class="fas fa-comments"></i> Chat</button>
+            <button class="stab" onclick="switchTab('students',this)"><i class="fas fa-users"></i> Students</button>
+            <button class="stab" onclick="switchTab('poll',this)"><i class="fas fa-poll"></i> Poll</button>
+            <button class="stab" onclick="switchTab('dpp',this)"><i class="fas fa-tasks"></i> DPP</button>
         </div>
-        <div class="flex items-center space-x-4">
-            <div class="flex items-center bg-gray-800 rounded-full px-3 py-1 border border-gray-700">
-                <div class="h-2 w-2 bg-green-500 rounded-full mr-2"></div>
-                <span class="text-xs text-gray-300">Server Stable</span>
-            </div>
-            <button onclick="endSession()" class="text-sm text-gray-400 hover:text-white transition hover:text-red-400">Exit Studio</button>
-        </div>
-    </header>
 
-    <main class="flex-1 flex p-4 gap-4 overflow-hidden">
-        <!-- Main Stream Control -->
-        <div class="flex-1 flex flex-col space-y-4">
-            <div id="instructor-meet" class="flex-1 bg-black rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
-                <!-- Jitsi will load here -->
+        <!-- HAND RAISE ALERTS -->
+        <div id="hand-alerts" style="padding:8px 12px;display:flex;flex-direction:column;gap:6px"></div>
+
+        <!-- CHAT -->
+        <div class="tab-content active" id="tab-chat">
+            <div class="chat-area" id="chat-messages"></div>
+        </div>
+
+        <!-- STUDENTS -->
+        <div class="tab-content" id="tab-students">
+            <div style="padding:12px 14px 6px;font-family:'Syne',sans-serif;font-size:0.68rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)">
+                Online Now — <span id="online-count">0</span>
             </div>
-            <!-- Teacher Toolbox -->
-            <div class="bg-gray-900 p-4 rounded-xl border border-gray-800 flex justify-between items-center">
-                <div class="flex space-x-3">
-                    <button onclick="document.getElementById('pdf-upload').click()" class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-sm font-medium transition flex items-center"><i class="fas fa-file-upload mr-2"></i> Share PDF</button>
-                    <input type="file" id="pdf-upload" class="hidden" accept=".pdf,.doc,.docx" onchange="uploadLiveResource(this)">
-                    <button class="bg-gray-800 hover:bg-gray-700 p-3 rounded-lg text-sm font-medium transition flex items-center"><i class="fas fa-poll-h mr-2"></i> Create Poll</button>
-                </div>
-                <button onclick="endSession()" class="bg-red-600/10 text-red-500 hover:bg-red-600 hover:text-white px-6 py-2 rounded-lg font-bold transition">END SESSION</button>
+            <div class="student-panel" id="student-list">
+                <div style="color:var(--muted);font-size:0.82rem;text-align:center;padding:20px">Loading students…</div>
             </div>
         </div>
 
-        <!-- Moderation Sidebar -->
-        <aside class="w-96 flex flex-col space-y-4">
-            <!-- Student Chat -->
-            <div class="flex-1 bg-gray-900 rounded-xl border border-gray-800 flex flex-col overflow-hidden">
-                <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/50">
-                    <h3 class="font-bold text-sm tracking-wide">STUDENT INTERACTION</h3>
-                    <span class="text-[10px] bg-blue-600/20 text-blue-400 px-2 py-0.5 rounded uppercase font-bold">Real-time</span>
+        <!-- POLL CREATOR -->
+        <div class="tab-content" id="tab-poll">
+            <div class="poll-creator" id="poll-creator-area">
+                <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px;font-size:0.9rem">Create Live Poll</div>
+                <textarea class="poll-input" id="poll-question" rows="2" placeholder="Type your question…"></textarea>
+                <div id="poll-options-list">
+                    <div class="poll-opt-input"><span class="opt-label">A</span><input class="poll-input" style="margin:0" placeholder="Option A…"></div>
+                    <div class="poll-opt-input"><span class="opt-label">B</span><input class="poll-input" style="margin:0" placeholder="Option B…"></div>
+                    <div class="poll-opt-input"><span class="opt-label">C</span><input class="poll-input" style="margin:0" placeholder="Option C…"></div>
+                    <div class="poll-opt-input"><span class="opt-label">D</span><input class="poll-input" style="margin:0" placeholder="Option D…"></div>
                 </div>
-                <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 text-sm scrollbar-thin scrollbar-thumb-gray-800">
-                    <!-- Messages -->
-                </div>
-                <div class="p-3 bg-gray-950">
-                    <form id="chat-form" class="flex space-x-2">
-                        <input type="text" id="chat-input" placeholder="Announce to class..." 
-                            class="flex-1 bg-gray-900 border border-gray-800 rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
-                        <button class="bg-blue-600 px-4 py-2 rounded-lg"><i class="fas fa-paper-plane text-xs"></i></button>
-                    </form>
-                </div>
+                <button class="launch-poll-btn" onclick="launchPoll()"><i class="fas fa-broadcast-tower"></i> Launch Poll</button>
+                <button class="end-poll-btn" id="end-poll-btn" style="display:none" onclick="endPoll()"><i class="fas fa-stop"></i> End Poll</button>
             </div>
-        </aside>
-    </main>
+        </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",
-            authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
-            projectId: "era-of-mathantics-8b6d1",
-            storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
-            messagingSenderId: "521238168559",
-            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
-            databaseURL: "https://era-of-mathantics-8b6d1-default-rtdb.firebaseio.com"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const rtdb = firebase.database();
-        const auth = firebase.auth();
+        <!-- DPP MANAGER -->
+        <div class="tab-content" id="tab-dpp">
+            <div class="dpp-creator">
+                <div style="font-family:'Syne',sans-serif;font-weight:700;margin-bottom:14px;font-size:0.9rem">Share DPP / Notes</div>
+                <div class="upload-zone" onclick="document.getElementById('dpp-file-input2').click()">
+                    <input type="file" id="dpp-file-input2" style="display:none" accept=".pdf,.doc,.docx" onchange="uploadDPP(this)">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Tap to upload PDF / Word</p>
+                    <p style="font-size:0.7rem;margin-top:4px">or drag and drop</p>
+                </div>
+                <input class="poll-input" id="dpp-title" placeholder="DPP Title (e.g. Trigonometry DPP #3)">
+                <input class="poll-input" id="dpp-topic" placeholder="Topic (e.g. Sin/Cos identities)">
+                <input class="poll-input" id="dpp-url" placeholder="Or paste a Google Drive / URL link">
+                <button class="launch-poll-btn" onclick="shareDPPManual()"><i class="fas fa-share"></i> Share with Students</button>
+                <div id="dpp-shared-list" style="margin-top:16px;display:flex;flex-direction:column;gap:8px"></div>
+            </div>
+        </div>
 
-        let currentUser = null;
-        let selectedBatchId = null;
-        let selectedBatchName = "";
-        let jitsiApi = null;
-        let isAuthReady = false;
+        <!-- CHAT FOOTER -->
+        <div class="chat-footer" id="chat-footer-area">
+            <textarea class="announce-input" id="announce-input" rows="2" placeholder="Announce to class… (Shift+Enter for new line)"></textarea>
+            <div class="announce-row">
+                <button class="send-btn" onclick="sendAnnouncement()"><i class="fas fa-bullhorn"></i> Announce</button>
+                <button class="pin-btn" onclick="sendPinned()"><i class="fas fa-thumbtack"></i></button>
+            </div>
+        </div>
+    </aside>
+</div>
 
-        const cloudinaryConfig = {
-            cloudName: 'dcxn3j3n6',
-            uploadPreset: 'eraofmathantics'
-        };
+<div class="toast-wrap" id="toast-wrap"></div>
 
-        async function init() {
-            updateLaunchButtonState();
-            // Load batches immediately to avoid hanging UI
-            loadBatches();
+<script>
+const firebaseConfig={apiKey:"AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",authDomain:"era-of-mathantics-8b6d1.firebaseapp.com",projectId:"era-of-mathantics-8b6d1",storageBucket:"era-of-mathantics-8b6d1.firebasestorage.app",messagingSenderId:"521238168559",appId:"1:521238168559:web:83b3c06de5b28b1eac6c1a"};
+firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
+const auth=firebase.auth();
+let storage;
+try{storage=firebase.storage();}catch(e){}
 
-            try {
-                // 1. Check Server Session
-                const res = await fetch('/api/check-auth').catch(() => { throw new Error("Server unreachable"); });
-                if (!res.ok) throw new Error("Failed to verify staff session");
-                
-                const data = await res.json();
-                if (!data.authenticated || data.role !== 'staff') {
-                    window.location.href = '/index.html';
-                    return;
-                }
-                currentUser = data;
-                updateLaunchButtonState();
+let currentUser=null,selectedBatch=null,sessionDocId=null,classStartTime=null,activePollId=null;
+const COLORS=['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#22c55e','#06b6d4','#f97316'];
+function userColor(n){let h=0;for(let c of(n||'U'))h=c.charCodeAt(0)+h*31;return COLORS[Math.abs(h)%COLORS.length];}
+function userInitial(n){return(n||'?').charAt(0).toUpperCase();}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-                // 2. Initialize Firebase SDK Session
-                try {
-                    // Only sign in if not already authenticated
-                    if (!auth.currentUser) {
-                        await auth.signInAnonymously();
-                    }
-                    isAuthReady = true;
-                    console.log("Firebase Session Established:", auth.currentUser.uid);
-                } catch (fbErr) {
-                    console.error("Firebase Auth Error:", fbErr);
-                    if (fbErr.code === 'auth/operation-not-allowed') {
-                        throw new Error("Anonymous Auth is disabled in Firebase Console.");
-                    } else if (fbErr.code === 'auth/unauthorized-domain') {
-                        throw new Error("This domain is not whitelisted in Firebase Console.");
-                    } else if (fbErr.message.includes("signup-are-blocked")) {
-                        throw new Error("User sign-up is disabled. In Firebase Console, go to Authentication > Settings > User actions and check 'Enable create (sign-up)'.");
-                    } else {
-                        throw new Error("Firebase Auth: " + fbErr.message);
-                    }
-                }
-            } catch (err) {
-                console.error("Studio Initialization Failed:", err);
-                alert("Connection Error: " + err.message);
-            }
-            updateLaunchButtonState();
-        }
+async function init(){
+    try{
+        const res=await fetch('/api/check-auth');const data=await res.json();
+        if(!data.authenticated||data.role!=='staff'){window.location.href='index.html';return;}
+        currentUser=data;
+    }catch(e){window.location.href='index.html';return;}
+    try{await auth.signInAnonymously();}catch(e){}
+    loadBatches();
+}
 
-        async function loadBatches() {
-            const list = document.getElementById('batch-list');
-            try {
-                const response = await fetch('/api/get-batches', { signal: AbortSignal.timeout(10000) });
-                if (!response.ok) throw new Error("API returned error status");
-                
-                const batches = await response.json();
-                list.innerHTML = ''; // Clear the pulsing "Fetching" text
-
-                if (!Array.isArray(batches) || batches.length === 0) {
-                    list.innerHTML = `
-                        <div class="text-center py-8 text-gray-500">
-                            <i class="fas fa-folder-open text-3xl mb-3 block"></i>
-                            <p class="text-sm">No batches found.</p>
-                            <p class="text-[10px] mt-1">Check if batches are created in Manage Batches.</p>
-                            <button onclick="loadBatches()" class="mt-4 text-blue-500 text-xs hover:underline">Retry</button>
-                        </div>`;
-                    return;
-                }
-
-                batches.forEach(batch => {
-                    const div = document.createElement('div');
-                    div.className = "p-4 bg-gray-800/50 border border-gray-700 rounded-xl cursor-pointer hover:border-blue-500 transition-all group animate-fade-in";
-                    div.onclick = () => selectBatch(batch.id, batch.name, div);
-                    div.innerHTML = `
-                        <div class="flex justify-between items-center">
-                            <div>
-                                <p class="font-bold text-sm group-hover:text-blue-400 transition-colors">${batch.name}</p>
-                                <p class="text-[10px] text-gray-500 uppercase tracking-wider">Class ${batch.classLevel} • ${batch.schedule}</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-700 group-hover:text-blue-500 text-xs"></i>
-                        </div>
-                    `;
-                    list.appendChild(div);
-                });
-            } catch (error) {
-                console.error("Error fetching batches:", error);
-                list.innerHTML = `
-                    <div class="p-4 bg-red-500/10 border border-red-500/20 text-red-500 text-xs rounded-xl text-center">
-                        <i class="fas fa-exclamation-circle mb-2 block text-lg"></i>
-                        <strong>Unable to load batches</strong><br>
-                        <span class="opacity-70">${error.message === 'API returned error status' ? 'Server Error (500). Check Vercel Logs.' : error.message}</span><br>
-                        <button onclick="loadBatches()" class="mt-3 bg-red-500 text-white px-4 py-1 rounded-lg font-bold">Retry Connection</button>
-                    </div>`;
-            }
-        }
-
-        function selectBatch(id, name, element) {
-            selectedBatchId = id;
-            selectedBatchName = name;
-            document.querySelectorAll('#batch-list > div').forEach(el => el.classList.remove('border-blue-500', 'bg-blue-600/10'));
-            element.classList.add('border-blue-500', 'bg-blue-600/10');
-            updateLaunchButtonState(); // Check button state after batch is selected
-        }
-
-        function updateLaunchButtonState() {
-            const launchBtn = document.getElementById('launch-btn');
-            const isReady = !!(selectedBatchId && isAuthReady && currentUser);
-
-            launchBtn.disabled = !isReady;
-
-            if (!currentUser) {
-                launchBtn.innerText = "VERIFYING ACCESS...";
-            } else if (!isAuthReady) {
-                launchBtn.innerText = "CONNECTING TO FIREBASE...";
-            } else if (!selectedBatchId) {
-                launchBtn.innerText = "SELECT A BATCH ABOVE";
-            } else {
-                launchBtn.innerText = "GO LIVE NOW";
-            }
-        }
-
-        async function startLiveSession() {
-            const btn = document.getElementById('launch-btn');
-            const originalText = btn.innerText;
-
-            if (btn.disabled) return;
-
-            try {
-                btn.disabled = true;
-                btn.innerText = "STARTING STUDIO...";
-
-                // Signal the Live state to students in RTDB
-                await rtdb.ref(`liveSessions/${selectedBatchId}`).set({
-                    isLive: true,
-                    classTitle: selectedBatchName,
-                    startedAt: firebase.database.ServerValue.TIMESTAMP,
-                    instructor: currentUser.email || 'Instructor'
-                });
-
-                document.getElementById('batch-overlay').style.display = 'none';
-                document.getElementById('batch-info').innerText = `Batch: ${selectedBatchName} | Active Instructor: ${currentUser.email}`;
-
-                launchInstructorMedia();
-                initStaffChat();
-            } catch (error) {
-                console.error("Failed to start session:", error);
-                alert("Error starting live session: " + error.message);
-                btn.disabled = false;
-                btn.innerText = originalText;
-            }
-        }
-
-        async function endSession() {
-            if (!selectedBatchId) { window.location.href = '/staff.html'; return; }
-            if (confirm("Are you sure you want to end the session? This will remove the LIVE status for students.")) {
-                await rtdb.ref(`liveSessions/${selectedBatchId}`).remove();
-                if (jitsiApi) jitsiApi.dispose();
-                window.location.href = '/staff.html';
-            }
-        }
-
-        function launchInstructorMedia() {
-            const domain = 'meet.jit.si';
-            const options = {
-                roomName: `EraOfMathAntics_Live_${selectedBatchId}`,
-                width: '100%',
-                height: '100%',
-                parentNode: document.querySelector('#instructor-meet'),
-                configOverwrite: {
-                    startWithAudioMuted: false,
-                    disableModeratorIndicator: false,
-                    makeJsonRpcRequests: true,
-                    prejoinPageEnabled: false
-                },
-                interfaceConfigOverwrite: {
-                    TOOLBAR_BUTTONS: [
-                        'microphone', 'camera', 'closedcaptions', 'desktop', 'fullscreen',
-                        'fms', 'hangup', 'profile', 'chat', 'recording',
-                        'livestreaming', 'etherpad', 'sharedvideo', 'settings', 'raisehand',
-                        'videoquality', 'filmstrip', 'invite', 'feedback', 'stats', 'shortcuts',
-                        'tileview', 'videobackgroundblur', 'download', 'help', 'mute-everyone',
-                        'security'
-                    ],
-                },
-                userInfo: { email: currentUser.email, displayName: "Instructor" }
+async function loadBatches(){
+    const list=document.getElementById('batch-list');
+    try{
+        const snap=await db.collection('batches').get();
+        if(snap.empty){list.innerHTML='<div style="color:var(--muted);font-size:0.82rem">No batches found. Create one in Staff Portal.</div>';return;}
+        list.innerHTML='';
+        snap.forEach(doc=>{
+            const d=doc.data();
+            const item=document.createElement('div');
+            item.className='batch-item';
+            item.dataset.id=doc.id;
+            item.innerHTML=`<div class="batch-icon">${(d.name||'B').charAt(0)}</div><div><div style="font-weight:600;font-size:0.88rem">${esc(d.name||'Batch')}</div><div style="font-size:0.72rem;color:var(--muted)">${esc(d.grade||'')} · ${esc(d.subject||'Mathematics')}</div></div>`;
+            item.onclick=()=>{
+                document.querySelectorAll('.batch-item').forEach(i=>i.classList.remove('selected'));
+                item.classList.add('selected');
+                selectedBatch={id:doc.id,...d};
+                document.getElementById('launch-btn').disabled=false;
             };
-            jitsiApi = new JitsiMeetExternalAPI(domain, options);
-        }
+            list.appendChild(item);
+        });
+    }catch(e){list.innerHTML='<div style="color:var(--muted);font-size:0.82rem">Error loading batches.</div>';}
+}
 
-        async function uploadLiveResource(input) {
-            const file = input.files[0];
-            if (!file || !selectedBatchId) return;
+async function startSession(){
+    if(!selectedBatch)return;
+    document.getElementById('batch-overlay').style.display='none';
+    document.getElementById('batch-header-name').textContent=selectedBatch.name||'Live Session';
+    // Mark class live in Firestore
+    const ref=await db.collection('live_sessions').add({
+        batchId:selectedBatch.id,batchName:selectedBatch.name,
+        startedAt:firebase.firestore.FieldValue.serverTimestamp(),
+        active:true,teacher:currentUser.name||currentUser.email,classTitle:selectedBatch.name
+    });
+    sessionDocId=ref.id;
+    classStartTime=Date.now();
+    startTimer();
+    startJitsi();
+    listenChat();
+    listenViewers();
+    loadSharedDPP();
+}
 
-            try {
-                const formData = new FormData();
-                formData.append('file', file);
-                formData.append('upload_preset', cloudinaryConfig.uploadPreset);
+function startJitsi(){
+    const name=currentUser.name||currentUser.email.split('@')[0]+' (Teacher)';
+    try{
+        new JitsiMeetExternalAPI('meet.jit.si',{
+            roomName:`EraOfMathAntics_Live_${selectedBatch.id}`,
+            width:'100%',height:'100%',
+            parentNode:document.getElementById('jitsi-container'),
+            configOverwrite:{startWithAudioMuted:false,startWithVideoMuted:false,enableWelcomePage:false,prejoinPageEnabled:false},
+            interfaceConfigOverwrite:{TOOLBAR_BUTTONS:['microphone','camera','desktop','fullscreen','hangup','chat','raisehand','tileview','videoquality','filmstrip'],MOBILE_APP_PROMO:false,SHOW_JITSI_WATERMARK:false},
+            userInfo:{email:currentUser.email,displayName:name}
+        });
+    }catch(e){showToast('Jitsi failed to load','red');}
+}
 
-                // UI Feedback
-                const btn = document.querySelector('button[onclick*="pdf-upload"]');
-                const originalHTML = btn.innerHTML;
-                btn.innerHTML = `<i class="fas fa-spinner fa-spin mr-2"></i> Uploading...`;
-                btn.disabled = true;
+function startTimer(){
+    setInterval(()=>{
+        const el=Math.floor((Date.now()-classStartTime)/1000);
+        const h=Math.floor(el/3600),m=Math.floor((el%3600)/60),s=el%60;
+        document.getElementById('class-timer').textContent=(h>0?String(h).padStart(2,'0')+':':'')+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    },1000);
+}
 
-                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryConfig.cloudName}/upload`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) throw new Error("Cloudinary upload failed");
-                const data = await response.json();
-
-                // Save link to Firestore (Metadata only, saves space!)
-                await db.collection('live_resources').add({
-                    batchId: selectedBatchId,
-                    title: file.name,
-                    url: data.secure_url,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
-
-                alert("Resource shared successfully!");
-                btn.innerHTML = originalHTML;
-                btn.disabled = false;
-            } catch (error) {
-                alert("Failed to share: " + error.message);
-            }
-        }
-
-        function initStaffChat() {
-            const chatBox = document.getElementById('chat-box');
-            const chatForm = document.getElementById('chat-form');
-            const chatInput = document.getElementById('chat-input');
-
-            db.collection('live_chats').doc(selectedBatchId).collection('messages')
-                .orderBy('timestamp', 'asc')
-                .limitToLast(100)
-                .onSnapshot(snapshot => {
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === 'added') {
-                            const msg = change.doc.data();
-                            const isStaff = msg.email === currentUser.email;
-                            const div = document.createElement('div');
-                            div.className = `p-2 rounded-lg ${isStaff ? 'bg-blue-600/10 border border-blue-600/20' : 'bg-gray-800'}`;
-                            div.innerHTML = `
-                                <div class="flex justify-between items-center mb-1">
-                                    <span class="font-bold text-[10px] text-blue-400 uppercase">${msg.email.split('@')[0]}</span>
-                                </div>
-                                <p class="text-gray-300 leading-relaxed">${msg.text}</p>
-                            `;
-                            chatBox.appendChild(div);
-                            chatBox.scrollTop = chatBox.scrollHeight;
-                        }
-                    });
-                });
-
-            chatForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const text = chatInput.value.trim();
-                if (!text) return;
-                chatInput.value = '';
-                await db.collection('live_chats').doc(selectedBatchId).collection('messages').add({
-                    text: text,
-                    email: currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+function listenViewers(){
+    db.collection('live_viewers').doc(selectedBatch.id).collection('active')
+        .onSnapshot(snap=>{
+            document.getElementById('viewer-count').textContent=snap.size;
+            document.getElementById('online-count').textContent=snap.size;
+            const list=document.getElementById('student-list');
+            list.innerHTML='';
+            snap.forEach(doc=>{
+                const d=doc.data();
+                const color=userColor(d.name);
+                const row=document.createElement('div');
+                row.className='student-row';
+                row.innerHTML=`<div class="s-avatar" style="background:${color}20;color:${color}">${userInitial(d.name)}</div><div class="s-info"><div class="s-name">${esc(d.name||'Student')}</div></div><div class="online-badge"></div>`;
+                list.appendChild(row);
             });
+        });
+}
+
+function listenChat(){
+    db.collection('live_chats').doc(selectedBatch.id).collection('messages')
+        .orderBy('timestamp','asc').limitToLast(100)
+        .onSnapshot(snap=>{
+            snap.docChanges().forEach(ch=>{
+                if(ch.type==='added') renderMessage(ch.doc.data());
+            });
+        });
+}
+
+function renderMessage(msg){
+    const box=document.getElementById('chat-messages');
+    const isTeacher=msg.role==='staff';
+    const isHand=msg.handRaise;
+    const name=msg.name||msg.email?.split('@')[0]||'Student';
+    const color=userColor(name);
+    if(isHand){
+        // Also show alert
+        const alerts=document.getElementById('hand-alerts');
+        const al=document.createElement('div');al.className='hand-alert';
+        al.innerHTML=`<span>✋ <strong>${esc(name)}</strong> raised their hand</span><button class="hand-dismiss" onclick="this.parentElement.remove()">Dismiss</button>`;
+        alerts.appendChild(al);
+        setTimeout(()=>{al.remove();},15000);
+    }
+    const div=document.createElement('div');
+    div.className=`msg${isHand?' hand':''}`;
+    div.innerHTML=`
+        <div class="msg-avatar" style="background:${color}20;color:${color}">${userInitial(name)}</div>
+        <div class="msg-body">
+            <div class="msg-name">
+                <span style="color:${color};font-size:0.72rem">${esc(name)}</span>
+                ${isTeacher?'<span style="background:rgba(59,130,246,0.2);color:var(--blue);font-size:0.58rem;padding:1px 6px;border-radius:4px;font-family:Syne,sans-serif;letter-spacing:0.06em;text-transform:uppercase">Teacher</span>':''}
+            </div>
+            <div class="msg-text">${esc(msg.text)}</div>
+        </div>`;
+    box.appendChild(div);
+    box.scrollTop=box.scrollHeight;
+}
+
+async function sendAnnouncement(){
+    const input=document.getElementById('announce-input');
+    const text=input.value.trim();
+    if(!text||!selectedBatch)return;
+    input.value='';
+    const name=currentUser.name||currentUser.email.split('@')[0];
+    await db.collection('live_chats').doc(selectedBatch.id).collection('messages').add({
+        text,email:currentUser.email,name:'📢 '+name,role:'staff',
+        timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+}
+
+async function sendPinned(){
+    const input=document.getElementById('announce-input');
+    const text=input.value.trim();
+    if(!text||!selectedBatch)return;
+    input.value='';
+    const name=currentUser.name||currentUser.email.split('@')[0];
+    await db.collection('live_chats').doc(selectedBatch.id).collection('messages').add({
+        text:'📌 PINNED: '+text,email:currentUser.email,name,role:'staff',pinned:true,
+        timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('Message pinned!','green');
+}
+
+async function pinAnnouncement(){
+    const input=document.getElementById('announce-input');
+    const text=input.value.trim();
+    if(!text){showToast('Type a message first','');return;}
+    await sendPinned();
+}
+
+// POLL
+async function launchPoll(){
+    if(!selectedBatch)return;
+    const q=document.getElementById('poll-question').value.trim();
+    if(!q){showToast('Enter a question','');return;}
+    const opts=[...document.querySelectorAll('#poll-options-list input')].map(i=>i.value.trim()).filter(Boolean);
+    if(opts.length<2){showToast('Add at least 2 options','');return;}
+    const ref=await db.collection('live_polls').add({
+        batchId:selectedBatch.id,question:q,options:opts,
+        votes:Object.fromEntries(opts.map((_,i)=>[i,0])),
+        userVotes:{},active:true,
+        timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    activePollId=ref.id;
+    document.getElementById('end-poll-btn').style.display='block';
+    showToast('Poll launched! Students can vote now','green');
+    // Announce in chat
+    await db.collection('live_chats').doc(selectedBatch.id).collection('messages').add({
+        text:`📊 Poll launched: "${q}" — Check the Poll tab to vote!`,
+        email:currentUser.email,name:currentUser.name||'Teacher',role:'staff',
+        timestamp:firebase.firestore.FieldValue.serverTimestamp()
+    });
+}
+
+async function endPoll(){
+    if(!activePollId)return;
+    await db.collection('live_polls').doc(activePollId).update({active:false});
+    activePollId=null;
+    document.getElementById('end-poll-btn').style.display='none';
+    showToast('Poll ended','');
+}
+
+// DPP UPLOAD
+async function uploadDPP(input){
+    const file=input.files[0];
+    if(!file||!selectedBatch)return;
+    const title=document.getElementById('dpp-title').value||file.name;
+    const topic=document.getElementById('dpp-topic').value||'';
+    showToast('Uploading…','');
+    try{
+        if(storage){
+            const ref2=storage.ref(`dpp/${selectedBatch.id}/${Date.now()}_${file.name}`);
+            await ref2.put(file);
+            const url=await ref2.getDownloadURL();
+            await db.collection('dpp').add({batchId:selectedBatch.id,title,topic,url,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+            await db.collection('live_resources').add({batchId:selectedBatch.id,title,url,type:'pdf',timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+            showToast('DPP shared with students!','green');
+            loadSharedDPP();
+        }else{
+            showToast('Storage not configured. Use URL method.','red');
         }
-        init();
-    </script>
+    }catch(e){showToast('Upload failed: '+e.message,'red');}
+}
+
+async function shareDPPManual(){
+    const url=document.getElementById('dpp-url').value.trim();
+    const title=document.getElementById('dpp-title').value.trim();
+    const topic=document.getElementById('dpp-topic').value.trim();
+    if(!url||!title){showToast('Enter title and URL','');return;}
+    if(!selectedBatch){showToast('Start session first','');return;}
+    await db.collection('dpp').add({batchId:selectedBatch.id,title,topic,url,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+    await db.collection('live_resources').add({batchId:selectedBatch.id,title,url,type:'pdf',timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+    document.getElementById('dpp-url').value='';document.getElementById('dpp-title').value='';document.getElementById('dpp-topic').value='';
+    showToast('DPP shared!','green');
+    loadSharedDPP();
+}
+
+function loadSharedDPP(){
+    if(!selectedBatch)return;
+    db.collection('dpp').where('batchId','==',selectedBatch.id).orderBy('timestamp','desc').limit(10)
+        .onSnapshot(snap=>{
+            const list=document.getElementById('dpp-shared-list');list.innerHTML='';
+            snap.forEach(doc=>{
+                const d=doc.data();
+                const card=document.createElement('div');
+                card.style.cssText='background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px';
+                card.innerHTML=`<i class="fas fa-file-pdf" style="color:var(--red)"></i><div style="flex:1"><div style="font-size:0.8rem;font-weight:600">${esc(d.title)}</div><div style="font-size:0.68rem;color:var(--muted)">${esc(d.topic||'')}</div></div><a href="${d.url}" target="_blank" style="color:var(--blue);font-size:0.75rem"><i class="fas fa-external-link-alt"></i></a>`;
+                list.appendChild(card);
+            });
+        });
+}
+
+async function shareYouTubeLink(){
+    const url=prompt('Paste YouTube video URL:');
+    if(!url||!selectedBatch)return;
+    const title=prompt('Video title:')||'Video';
+    await db.collection('live_resources').add({batchId:selectedBatch.id,title,url,type:'youtube',timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+    showToast('Video link shared!','green');
+}
+
+async function confirmEndSession(){
+    if(!confirm('End this live session for all students?'))return;
+    if(sessionDocId) await db.collection('live_sessions').doc(sessionDocId).update({active:false,endedAt:firebase.firestore.FieldValue.serverTimestamp()});
+    if(activePollId) await db.collection('live_polls').doc(activePollId).update({active:false});
+    showToast('Session ended','');
+    setTimeout(()=>{window.location.href='staff.html';},1500);
+}
+
+function switchTab(name,btn){
+    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    btn.classList.add('active');
+    document.getElementById('chat-footer-area').style.display=name==='chat'?'block':'none';
+}
+
+function showToast(msg,type){
+    const wrap=document.getElementById('toast-wrap');
+    const t=document.createElement('div');t.className='toast'+(type?' '+type:'');t.textContent=msg;
+    wrap.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+
+document.getElementById('announce-input').addEventListener('keydown',e=>{
+    if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAnnouncement();}
+});
+
+init();
+</script>
 </body>
 </html>

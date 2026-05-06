@@ -1,260 +1,720 @@
 <!DOCTYPE html>
-<html lang="en" class="h-full bg-gray-900">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Classroom | Era of MathAntics</title>
+    <title>Live Class | Era of MathAntics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://meet.jit.si/external_api.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        #video-container iframe { border-radius: 0.5rem; }
-        .chat-gradient { background: linear-gradient(to bottom, #1f2937, #111827); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #111827; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+        :root {
+            --bg: #0d0f14;
+            --surface: #141720;
+            --surface2: #1a1e2a;
+            --border: rgba(255,255,255,0.07);
+            --blue: #3b82f6;
+            --blue2: #1d4ed8;
+            --gold: #f59e0b;
+            --green: #22c55e;
+            --red: #ef4444;
+            --text: #e2e8f0;
+            --muted: #64748b;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; }
+        h1,h2,h3,h4 { font-family: 'Syne', sans-serif; }
+
+        /* HEADER */
+        .header { height: 56px; background: var(--surface); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; flex-shrink: 0; }
+        .header-left { display: flex; align-items: center; gap: 14px; }
+        .live-badge { background: var(--red); color: #fff; font-family: 'Syne', sans-serif; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.12em; padding: 3px 10px; border-radius: 100px; animation: pulse 1.5s infinite; display: flex; align-items: center; gap: 5px; }
+        .live-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff; animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .class-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem; }
+        .viewer-count { font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; gap: 5px; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .btn-outline { border: 1px solid var(--border); background: transparent; color: var(--text); padding: 7px 14px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-outline:hover { background: var(--surface2); }
+        .btn-back { color: var(--muted); font-size: 0.8rem; text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+        .btn-back:hover { color: var(--text); }
+
+        /* TIMER */
+        .timer { font-family: 'Syne', sans-serif; font-size: 0.85rem; font-weight: 700; color: var(--green); background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); padding: 5px 12px; border-radius: 8px; }
+
+        /* MAIN LAYOUT */
+        .main { flex: 1; display: flex; overflow: hidden; }
+
+        /* VIDEO AREA */
+        .video-area { flex: 1; background: #000; position: relative; display: flex; flex-direction: column; }
+        #jitsi-container { flex: 1; width: 100%; }
+        .video-placeholder { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--muted); }
+        .video-placeholder i { font-size: 3rem; color: var(--blue); }
+
+        /* CLASS INFO BAR */
+        .class-info-bar { background: var(--surface); border-top: 1px solid var(--border); padding: 10px 20px; display: flex; align-items: center; gap: 20px; flex-shrink: 0; }
+        .info-chip { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--muted); }
+        .info-chip strong { color: var(--text); }
+
+        /* SIDEBAR */
+        .sidebar { width: 340px; background: var(--surface); border-left: 1px solid var(--border); display: flex; flex-direction: column; flex-shrink: 0; }
+
+        /* SIDEBAR TABS */
+        .sidebar-tabs { display: flex; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .stab { flex: 1; padding: 12px 8px; font-family: 'Syne', sans-serif; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; position: relative; }
+        .stab.active { color: var(--blue); border-bottom-color: var(--blue); }
+        .stab .badge-dot { position: absolute; top: 8px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--red); display: none; }
+        .stab .badge-dot.show { display: block; }
+
+        /* CHAT */
+        .chat-area { flex: 1; overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .chat-area::-webkit-scrollbar { width: 3px; }
+        .chat-area::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 2px; }
+        .msg { display: flex; gap: 8px; animation: fadeUp 0.25s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        .msg-avatar { width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.7rem; }
+        .msg-body { flex: 1; }
+        .msg-name { font-size: 0.7rem; font-weight: 700; margin-bottom: 3px; display: flex; align-items: center; gap: 6px; }
+        .msg-teacher-tag { background: rgba(59,130,246,0.2); color: var(--blue); font-size: 0.58rem; padding: 1px 6px; border-radius: 4px; font-family: 'Syne', sans-serif; letter-spacing: 0.06em; text-transform: uppercase; }
+        .msg-text { font-size: 0.82rem; color: var(--text); background: var(--surface2); padding: 8px 12px; border-radius: 0 12px 12px 12px; line-height: 1.4; word-break: break-word; }
+        .msg.mine .msg-text { background: var(--blue2); border-radius: 12px 0 12px 12px; }
+        .msg.mine { flex-direction: row-reverse; }
+        .msg.mine .msg-name { justify-content: flex-end; }
+        .msg.teacher .msg-text { border: 1px solid rgba(59,130,246,0.3); }
+
+        /* CHAT SYSTEM */
+        .system-msg { text-align: center; font-size: 0.7rem; color: var(--muted); padding: 4px 0; }
+
+        /* HAND RAISE */
+        .hand-raised-banner { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); border-radius: 10px; padding: 8px 12px; font-size: 0.78rem; color: var(--gold); display: flex; align-items: center; gap: 8px; margin: 0 14px 10px; animation: fadeUp 0.3s ease; }
+
+        /* DPP SECTION */
+        .dpp-panel { padding: 14px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .dpp-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; transition: border-color 0.2s; cursor: pointer; }
+        .dpp-card:hover { border-color: var(--blue); }
+        .dpp-badge { font-family: 'Syne', sans-serif; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; }
+        .dpp-new { background: rgba(34,197,94,0.15); color: var(--green); }
+        .dpp-old { background: rgba(100,116,139,0.15); color: var(--muted); }
+
+        /* POLLS */
+        .poll-panel { padding: 14px; flex: 1; overflow-y: auto; }
+        .poll-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 14px; padding: 16px; }
+        .poll-q { font-weight: 600; font-size: 0.9rem; margin-bottom: 12px; line-height: 1.4; }
+        .poll-opt { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; margin-bottom: 8px; position: relative; overflow: hidden; font-size: 0.82rem; }
+        .poll-opt:hover { border-color: var(--blue); }
+        .poll-opt.selected { border-color: var(--blue); background: rgba(59,130,246,0.1); }
+        .poll-opt.correct { border-color: var(--green); background: rgba(34,197,94,0.1); }
+        .poll-opt.wrong { border-color: var(--red); background: rgba(239,68,68,0.1); }
+        .poll-bar { position: absolute; left: 0; top: 0; height: 100%; background: rgba(59,130,246,0.12); transition: width 0.6s ease; border-radius: 10px; }
+        .poll-pct { margin-left: auto; font-family: 'Syne', sans-serif; font-size: 0.75rem; font-weight: 700; color: var(--blue); }
+
+        /* RESOURCES */
+        .res-panel { padding: 14px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .res-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; }
+        .res-card:hover { border-color: var(--blue); transform: translateY(-2px); }
+        .res-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+        .res-pdf { background: rgba(239,68,68,0.15); color: #ef4444; }
+        .res-link { background: rgba(59,130,246,0.15); color: var(--blue); }
+        .res-info { flex: 1; min-width: 0; }
+        .res-title { font-weight: 600; font-size: 0.82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .res-meta { font-size: 0.7rem; color: var(--muted); margin-top: 2px; }
+
+        /* PARTICIPANTS */
+        .part-panel { padding: 14px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+        .part-card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 10px; background: var(--surface2); }
+        .part-avatar { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+        .part-info { flex: 1; }
+        .part-name { font-size: 0.82rem; font-weight: 600; }
+        .part-role { font-size: 0.68rem; color: var(--muted); }
+        .part-hand { color: var(--gold); font-size: 0.9rem; }
+
+        /* CHAT INPUT */
+        .chat-footer { padding: 12px; border-top: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+        .chat-actions { display: flex; gap: 8px; margin-bottom: 8px; }
+        .action-btn { flex: 1; padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .action-btn:hover { background: var(--surface); border-color: var(--blue); color: var(--blue); }
+        .action-btn.active { background: rgba(245,158,11,0.15); border-color: var(--gold); color: var(--gold); }
+        .chat-input-row { display: flex; gap: 8px; align-items: center; }
+        .chat-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.82rem; color: var(--text); outline: none; transition: border-color 0.2s; font-family: 'DM Sans', sans-serif; }
+        .chat-input:focus { border-color: var(--blue); }
+        .send-btn { width: 38px; height: 38px; border-radius: 10px; background: var(--blue); border: none; color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0; }
+        .send-btn:hover { background: var(--blue2); }
+
+        /* SCHEDULE PANEL */
+        .sched-panel { padding: 14px; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .sched-today { font-family: 'Syne', sans-serif; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+        .sched-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 14px; display: flex; gap: 14px; align-items: center; }
+        .sched-card.active-now { border-color: var(--green); background: rgba(34,197,94,0.05); }
+        .sched-time { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.82rem; color: var(--blue); min-width: 50px; }
+        .sched-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--border); flex-shrink: 0; }
+        .sched-card.active-now .sched-dot { background: var(--green); animation: pulse 1.2s infinite; }
+        .sched-title { font-weight: 600; font-size: 0.85rem; }
+        .sched-sub { font-size: 0.72rem; color: var(--muted); margin-top: 2px; }
+
+        /* TABS CONTENT */
+        .tab-content { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+        .tab-content.active { display: flex; }
+
+        /* EMPTY STATE */
+        .empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; color: var(--muted); text-align: center; padding: 30px; }
+        .empty i { font-size: 2.5rem; opacity: 0.3; }
+        .empty p { font-size: 0.82rem; }
+
+        /* MOBILE OVERLAY */
+        .mob-sidebar-toggle { display: none; }
+        @media (max-width: 900px) {
+            .sidebar { position: fixed; right: 0; top: 56px; bottom: 0; z-index: 50; transform: translateX(100%); transition: transform 0.3s; width: 100%; max-width: 360px; }
+            .sidebar.open { transform: translateX(0); }
+            .mob-sidebar-toggle { display: flex; }
+            .class-info-bar { display: none; }
+        }
+
+        /* TOAST */
+        .toast-wrap { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 999; display: flex; flex-direction: column; align-items: center; gap: 8px; pointer-events: none; }
+        .toast { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 10px 18px; font-size: 0.82rem; font-weight: 600; color: var(--text); animation: toastIn 0.3s ease; box-shadow: 0 8px 30px rgba(0,0,0,0.4); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .toast.green { border-color: rgba(34,197,94,0.4); color: var(--green); }
+        .toast.gold { border-color: rgba(245,158,11,0.4); color: var(--gold); }
+
+        /* REACTIONS */
+        .reaction-float { position: fixed; bottom: 80px; left: 50%; pointer-events: none; z-index: 998; }
+        .reaction-emoji { position: absolute; font-size: 1.8rem; animation: floatUp 2s ease forwards; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0) scale(1); } 100% { opacity: 0; transform: translateY(-120px) scale(1.5); } }
     </style>
 </head>
-<body class="h-full text-white flex flex-col overflow-hidden">
-    <!-- Top Navigation -->
-    <header class="bg-gray-800 border-b border-gray-700 px-6 py-3 flex justify-between items-center">
-        <div class="flex items-center space-x-4">
-            <a href="/student.html" class="text-gray-400 hover:text-white transition"><i class="fas fa-arrow-left"></i></a>
-            <h1 id="batch-name" class="font-bold text-lg tracking-tight">Loading Live Class...</h1>
-            <span class="bg-red-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded animate-pulse">Live</span>
+<body>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="header-left">
+        <a href="student.html" class="btn-back"><i class="fas fa-arrow-left"></i> <span class="hidden sm:inline">Back</span></a>
+        <div>
+            <div class="class-title" id="class-title">Loading...</div>
+            <div class="viewer-count"><i class="fas fa-circle" style="color:var(--green);font-size:0.5rem"></i> <span id="viewer-count">0</span> watching</div>
         </div>
-        <div class="flex items-center space-x-6 text-sm">
-            <span id="user-display" class="text-gray-400"></span>
-            <button onclick="window.location.href='/student.html'" class="bg-blue-600 hover:bg-blue-700 px-4 py-1.5 rounded-lg transition">Back to Portal</button>
+        <div class="live-badge">LIVE</div>
+    </div>
+    <div class="header-right">
+        <div class="timer" id="class-timer">00:00</div>
+        <button onclick="toggleReaction('🔥')" class="btn-outline" title="React">🔥</button>
+        <button onclick="toggleReaction('👍')" class="btn-outline" title="React">👍</button>
+        <button class="mob-sidebar-toggle btn-outline" onclick="document.querySelector('.sidebar').classList.toggle('open')">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+</header>
+
+<!-- MAIN -->
+<div class="main">
+    <!-- VIDEO AREA -->
+    <div class="video-area">
+        <div class="video-placeholder" id="video-placeholder">
+            <i class="fas fa-circle-notch fa-spin"></i>
+            <p style="font-size:0.9rem">Connecting to live classroom…</p>
+            <p style="font-size:0.75rem;color:var(--muted)">Please wait while the teacher starts the session</p>
         </div>
-    </header>
+        <div id="jitsi-container" style="flex:1;width:100%"></div>
+    </div>
 
-    <main class="flex-1 flex overflow-hidden">
-        <!-- Video Area -->
-        <div class="flex-1 bg-black relative flex flex-col">
-            <div id="video-placeholder" class="absolute inset-0 flex items-center justify-center text-gray-600">
-                <div class="text-center">
-                    <i class="fas fa-circle-notch fa-spin text-4xl mb-4"></i>
-                    <p>Connecting to secure stream...</p>
-                </div>
-            </div>
-            <div id="jitsi-container" class="w-full h-full z-10"></div>
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+        <!-- TABS -->
+        <div class="sidebar-tabs">
+            <button class="stab active" onclick="switchTab('chat', this)">
+                <i class="fas fa-comments"></i> Chat
+                <span class="badge-dot" id="chat-dot"></span>
+            </button>
+            <button class="stab" onclick="switchTab('dpp', this)">
+                <i class="fas fa-tasks"></i> DPP
+                <span class="badge-dot" id="dpp-dot"></span>
+            </button>
+            <button class="stab" onclick="switchTab('poll', this)">
+                <i class="fas fa-poll"></i> Poll
+                <span class="badge-dot" id="poll-dot"></span>
+            </button>
+            <button class="stab" onclick="switchTab('resources', this)">
+                <i class="fas fa-file-alt"></i> Notes
+            </button>
+            <button class="stab" onclick="switchTab('schedule', this)">
+                <i class="fas fa-calendar"></i> Schedule
+            </button>
         </div>
 
-        <!-- Professional Sidebar -->
-        <aside class="w-80 chat-gradient border-l border-gray-800 flex flex-col">
-            <div class="p-4 border-b border-gray-800 flex space-x-4">
-                <button onclick="toggleSidebar('chat')" class="sidebar-tab text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1 transition-all">Chat</button>
-                <button onclick="toggleSidebar('resources')" class="sidebar-tab text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300 transition-all">Resources</button>
+        <!-- HAND RAISE NOTIFICATIONS -->
+        <div id="hand-notifs"></div>
+
+        <!-- CHAT TAB -->
+        <div class="tab-content active" id="tab-chat">
+            <div class="chat-area" id="chat-messages">
+                <div class="system-msg">Welcome to the live class! 🎉</div>
             </div>
+        </div>
 
-            <!-- Live Chat Messages -->
-            <div id="chat-box" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                <!-- Messages injected here -->
+        <!-- DPP TAB -->
+        <div class="tab-content" id="tab-dpp">
+            <div class="dpp-panel" id="dpp-list">
+                <div class="empty"><i class="fas fa-tasks"></i><p>DPP will appear here after class</p></div>
             </div>
+        </div>
 
-            <!-- Resources List -->
-            <div id="resources-box" class="hidden flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                <div class="text-center py-10 text-gray-600 text-xs italic">No resources shared yet</div>
+        <!-- POLL TAB -->
+        <div class="tab-content" id="tab-poll">
+            <div class="poll-panel" id="poll-area">
+                <div class="empty"><i class="fas fa-poll-h"></i><p>No active poll right now</p></div>
             </div>
+        </div>
 
-            <!-- Chat Input -->
-            <div class="p-4 bg-gray-800">
-                <form id="chat-form" class="flex items-center space-x-2">
-                    <input type="text" id="chat-input" placeholder="Ask a question..." 
-                        class="flex-1 bg-gray-900 border border-gray-700 rounded-full px-4 py-2 text-sm focus:outline-none focus:border-blue-500">
-                    <button type="submit" class="bg-blue-600 p-2 rounded-full hover:bg-blue-700 transition">
-                        <i class="fas fa-paper-plane"></i>
-                    </button>
-                </form>
+        <!-- RESOURCES TAB -->
+        <div class="tab-content" id="tab-resources">
+            <div class="res-panel" id="res-list">
+                <div class="empty"><i class="fas fa-folder-open"></i><p>No resources shared yet</p></div>
             </div>
-        </aside>
-    </main>
+        </div>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",
-            authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
-            projectId: "era-of-mathantics-8b6d1",
-            storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
-            messagingSenderId: "521238168559",
-            appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a",
-            databaseURL: "https://era-of-mathantics-8b6d1-default-rtdb.firebaseio.com"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+        <!-- SCHEDULE TAB -->
+        <div class="tab-content" id="tab-schedule">
+            <div class="sched-panel" id="sched-list">
+                <div class="empty"><i class="fas fa-calendar-alt"></i><p>Loading schedule…</p></div>
+            </div>
+        </div>
 
-        let currentUser = null;
-        const urlParams = new URLSearchParams(window.location.search);
-        const batchId = urlParams.get('batch') || 'general_class';
+        <!-- CHAT FOOTER -->
+        <div class="chat-footer">
+            <div class="chat-actions" id="chat-actions">
+                <button class="action-btn" id="hand-btn" onclick="toggleHandRaise()">
+                    <i class="fas fa-hand-paper"></i> Raise Hand
+                </button>
+                <button class="action-btn" onclick="toggleReaction('❓')">
+                    <i class="fas fa-question"></i> Doubt
+                </button>
+                <button class="action-btn" onclick="toggleReaction('👍')">
+                    <i class="fas fa-thumbs-up"></i> Got it
+                </button>
+            </div>
+            <div class="chat-input-row">
+                <input type="text" class="chat-input" id="chat-input" placeholder="Ask a question…" maxlength="300">
+                <button class="send-btn" id="send-btn" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane" style="font-size:0.8rem"></i>
+                </button>
+            </div>
+        </div>
+    </aside>
+</div>
 
-        async function init() {
-            const res = await fetch('/api/check-auth');
-            const data = await res.json();
-            if (!data.authenticated) {
-                window.location.href = '/index.html';
-                return;
-            }
-            currentUser = data;
-            document.getElementById('user-display').innerText = `Student: ${data.name || data.email.split('@')[0]}`;
+<!-- CLASS INFO BAR -->
+<div class="class-info-bar">
+    <div class="info-chip"><i class="fas fa-chalkboard-teacher"></i> Teacher: <strong id="teacher-name">Era of MathAntics</strong></div>
+    <div class="info-chip"><i class="fas fa-book"></i> Subject: <strong id="subject-name">Mathematics</strong></div>
+    <div class="info-chip"><i class="fas fa-graduation-cap"></i> Class: <strong id="class-grade">—</strong></div>
+    <div class="info-chip"><i class="fas fa-clock"></i> Duration: <strong id="class-duration">Ongoing</strong></div>
+</div>
 
-            // Establish Firebase SDK session for Chat/RTDB (required by Security Rules)
-            try {
-                if (!auth.currentUser) {
-                    await auth.signInAnonymously();
-                }
-            } catch (err) {
-                console.error("Firebase Session Error:", err.message);
-                if (err.code === 'auth/unauthorized-domain') {
-                    alert("Security Error: This domain is not authorized in your Firebase settings.");
-                } else if (err.message.includes("signup-are-blocked")) {
-                    alert("Configuration Error: User sign-up is disabled in Firebase Settings. Please contact the administrator.");
-                }
-            }
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toast-wrap"></div>
+<div class="reaction-float" id="reaction-float"></div>
 
-            try {
-                const response = await fetch('/api/get-batches');
-                const batches = await response.json();
-                // Handle array or single object if the API format changes
-                const batchList = Array.isArray(batches) ? batches : [];
-                const batchData = batchList.find(b => b.id === batchId);
-                document.getElementById('batch-name').innerText = `Live Class: ${batchData ? batchData.name : 'Era of MathAntics'}`;
-            } catch (e) {
-                console.error("Batch info error:", e);
-                document.getElementById('batch-name').innerText = 'Live Class';
-            }
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyDkrbfNKopAWj7ZA5fCrkjsOz_dsdMCmCs",
+    authDomain: "era-of-mathantics-8b6d1.firebaseapp.com",
+    projectId: "era-of-mathantics-8b6d1",
+    storageBucket: "era-of-mathantics-8b6d1.firebasestorage.app",
+    messagingSenderId: "521238168559",
+    appId: "1:521238168559:web:83b3c06de5b28b1eac6c1a"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const auth = firebase.auth();
 
-            startLiveStream();
-            initChat();
-            initResources();
+// ── STATE ──────────────────────────────────────────────────────────
+let currentUser = null;
+let handRaised = false;
+let classStartTime = null;
+let timerInterval = null;
+let activePollId = null;
+let pollAnswered = false;
+const batchId = new URLSearchParams(window.location.search).get('batch') || 'general_class';
+const COLORS = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#22c55e','#06b6d4','#f97316'];
+function userColor(name) { let h=0; for(let c of (name||'U')) h=c.charCodeAt(0)+h*31; return COLORS[Math.abs(h)%COLORS.length]; }
+function userInitial(name) { return (name||'?').charAt(0).toUpperCase(); }
+
+// ── INIT ──────────────────────────────────────────────────────────
+async function init() {
+    try {
+        const res = await fetch('/api/check-auth');
+        const data = await res.json();
+        if (!data.authenticated) { window.location.href = 'index.html'; return; }
+        currentUser = data;
+    } catch(e) { window.location.href = 'index.html'; return; }
+
+    try { await auth.signInAnonymously(); } catch(e) {}
+
+    loadBatchInfo();
+    startJitsi();
+    listenChat();
+    listenDPP();
+    listenPoll();
+    listenResources();
+    loadSchedule();
+    trackViewer();
+    startTimer();
+
+    // Enter key to send
+    document.getElementById('chat-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+}
+
+// ── BATCH INFO ────────────────────────────────────────────────────
+async function loadBatchInfo() {
+    try {
+        const snap = await db.collection('batches').doc(batchId).get();
+        if (snap.exists) {
+            const d = snap.data();
+            document.getElementById('class-title').textContent = d.name || 'Live Class';
+            document.getElementById('subject-name').textContent = d.subject || 'Mathematics';
+            document.getElementById('class-grade').textContent = d.grade || '—';
+            document.getElementById('teacher-name').textContent = d.teacher || 'Era of MathAntics';
+        } else {
+            document.getElementById('class-title').textContent = 'Era of MathAntics — Live';
         }
+    } catch(e) {
+        document.getElementById('class-title').textContent = 'Era of MathAntics — Live';
+    }
+}
 
-        function startLiveStream() {
-            const domain = 'meet.jit.si';
-            const options = {
-                roomName: `EraOfMathAntics_Live_${batchId}`,
-                width: '100%',
-                height: '100%',
-                parentNode: document.querySelector('#jitsi-container'),
-                configOverwrite: {
-                    startWithAudioMuted: true,
-                    disableModeratorIndicator: true,
-                    startScreenSharing: false,
-                    enableWelcomePage: false,
-                    prejoinPageEnabled: false
-                },
-                interfaceConfigOverwrite: {
-                    TOOLBAR_BUTTONS: ['microphone', 'camera', 'fullscreen', 'hangup', 'chat', 'raisehand', 'tileview'],
-                    MOBILE_APP_PROMO: false
-                },
-                userInfo: { email: currentUser.email, displayName: currentUser.email.split('@')[0] }
-            };
-            const api = new JitsiMeetExternalAPI(domain, options);
-            document.getElementById('video-placeholder').style.display = 'none';
-        }
+// ── JITSI ─────────────────────────────────────────────────────────
+function startJitsi() {
+    const name = currentUser.name || currentUser.email.split('@')[0];
+    const options = {
+        roomName: `EraOfMathAntics_Live_${batchId}`,
+        width: '100%', height: '100%',
+        parentNode: document.getElementById('jitsi-container'),
+        configOverwrite: {
+            startWithAudioMuted: true,
+            startWithVideoMuted: true,
+            disableModeratorIndicator: false,
+            enableWelcomePage: false,
+            prejoinPageEnabled: false,
+            disableInviteFunctions: true,
+            toolbarButtons: ['microphone','camera','desktop','fullscreen','fodeviceselection','hangup','chat','raisehand','tileview','videoquality','stats','shortcuts','filmstrip','feedback','mute-everyone']
+        },
+        interfaceConfigOverwrite: { MOBILE_APP_PROMO: false, SHOW_JITSI_WATERMARK: false, SHOW_WATERMARK_FOR_GUESTS: false },
+        userInfo: { email: currentUser.email, displayName: name }
+    };
+    try {
+        new JitsiMeetExternalAPI('meet.jit.si', options);
+        document.getElementById('video-placeholder').style.display = 'none';
+    } catch(e) {
+        document.getElementById('video-placeholder').innerHTML = `<i class="fas fa-exclamation-circle" style="color:var(--red)"></i><p>Could not connect to live stream</p>`;
+    }
+}
 
-        function toggleSidebar(tab) {
-            const chatBox = document.getElementById('chat-box');
-            const resBox = document.getElementById('resources-box');
-            const chatInput = document.getElementById('chat-form').parentElement;
-            const btns = document.querySelectorAll('.sidebar-tab');
+// ── TIMER ─────────────────────────────────────────────────────────
+function startTimer() {
+    classStartTime = Date.now();
+    timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - classStartTime) / 1000);
+        const h = Math.floor(elapsed/3600), m = Math.floor((elapsed%3600)/60), s = elapsed%60;
+        document.getElementById('class-timer').textContent =
+            (h > 0 ? String(h).padStart(2,'0')+':' : '') +
+            String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+    }, 1000);
+}
 
-            if (tab === 'chat') {
-                chatBox.classList.remove('hidden');
-                resBox.classList.add('hidden');
-                chatInput.style.display = 'block';
-                btns[0].className = 'sidebar-tab text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1';
-                btns[1].className = 'sidebar-tab text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300';
-            } else {
-                chatBox.classList.add('hidden');
-                resBox.classList.remove('hidden');
-                chatInput.style.display = 'none';
-                btns[1].className = 'sidebar-tab text-blue-400 border-b-2 border-blue-400 pb-2 text-sm font-semibold flex-1';
-                btns[0].className = 'sidebar-tab text-gray-500 pb-2 text-sm font-semibold flex-1 hover:text-gray-300';
-            }
-        }
+// ── VIEWER TRACKER ────────────────────────────────────────────────
+function trackViewer() {
+    const ref = db.collection('live_viewers').doc(batchId);
+    db.collection('live_viewers').doc(batchId)
+        .collection('active').doc(currentUser.email.replace(/\./g,'_'))
+        .set({ name: currentUser.name || currentUser.email, ts: firebase.firestore.FieldValue.serverTimestamp() });
+    db.collection('live_viewers').doc(batchId).collection('active')
+        .onSnapshot(s => { document.getElementById('viewer-count').textContent = s.size; });
+    window.addEventListener('beforeunload', () => {
+        db.collection('live_viewers').doc(batchId).collection('active')
+            .doc(currentUser.email.replace(/\./g,'_')).delete();
+    });
+}
 
-        function initResources() {
-            const box = document.getElementById('resources-box');
-            db.collection('live_resources').where('batchId', '==', batchId)
-                .orderBy('timestamp', 'desc')
-                .onSnapshot(snapshot => {
-                    if (snapshot.empty) {
-                        box.innerHTML = `<div class="text-center py-10 text-gray-600 text-xs italic">No resources shared yet</div>`;
-                        return;
-                    }
-                    box.innerHTML = '';
-                    snapshot.forEach(doc => {
-                        const res = doc.data();
-                        const div = document.createElement('div');
-                        div.className = "p-3 bg-gray-800/50 border border-gray-700 rounded-xl hover:border-blue-500 transition-all cursor-pointer group";
-                        div.onclick = () => window.open(res.url, '_blank');
-                        div.innerHTML = `
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 bg-blue-600/20 text-blue-400 rounded-lg flex items-center justify-center"><i class="fas fa-file-pdf"></i></div>
-                                <div class="flex-1 overflow-hidden">
-                                    <p class="text-xs font-bold text-gray-200 truncate">${res.title}</p>
-                                    <p class="text-[9px] text-gray-500 uppercase">Shared by Teacher</p>
-                                </div>
-                                <i class="fas fa-download text-gray-700 group-hover:text-blue-500 text-[10px]"></i>
-                            </div>
-                        `;
-                        box.appendChild(div);
-                    });
-                });
-        }
-
-        function initChat() {
-            const chatBox = document.getElementById('chat-box');
-            const chatForm = document.getElementById('chat-form');
-            const chatInput = document.getElementById('chat-input');
-
-            // Listen for messages
-            db.collection('live_chats').doc(batchId).collection('messages')
-                .orderBy('timestamp', 'asc')
-                .limitToLast(50)
-                .onSnapshot(snapshot => {
-                    snapshot.docChanges().forEach(change => {
-                        if (change.type === 'added') {
-                            const msg = change.doc.data();
-                            const div = document.createElement('div');
-                            const isMe = msg.email === currentUser.email;
-                            div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'}`;
-                            div.innerHTML = `
-                                <span class="text-[10px] text-gray-500 mb-1">${msg.email ? msg.email.split('@')[0] : 'User'}</span>
-                                <div class="px-3 py-2 rounded-2xl text-xs ${isMe ? 'bg-blue-600 text-white' : 'bg-gray-700 text-gray-200'}">
-                                    ${msg.text}
-                                </div>
-                            `;
-                            chatBox.appendChild(div);
-                            chatBox.scrollTop = chatBox.scrollHeight;
-                        }
-                    });
-                });
-
-            chatForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const text = chatInput.value.trim();
-                if (!text) return;
-
-                chatInput.value = '';
-                await db.collection('live_chats').doc(batchId).collection('messages').add({
-                    text: text,
-                    email: currentUser.email,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+// ── CHAT ──────────────────────────────────────────────────────────
+function listenChat() {
+    db.collection('live_chats').doc(batchId).collection('messages')
+        .orderBy('timestamp','asc').limitToLast(80)
+        .onSnapshot(snap => {
+            snap.docChanges().forEach(change => {
+                if (change.type === 'added') renderMessage(change.doc.data());
             });
-        }
+        });
+}
 
-        init();
-    </script>
+function renderMessage(msg) {
+    const box = document.getElementById('chat-messages');
+    const isMe = msg.email === currentUser?.email;
+    const isTeacher = msg.role === 'staff';
+    const name = msg.name || msg.email?.split('@')[0] || 'Student';
+    const color = userColor(name);
+
+    const div = document.createElement('div');
+    div.className = `msg${isMe?' mine':''}${isTeacher?' teacher':''}`;
+    div.innerHTML = `
+        <div class="msg-avatar" style="background:${color}20;color:${color}">${userInitial(name)}</div>
+        <div class="msg-body">
+            <div class="msg-name">
+                <span style="color:${color};font-size:0.72rem">${isMe?'You':name}</span>
+                ${isTeacher?'<span class="msg-teacher-tag">Teacher</span>':''}
+                ${msg.handRaise?'<span style="color:var(--gold)">✋</span>':''}
+            </div>
+            <div class="msg-text">${escHtml(msg.text)}</div>
+        </div>`;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+async function sendMessage() {
+    const input = document.getElementById('chat-input');
+    const text = input.value.trim();
+    if (!text || !currentUser) return;
+    input.value = '';
+    const name = currentUser.name || currentUser.email.split('@')[0];
+    await db.collection('live_chats').doc(batchId).collection('messages').add({
+        text, email: currentUser.email, name,
+        role: currentUser.role || 'student',
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+}
+
+// ── HAND RAISE ────────────────────────────────────────────────────
+async function toggleHandRaise() {
+    handRaised = !handRaised;
+    const btn = document.getElementById('hand-btn');
+    btn.className = 'action-btn' + (handRaised ? ' active' : '');
+    btn.innerHTML = handRaised ? '<i class="fas fa-hand-paper"></i> Lower Hand' : '<i class="fas fa-hand-paper"></i> Raise Hand';
+    const name = currentUser.name || currentUser.email.split('@')[0];
+    if (handRaised) {
+        await db.collection('live_chats').doc(batchId).collection('messages').add({
+            text: `✋ ${name} raised their hand`,
+            email: currentUser.email, name, role: 'system', handRaise: true,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('✋ Hand raised! Teacher notified', 'gold');
+    } else {
+        showToast('Hand lowered', '');
+    }
+}
+
+// ── DPP ──────────────────────────────────────────────────────────
+function listenDPP() {
+    db.collection('dpp').where('batchId','==',batchId)
+        .orderBy('timestamp','desc')
+        .onSnapshot(snap => {
+            const list = document.getElementById('dpp-list');
+            if (snap.empty) { list.innerHTML = '<div class="empty"><i class="fas fa-tasks"></i><p>DPP will appear here after class</p></div>'; return; }
+            list.innerHTML = '';
+            const now = Date.now();
+            snap.forEach(doc => {
+                const d = doc.data();
+                const ts = d.timestamp?.toMillis?.() || 0;
+                const isNew = (now - ts) < 86400000;
+                const card = document.createElement('div');
+                card.className = 'dpp-card';
+                card.onclick = () => window.open(d.url, '_blank');
+                card.innerHTML = `
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                        <span class="dpp-badge ${isNew?'dpp-new':'dpp-old'}">${isNew?'NEW':'PAST'}</span>
+                        <span style="font-size:0.7rem;color:var(--muted)">${formatDate(ts)}</span>
+                    </div>
+                    <div style="font-weight:600;font-size:0.85rem;margin-bottom:4px">${escHtml(d.title||'DPP Sheet')}</div>
+                    <div style="font-size:0.75rem;color:var(--muted)">${escHtml(d.topic||'')}</div>
+                    <div style="margin-top:10px;display:flex;gap:8px">
+                        <a href="${d.url}" target="_blank" onclick="event.stopPropagation()" 
+                           style="font-size:0.75rem;color:var(--blue);font-weight:600;display:flex;align-items:center;gap:4px">
+                            <i class="fas fa-download"></i> Download
+                        </a>
+                    </div>`;
+                list.appendChild(card);
+            });
+            document.getElementById('dpp-dot').classList.add('show');
+        });
+}
+
+// ── POLL ─────────────────────────────────────────────────────────
+function listenPoll() {
+    db.collection('live_polls').where('batchId','==',batchId).where('active','==',true)
+        .onSnapshot(snap => {
+            const area = document.getElementById('poll-area');
+            if (snap.empty) { area.innerHTML = '<div class="empty"><i class="fas fa-poll-h"></i><p>No active poll right now</p></div>'; pollAnswered=false; activePollId=null; return; }
+            const doc = snap.docs[0];
+            const poll = doc.data();
+            if (activePollId !== doc.id) { activePollId = doc.id; pollAnswered = false; }
+            document.getElementById('poll-dot').classList.add('show');
+            renderPoll(doc.id, poll);
+        });
+}
+
+function renderPoll(pollId, poll) {
+    const area = document.getElementById('poll-area');
+    const totalVotes = Object.values(poll.votes||{}).reduce((a,b)=>a+b,0);
+    area.innerHTML = `
+        <div class="poll-card">
+            <div style="font-size:0.68rem;color:var(--blue);font-family:'Syne',sans-serif;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:10px">
+                📊 Live Poll · ${totalVotes} vote${totalVotes!==1?'s':''}
+            </div>
+            <div class="poll-q">${escHtml(poll.question)}</div>
+            ${(poll.options||[]).map((opt,i) => {
+                const votes = poll.votes?.[i] || 0;
+                const pct = totalVotes > 0 ? Math.round((votes/totalVotes)*100) : 0;
+                const myVote = poll.userVotes?.[currentUser?.email?.replace(/\./g,'_')] === i;
+                return `<div class="poll-opt${myVote?' selected':''}" onclick="votePoll('${pollId}',${i},${poll.options.length})">
+                    <div class="poll-bar" style="width:${pollAnswered||myVote?pct:0}%"></div>
+                    <span style="position:relative;z-index:1">${escHtml(opt)}</span>
+                    ${(pollAnswered||myVote)?`<span class="poll-pct">${pct}%</span>`:''}
+                </div>`;
+            }).join('')}
+        </div>`;
+}
+
+async function votePoll(pollId, optIdx, total) {
+    if (pollAnswered) return;
+    pollAnswered = true;
+    const key = currentUser.email.replace(/\./g,'_');
+    const update = { [`votes.${optIdx}`]: firebase.firestore.FieldValue.increment(1), [`userVotes.${key}`]: optIdx };
+    await db.collection('live_polls').doc(pollId).update(update);
+    showToast('✅ Vote submitted!', 'green');
+}
+
+// ── RESOURCES ────────────────────────────────────────────────────
+function listenResources() {
+    db.collection('live_resources').where('batchId','==',batchId)
+        .orderBy('timestamp','desc')
+        .onSnapshot(snap => {
+            const list = document.getElementById('res-list');
+            if (snap.empty) { list.innerHTML = '<div class="empty"><i class="fas fa-folder-open"></i><p>No resources shared yet</p></div>'; return; }
+            list.innerHTML = '';
+            snap.forEach(doc => {
+                const d = doc.data();
+                const isPdf = (d.url||'').includes('.pdf') || d.type === 'pdf';
+                const card = document.createElement('div');
+                card.className = 'res-card';
+                card.onclick = () => window.open(d.url, '_blank');
+                card.innerHTML = `
+                    <div class="res-icon ${isPdf?'res-pdf':'res-link'}"><i class="fas fa-${isPdf?'file-pdf':'link'}"></i></div>
+                    <div class="res-info">
+                        <div class="res-title">${escHtml(d.title||'Resource')}</div>
+                        <div class="res-meta">${formatDate(d.timestamp?.toMillis?.())} · Tap to open</div>
+                    </div>
+                    <i class="fas fa-external-link-alt" style="color:var(--muted);font-size:0.75rem"></i>`;
+                list.appendChild(card);
+            });
+        });
+}
+
+// ── SCHEDULE ─────────────────────────────────────────────────────
+async function loadSchedule() {
+    const list = document.getElementById('sched-list');
+    try {
+        const snap = await db.collection('schedule').where('batchId','==',batchId).orderBy('dayOrder').get();
+        if (snap.empty) { list.innerHTML = '<div class="empty"><i class="fas fa-calendar-alt"></i><p>No schedule set yet</p></div>'; return; }
+        list.innerHTML = '';
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+        const today = days[new Date().getDay()];
+        snap.forEach(doc => {
+            const d = doc.data();
+            const isToday = d.day === today;
+            const label = document.createElement('div');
+            label.className = 'sched-today';
+            label.textContent = d.day + (isToday?' (Today)':'');
+            list.appendChild(label);
+            (d.slots||[]).forEach(slot => {
+                const card = document.createElement('div');
+                card.className = 'sched-card' + (isToday?' active-now':'');
+                card.innerHTML = `
+                    <div class="sched-time">${slot.time}</div>
+                    <div class="sched-dot"></div>
+                    <div><div class="sched-title">${escHtml(slot.topic||'Class')}</div><div class="sched-sub">${escHtml(slot.teacher||'')} · ${escHtml(slot.duration||'')}</div></div>`;
+                list.appendChild(card);
+            });
+        });
+    } catch(e) {
+        // Fallback static schedule
+        list.innerHTML = '';
+        const days2 = [{day:'Monday',slots:[{time:'5:00 PM',topic:'Algebra',teacher:'Sir',duration:'90 min'},{time:'7:00 PM',topic:'Doubt Session',teacher:'Sir',duration:'30 min'}]},{day:'Wednesday',slots:[{time:'5:00 PM',topic:'Geometry',teacher:'Sir',duration:'90 min'}]},{day:'Friday',slots:[{time:'5:00 PM',topic:'Trigonometry',teacher:'Sir',duration:'90 min'}]},{day:'Saturday',slots:[{time:'10:00 AM',topic:'Mock Test',teacher:'',duration:'2 hrs'}]}];
+        days2.forEach(entry => {
+            const lbl = document.createElement('div'); lbl.className='sched-today'; lbl.textContent=entry.day; list.appendChild(lbl);
+            entry.slots.forEach(slot => {
+                const card = document.createElement('div'); card.className='sched-card';
+                card.innerHTML=`<div class="sched-time">${slot.time}</div><div class="sched-dot"></div><div><div class="sched-title">${slot.topic}</div><div class="sched-sub">${slot.teacher}${slot.teacher&&slot.duration?' · ':''}${slot.duration}</div></div>`;
+                list.appendChild(card);
+            });
+        });
+    }
+}
+
+// ── REACTIONS ────────────────────────────────────────────────────
+function toggleReaction(emoji) {
+    const float = document.getElementById('reaction-float');
+    const el = document.createElement('span');
+    el.className = 'reaction-emoji';
+    el.textContent = emoji;
+    el.style.left = (Math.random()*60-30)+'px';
+    float.appendChild(el);
+    setTimeout(() => el.remove(), 2100);
+    // Also broadcast to chat occasionally
+    if (emoji === '❓') {
+        db.collection('live_chats').doc(batchId).collection('messages').add({
+            text: '❓ ' + (currentUser?.name||'Student') + ' has a doubt',
+            email: currentUser?.email, name: currentUser?.name||'Student',
+            role: 'system', timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('❓ Doubt sent to teacher', 'gold');
+    }
+}
+
+// ── TABS ─────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-'+name).classList.add('active');
+    btn.classList.add('active');
+    // Clear dot
+    const dot = document.getElementById(name+'-dot');
+    if (dot) dot.classList.remove('show');
+    // Show/hide chat footer
+    document.getElementById('chat-footer-area').style.display = name==='chat'?'block':'none';
+    // Scroll chat
+    if (name==='chat') { const b=document.getElementById('chat-messages'); b.scrollTop=b.scrollHeight; }
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+function showToast(msg, type) {
+    const wrap = document.getElementById('toast-wrap');
+    const t = document.createElement('div');
+    t.className = 'toast' + (type?' '+type:'');
+    t.textContent = msg;
+    wrap.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
+}
+
+// ── UTILS ────────────────────────────────────────────────────────
+function escHtml(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function formatDate(ts) {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-IN',{day:'numeric',month:'short'}) + ' ' + d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+
+init();
+</script>
+
+<!-- Fix chat footer visibility toggle -->
+<script>
+document.querySelector('.chat-footer').id = 'chat-footer-area';
+// Override switchTab to handle footer properly
+const _origSwitch = switchTab;
+</script>
 </body>
 </html>

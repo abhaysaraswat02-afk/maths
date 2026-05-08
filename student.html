@@ -493,6 +493,9 @@
                 tab: 'videos',
                 videoSearchQuery: '',
                 resourceSearchQuery: '',
+                myCourses: [],
+                selectedCourseId: null,
+                currentCurriculum: [],
                 selectedClass: 'All',
                 studentName: 'Student Name',
                 studentEmail: '',
@@ -620,6 +623,10 @@
                         }
 
                         try {
+                            // Fetch Enrolled Courses
+                            const courseRes = await fetch('/api/get-my-courses');
+                            this.myCourses = await courseRes.json();
+
                             // Fetch Auto-sync Videos from YouTube
                             this.fetchYouTubeVideos();
 
@@ -653,6 +660,18 @@
                             console.error("Error fetching collections:", e);
                         }
                     },
+
+                async loadCourseContent(batchId) {
+                    this.selectedCourseId = batchId;
+                    try {
+                        const res = await fetch(`/api/get-curriculum?batchId=${batchId}`);
+                        const data = await res.json();
+                        this.currentCurriculum = data.modules || [];
+                    } catch (e) {
+                        console.error('Failed to load course curriculum');
+                        this.currentCurriculum = [];
+                    }
+                },
 
                 async fetchYouTubeVideos() {
                     if (!this.youtubeApiKey || this.youtubeApiKey.includes('YOUR_API')) {

@@ -49,11 +49,6 @@
                     </h2>
                 </div>
                 <nav class="mt-6">
-                    <!-- FEATURE: Access to Live Teaching Studio -->
-                    <a href="live-teach.html" class="w-full flex items-center px-6 py-4 transition-all hover:bg-slate-800 text-red-500 font-bold border-l-4 border-red-600 bg-red-600/5 mb-4 group">
-                        <i class="fas fa-broadcast-tower w-6 group-hover:animate-pulse"></i> 
-                        <span class="ml-1">Go Live Studio</span>
-                    </a>
                     <button @click="activeTab = 'admissions'" :class="activeTab === 'admissions' ? 'bg-blue-600' : 'hover:bg-slate-800'" class="w-full flex items-center px-6 py-4 transition-colors">
                         <i class="fas fa-user-graduate w-6"></i> Admissions
                     </button>
@@ -90,9 +85,6 @@
                         <h1 class="text-2xl font-bold text-gray-800" x-text="tabTitle()"></h1>
                     </div>
                     <div class="flex items-center gap-3">
-                        <a href="live-teach.html" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md font-bold">
-                            <i class="fas fa-broadcast-tower mr-2"></i> Open Live Studio
-                        </a>
                         <button @click="exportData" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-all shadow-md">
                             <i class="fas fa-download mr-2"></i> Export Data
                         </button>

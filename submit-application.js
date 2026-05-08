@@ -783,6 +783,96 @@ app.post('/api/delete-batch', async (req, res) => {
   }
 });
 
+// --- LMS Curriculum & Progress APIs ---
+
+app.get('/api/get-curriculum', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const { batchId } = req.query;
+  if (!batchId) return res.status(400).json({ error: 'Batch ID required' });
+
+  try {
+    const doc = await db.collection('curriculum').doc(batchId).get();
+    res.status(200).json(doc.exists ? doc.data() : { modules: [] });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/save-curriculum', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const { batchId, modules, staffEmail } = req.body;
+
+  if (!(await isAuthorizedStaff(staffEmail))) {
+    return res.status(403).json({ error: 'Unauthorized' });
+  }
+
+  try {
+    await db.collection('curriculum').doc(batchId).set({
+      batchId,
+      modules,
+      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
+    });
+    res.status(200).json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.get('/api/get-progress', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const sessionCookie = cookies[COOKIE_NAME];
+  if (!sessionCookie) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    const email = decoded.email.toLowerCase();
+    const { batchId } = req.query;
+
+    const snap = await db.collection('progress')
+      .where('email', '==', email)
+      .where('batchId', '==', batchId)
+      .get();
+
+    if (snap.empty) return res.json({ completedLessons: [] });
+    res.json(snap.docs[0].data());
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+app.post('/api/update-lesson-status', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const sessionCookie = cookies[COOKIE_NAME];
+  if (!sessionCookie) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    const email = decoded.email.toLowerCase();
+    const { batchId, lessonId, completed } = req.body;
+
+    const progressRef = db.collection('progress').doc(`${email}_${batchId}`);
+    
+    if (completed) {
+      await progressRef.set({
+        email,
+        batchId,
+        completedLessons: admin.firestore.FieldValue.arrayUnion(lessonId)
+      }, { merge: true });
+    } else {
+      await progressRef.set({
+        email,
+        batchId,
+        completedLessons: admin.firestore.FieldValue.arrayRemove(lessonId)
+      }, { merge: true });
+    }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- Staff Management APIs ---
 
 app.get('/api/get-staff', async (req, res) => {

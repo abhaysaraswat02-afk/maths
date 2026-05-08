@@ -33,6 +33,9 @@ function staffPortal() {
         newsForm: { title: '', content: '' },
         docForm: { name: '', url: '', classGrade: 'All' },
         staffForm: { name: '', email: '', role: 'Teacher' },
+        curriculumBatchId: '',
+        curriculumModules: [],
+        showCurriculumForm: false,
         admissionSearch: '',
         newsSearch: '',
         resourceSearch: '',
@@ -152,7 +155,8 @@ function staffPortal() {
                 'docs': 'Resource Library Management',
                 'scores': 'Manage Offline Test Scores',
                 'manage-staff': 'Manage Team & Access',
-                'batches': 'Manage Course Batches',
+                'batches': 'Course & Batch Control',
+                'curriculum': 'LMS Curriculum Designer',
                 'scholarship': 'Scholarship Test Management'
             };
             return titles[this.activeTab];
@@ -499,6 +503,59 @@ function staffPortal() {
             } finally {
                 this.loading = false;
             }
+        },
+
+        // --- LMS CURRICULUM LOGIC ---
+        async loadCurriculum(batchId) {
+            this.curriculumBatchId = batchId;
+            this.loading = true;
+            try {
+                const res = await fetch(`/api/get-curriculum?batchId=${batchId}`);
+                const data = await res.json();
+                this.curriculumModules = data.modules || [];
+                this.activeTab = 'curriculum';
+            } catch (err) {
+                alert('Failed to load curriculum');
+            } finally {
+                this.loading = false;
+            }
+        },
+
+        addModule() {
+            this.curriculumModules.push({
+                id: 'mod_' + Date.now(),
+                title: 'New Module',
+                lessons: []
+            });
+        },
+
+        addLesson(moduleId) {
+            const mod = this.curriculumModules.find(m => m.id === moduleId);
+            if (mod) {
+                mod.lessons.push({
+                    id: 'les_' + Date.now(),
+                    title: 'New Lesson',
+                    type: 'video',
+                    videoUrl: '',
+                    content: ''
+                });
+            }
+        },
+
+        async saveCurriculum() {
+            this.loading = true;
+            try {
+                const res = await fetch('/api/save-curriculum', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        batchId: this.curriculumBatchId,
+                        modules: this.curriculumModules,
+                        staffEmail: this.getStaffEmail()
+                    })
+                });
+                if (res.ok) alert('Curriculum saved successfully!');
+            } catch (err) { alert('Save failed'); } finally { this.loading = false; }
         },
 
         async addBatch() {

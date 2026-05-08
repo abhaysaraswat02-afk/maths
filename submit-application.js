@@ -737,7 +737,7 @@ app.get('/api/get-batches', async (req, res) => {
 
 app.post('/api/add-batch', async (req, res) => {
   if (!db) return res.status(500).json({ error: 'DB error' });
-  const { name, classLevel, price, originalPrice, teacher, schedule, subjects, totalSeats, staffEmail } = req.body;
+  const { name, classLevel, price, originalPrice, teacher, schedule, subjects, totalSeats, staffEmail, description, active } = req.body;
 
   if (!(await isAuthorizedStaff(staffEmail))) {
     return res.status(403).json({ error: 'Unauthorized staff access.' });
@@ -753,6 +753,8 @@ app.post('/api/add-batch', async (req, res) => {
       schedule: schedule,
       subjects: Array.isArray(subjects) ? subjects : subjects.split(',').map(s => s.trim()).filter(Boolean),
       totalSeats: Number(totalSeats || 100),
+      description: description || '',
+      active: active !== undefined ? active : true,
       enrolled: 0,
       status: 'upcoming',
       timestamp: admin.firestore.FieldValue.serverTimestamp()

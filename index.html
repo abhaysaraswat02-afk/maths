@@ -274,6 +274,55 @@
     </div>
 </section>
 
+<!-- ACTIVE BATCHES -->
+<section class="py-28 bg-white">
+    <div class="max-w-7xl mx-auto px-6">
+        <div class="text-center mb-16 rev">
+            <div class="slbl justify-center mb-4">Start Your Journey</div>
+            <h2 class="stitle">Available <span class="grad">Batches</span></h2>
+            <p class="text-slate-500 mt-4 max-w-xl mx-auto text-sm leading-relaxed">Choose the right batch for your class level and join thousands of students mastering mathematics.</p>
+        </div>
+        <template x-if="availableBatches.length > 0">
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <template x-for="batch in availableBatches" :key="batch.id">
+                    <div class="fcard rev hover:shadow-xl transition-all border-2 border-transparent hover:border-blue-500">
+                        <div class="flex items-start justify-between mb-4">
+                            <div>
+                                <div class="text-xs font-bold text-blue-600 uppercase tracking-widest mb-1" x-text="'Class '+batch.classLevel"></div>
+                                <h3 class="font-bold text-lg" x-text="batch.name"></h3>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-2xl font-bold text-blue-600" x-text="'₹'+batch.price"></div>
+                                <template x-if="batch.originalPrice && batch.originalPrice > batch.price">
+                                    <div class="text-sm line-through text-slate-400" x-text="'₹'+batch.originalPrice"></div>
+                                </template>
+                            </div>
+                        </div>
+                        <p class="text-slate-500 text-sm leading-relaxed mb-4" x-text="batch.description||(batch.name+' batch with comprehensive coverage')"></p>
+                        <template x-if="batch.schedule">
+                            <div class="text-xs text-slate-600 mb-6 flex items-center gap-2">
+                                <i class="fas fa-calendar"></i>
+                                <span x-text="batch.schedule"></span>
+                            </div>
+                        </template>
+                        <button @click="purchaseBatch(batch)" class="w-full ctap justify-center">
+                            <i class="fas fa-shopping-cart"></i>
+                            <span>Enroll Now</span>
+                        </button>
+                    </div>
+                </template>
+            </div>
+        </template>
+        <template x-if="availableBatches.length === 0">
+            <div class="text-center py-16 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200">
+                <div class="text-5xl mb-4">📋</div>
+                <h3 class="font-bold text-lg text-slate-900 mb-2">New Batches Coming Soon</h3>
+                <p class="text-slate-500 text-sm max-w-md mx-auto">We're preparing exciting batches for the upcoming academic year. Register now to get notified when they open!</p>
+            </div>
+        </template>
+    </div>
+</section>
+
 <!-- HOW IT WORKS -->
 <section style="background:var(--ink)" class="py-28">
     <div class="max-w-7xl mx-auto px-6">
@@ -576,7 +625,7 @@
     function app(){return{
         mobileMenu:false,scrolled:false,academicYear:'',typeText:'',
         typeWords:['Modern Math','Logic Skills','Board Exams','Your Future'],
-        animatedStats:{students:0},starAchievers:[],staffList:[],
+        animatedStats:{students:0},starAchievers:[],staffList:[],availableBatches:[],
         isLoggedIn:false,isStaffLoggedIn:false,applicationStep:'form',
         isLoginMode:false,isSubmitting:false,isExistingUser:false,
         enteredOtp:'',verificationToken:'',resendDisabled:false,resendTimer:30,
@@ -586,7 +635,7 @@
         async init(){
             const y=new Date().getFullYear();
             this.academicYear=`${y}–${String(y+1).slice(-2)}`;
-            this.startTypewriter();this.animateStats();this.setupScroll();this.revealCheck();this.fetchData();
+            this.startTypewriter();this.animateStats();this.setupScroll();this.revealCheck();this.fetchData();this.fetchBatches();
             if(window.auth?.signInAnonymously)window.auth.signInAnonymously().catch(()=>{});
             try{const r=await fetch('/api/check-auth');const d=await r.json();if(r.ok&&d.authenticated){this.isLoggedIn=d.role==='student';this.isStaffLoggedIn=d.role==='staff';}}catch(e){}
         },
@@ -594,6 +643,15 @@
         fetchData(){
             window.db.collection('achievers').orderBy('timestamp','desc').get().then(s=>{this.starAchievers=s.docs.map(d=>({...d.data(),id:d.id}));}).catch(()=>{});
             fetch('/api/get-staff').then(r=>r.json()).then(d=>{this.staffList=d;}).catch(()=>{});
+        },
+
+        fetchBatches(){
+            window.db.collection('batches').get().then(s=>{this.availableBatches=s.docs.map(d=>({...d.data(),id:d.id})).filter(b=>b.active!==false);}).catch(()=>{});
+        },
+
+        purchaseBatch(batch){
+            if(!this.isLoggedIn){this.showAlert('Login Required','Please log in first to purchase a batch.');return;}
+            window.location.href='/purchase?batchId='+batch.id;
         },
 
         startTypewriter(){

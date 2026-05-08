@@ -29,7 +29,7 @@ function staffPortal() {
         newsList: [],
         recentScores: [],
         staffList: [],
-        batchForm: { name: '', classLevel: '10', price: 0, originalPrice: 0, teacher: 'Sir (MathAntics)', schedule: '', startDate: '', duration: '', subjects: '', totalSeats: 100 },
+        batchForm: { name: '', classLevel: '10', price: 0, originalPrice: 0, teacher: 'Sir (MathAntics)', schedule: '', startDate: '', duration: '', subjects: '', totalSeats: 100, description: '', active: true },
         newsForm: { title: '', content: '' },
         docForm: { name: '', url: '', classGrade: 'All' },
         staffForm: { name: '', email: '', role: 'Teacher' },
@@ -519,7 +519,7 @@ function staffPortal() {
                     throw new Error(errData.error || 'Failed to create batch');
                 }
 
-                this.batchForm = { name: '', classLevel: '10', price: 0, originalPrice: 0, teacher: 'Sir (MathAntics)', schedule: '', startDate: '', duration: '', subjects: '', totalSeats: 100 };
+                this.batchForm = { name: '', classLevel: '10', price: 0, originalPrice: 0, teacher: 'Sir (MathAntics)', schedule: '', startDate: '', duration: '', subjects: '', totalSeats: 100, description: '', active: true };
                 alert('Batch created successfully!');
                 this.loadData();
             } catch (err) {

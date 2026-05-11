@@ -1,10 +1,14 @@
 {
   "version": 2,
   "builds": [
-    { "src": "submit-application.js", "use": "@vercel/node" },
-    { "src": "*.{html,css,js,jpg,png,svg,ico}", "use": "@vercel/static" }
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
   ],
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/submit-application.js" }
-  ]
+  "functions": {
+    "src/pages/api/socket.js": {
+      "maxDuration": 30
+    }
+  }
 }

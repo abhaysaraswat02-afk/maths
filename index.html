@@ -635,9 +635,19 @@
         async init(){
             const y=new Date().getFullYear();
             this.academicYear=`${y}–${String(y+1).slice(-2)}`;
-            this.startTypewriter();this.animateStats();this.setupScroll();this.revealCheck();this.fetchData();this.fetchBatches();
+            this.startTypewriter();
+            this.animateStats();
+            this.setupScroll();
+            this.revealCheck();
+            this.fetchData();
+            this.fetchBatches();
             if(window.auth?.signInAnonymously)window.auth.signInAnonymously().catch(()=>{});
-            try{const r=await fetch('/api/check-auth');const d=await r.json();if(r.ok&&d.authenticated){this.isLoggedIn=d.role==='student';this.isStaffLoggedIn=d.role==='staff';}}catch(e){}
+            try{
+                const r=await fetch('/api/check-auth');
+                const d=await r.json();
+                console.log('Auth check response:', d); // Debugging line
+                if(r.ok&&d.authenticated){this.isLoggedIn=d.role==='student';this.isStaffLoggedIn=d.role==='staff';console.log('isLoggedIn set to:', this.isLoggedIn, 'isStaffLoggedIn set to:', this.isStaffLoggedIn);}
+            }catch(e){console.error('Error during auth check:', e);}
         },
 
         fetchData(){
@@ -659,8 +669,12 @@
         },
 
         purchaseBatch(batch){
-            if(!this.isLoggedIn){this.showAlert('Login Required','Please log in first to purchase a batch.');return;}
-            window.location.href='/purchase?batchId='+batch.id;
+            if (this.isStaffLoggedIn) {
+                this.showAlert('Access Denied', 'Staff members cannot purchase batches. Please log in as a student or use a student account.');
+                return;
+            }
+            if (!this.isLoggedIn) {this.showAlert('Login Required','Please log in first to purchase a batch.');return;}
+            window.location.href='purchase.html?batchId='+batch.id;
         },
 
         startTypewriter(){

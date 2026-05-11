@@ -1,195 +1,207 @@
-# Era of MathAntics - Master Mathematics
+# Era of MathAntics — Full LMS
 
-A modern, professional math learning platform built with Alpine.js, featuring interactive lessons, smooth animations, and Firebase database integration.
+A complete Learning Management System built with Next.js 14, Firebase Firestore, Cloudinary, Socket.io, and WebRTC live classes.
 
-## 🚀 Features
+## Tech Stack
 
-### ✨ Modern Design
-- **Responsive Design**: Optimized for all devices (mobile, tablet, desktop)
-- **Modern UI/UX**: Clean, professional design with smooth animations
-- **Accessibility**: WCAG compliant with proper ARIA labels and keyboard navigation
-- **Performance**: Optimized loading with lazy loading and efficient code
-
-### 🎯 Core Functionality
-- **Interactive Courses**: Arithmetic, Algebra, and Geometry courses with Firebase backend
-- **Expert Instructors**: Profile system for math educators
-- **Learning Resources**: Worksheets, practice problems, and study materials
-- **Student Portal**: Track progress and access personalized content
-- **Real-time Updates**: Live course updates and new resource notifications
-
-### 🛠️ Technology Stack
-- **Frontend**: HTML5, CSS3, JavaScript (ES6+)
-- **Framework**: Tailwind CSS for styling
-- **Interactivity**: Alpine.js for reactive components
-- **Animations**: GSAP for smooth animations
-- **Backend**: Firebase Firestore for database
-- **Icons**: Font Awesome icons
-- **Fonts**: Google Fonts (Inter)
-
-## 📁 File Structure
-
-```
-era-of-mathantics/
-├── index.html             # Main math learning platform
-├── staff.html             # Instructor/admin portal
-├── student.html           # Student learning portal
-├── style.css              # Custom styles and utilities
-├── script.js              # Enhanced JavaScript functionality
-└── README.md              # This file
-```
-
-## 🎨 Design Improvements
-
-### Visual Enhancements
-- **Gradient Backgrounds**: Beautiful gradient overlays and text effects
-- **Glass Morphism**: Modern glass-like elements with backdrop blur
-- **Floating Animations**: Subtle animations for visual appeal
-- **Hover Effects**: Interactive elements with smooth transitions
-- **Color Scheme**: Professional blue and red color palette
-
-### User Experience
-- **Loading States**: Smooth loading animations and skeleton screens
-- **Form Validation**: Real-time validation with helpful error messages
-- **Mobile-First**: Responsive design that works perfectly on all devices
-- **Smooth Scrolling**: Enhanced navigation with smooth scroll behavior
-- **Accessibility**: Screen reader support and keyboard navigation
-
-### Performance Optimizations
-- **Lazy Loading**: Images and content load as needed
-- **Code Splitting**: Modular JavaScript for better performance
-- **Optimized Assets**: Compressed and optimized resources
-- **Caching**: Efficient caching strategies for better load times
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Modern web browser (Chrome, Firefox, Safari, Edge)
-- Internet connection for Firebase services
-- Local web server (optional, for testing)
-
-### Installation
-
-1. **Clone or Download** the project files
-2. **Open** `index (1).html` in your web browser
-3. **Navigate** through the different sections
-
-### For Development
-
-1. **Set up a local server** (recommended):
-   ```bash
-   # Using Python (if available)
-   python -m http.server 8000
-
-   # Using Node.js
-   npx serve .
-
-   # Using PHP
-   php -S localhost:8000
-   ```
-
-2. **Open** `http://localhost:8000/index (1).html` in your browser
-
-## 📱 Usage Guide
-
-### For Students
-1. **Visit Homepage**: Browse college information and programs
-2. **Apply Online**: Fill out the admission form
-3. **Access Student Portal**: Track fees and view notices
-4. **Download Resources**: Access study materials and documents
-
-### For Staff
-1. **Access Staff Portal**: Use password "Admin@2026"
-2. **Manage Admissions**: Review and approve applications
-3. **Handle Payments**: Verify fee payments
-4. **Post Updates**: Add news and upload documents
-
-## 🔧 Configuration
-
-### Firebase Setup
-The website uses Firebase for backend services. Configuration is already included in the code.
-
-### Customization
-- **Colors**: Modify CSS custom properties in `style (1).css`
-- **Content**: Update text and information in HTML files
-- **Styling**: Adjust Tailwind classes for different appearances
-- **Functionality**: Modify JavaScript in `script (1).js`
-
-## 📊 Key Sections
-
-### Homepage (`index.html`)
-- Hero section with college introduction
-- Academic programs showcase
-- Faculty information
-- News and announcements
-- Contact information and map
-- Online admission form
-
-### Staff Portal (`staff.html`)
-- Secure login system
-- Student admissions management
-- Fee payment verification
-- News posting interface
-- Document upload system
-- Data export functionality
-
-### Student Portal (`student.html`)
-- Student login via phone number
-- Fee payment tracking
-- Payment submission system
-- College notice board
-- WhatsApp integration for receipts
-
-## 🎯 Browser Support
-
-- **Chrome**: 90+
-- **Firefox**: 88+
-- **Safari**: 14+
-- **Edge**: 90+
-- **Mobile Browsers**: iOS Safari 14+, Chrome Mobile 90+
-
-## 🔒 Security Features
-
-- **Input Validation**: Client-side and server-side validation
-- **Secure Authentication**: Password-protected staff access
-- **Data Sanitization**: Clean data handling
-- **HTTPS Ready**: Prepared for secure connections
-
-## 🚀 Performance Metrics
-
-- **First Contentful Paint**: < 1.5s
-- **Largest Contentful Paint**: < 2.5s
-- **Cumulative Layout Shift**: < 0.1
-- **Total Bundle Size**: < 500KB
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is proprietary to Pt. Parsadi Lal Memorial College.
-
-## 📞 Support
-
-For technical support or questions:
-- **Email**: info@pplmcollege.edu.in
-- **Phone**: +91 9719000489
-- **Address**: Moiuddinpur, Uttar Pradesh 281205, India
-
-## 🔄 Recent Updates
-
-### Version 2.0 (2024)
-- Complete redesign with modern UI/UX
-- Enhanced mobile responsiveness
-- Improved accessibility features
-- Better performance optimizations
-- Additional interactive features
-- Firebase integration improvements
+| Layer | Technology |
+|-------|-----------|
+| Framework | Next.js 14 (Pages Router) |
+| Database | Firebase Firestore (Admin SDK) |
+| Auth | OTP via Gmail + JWT cookies |
+| File Storage | Cloudinary |
+| Real-time | Socket.io |
+| Live Video | WebRTC (peer-to-peer, no Zoom/Meet) |
+| Styling | Custom CSS + Google Fonts (Syne + DM Sans) |
 
 ---
 
-**Built with ❤️ for Pt. Parsadi Lal Memorial College**
+## Features
+
+### Students
+- OTP email login (passwordless)
+- Dashboard with enrolled batches, live alerts, pending enrollments
+- Explore & enroll in batches (free = instant, paid = UPI + approval flow)
+- Study materials viewer (PDF, video, image, links)
+- Real-time batch chat (Socket.io)
+- Join live WebRTC video classes
+
+### Staff / Admin
+- Dashboard with stats (batches, students, pending approvals, live count)
+- Create batches with thumbnail upload, price, schedule
+- Manage study materials per batch (upload or paste links)
+- Review & approve/reject enrollment requests
+- View all students and their enrollments
+- Start/stop live classes (WebRTC broadcaster)
+- Live class chat with students
+
+---
+
+## Setup
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/abhaysaraswat02-afk/maths
+cd maths
+npm install
+```
+
+### 2. Environment Variables
+```bash
+cp .env.local.example .env.local
+```
+Fill in all values (see below).
+
+### 3. Firebase
+1. Go to [console.firebase.google.com](https://console.firebase.google.com)
+2. Create a project → Enable **Firestore Database** (production mode)
+3. Project Settings → Service Accounts → **Generate new private key**
+4. Copy `project_id`, `client_email`, `private_key` into `.env.local`
+5. Apply Firestore rules from `firestore.rules`
+
+### 4. Gmail App Password
+1. Enable 2FA on your Google account
+2. Google Account → Security → **App Passwords**
+3. Create one for "Mail" → copy into `GMAIL_APP_PASSWORD`
+
+### 5. Cloudinary
+1. Sign up at [cloudinary.com](https://cloudinary.com) (free tier is enough)
+2. Copy Cloud Name, API Key, API Secret from Dashboard
+
+### 6. Set Super Admin
+Edit `src/lib/auth.js` → `SUPER_ADMINS` array:
+```js
+export const SUPER_ADMINS = ['youremail@gmail.com'];
+```
+Anyone in this list gets the `admin` role on login.
+
+### 7. Run
+```bash
+npm run dev    # Development → http://localhost:3000
+npm run build  # Production build
+npm start      # Production server
+```
+
+---
+
+## File Structure
+
+```
+src/
+├── pages/
+│   ├── index.js                  # Redirects to /login
+│   ├── login.js                  # OTP login page
+│   ├── _app.js
+│   ├── api/
+│   │   ├── auth/
+│   │   │   ├── send-otp.js       # Send OTP email
+│   │   │   ├── verify-otp.js     # Verify OTP → set JWT cookie
+│   │   │   ├── logout.js
+│   │   │   └── me.js             # Get current session
+│   │   ├── batches/
+│   │   │   ├── index.js          # GET all / POST create
+│   │   │   └── [id].js           # GET / PUT / DELETE single batch
+│   │   ├── enrollments/
+│   │   │   └── index.js          # GET / POST enroll / PUT approve
+│   │   ├── materials/
+│   │   │   └── index.js          # GET / POST upload / DELETE
+│   │   ├── chat/
+│   │   │   └── index.js          # GET messages / POST message
+│   │   ├── live/
+│   │   │   └── toggle.js         # Start / stop live class
+│   │   └── socket.js             # Socket.io server (WebRTC signaling + chat)
+│   ├── student/
+│   │   ├── dashboard.js
+│   │   ├── batches.js
+│   │   ├── explore.js
+│   │   └── batch/[id].js         # Materials + chat per batch
+│   ├── staff/
+│   │   ├── dashboard.js
+│   │   ├── batches.js
+│   │   ├── enrollments.js
+│   │   ├── students.js
+│   │   └── batch/[id].js         # Manage materials + chat
+│   └── live/
+│       ├── teacher.js            # WebRTC broadcaster
+│       └── student.js            # WebRTC viewer
+├── components/
+│   └── ui/
+│       └── Sidebar.js
+├── lib/
+│   ├── firebase.js               # Firebase Admin SDK
+│   ├── auth.js                   # JWT + session helpers
+│   ├── otp.js                    # In-memory OTP store
+│   ├── mailer.js                 # Nodemailer (Gmail)
+│   ├── cloudinary.js             # Cloudinary upload helper
+│   └── hooks.js                  # useAuth, useToast
+└── styles/
+    └── globals.css
+```
+
+---
+
+## Firestore Collections
+
+| Collection | Fields |
+|-----------|--------|
+| `students` | email, role, createdAt |
+| `staff` | email, role, createdAt |
+| `batches` | name, description, price, schedule, subject, thumbnail, createdBy, createdAt, isLive |
+| `enrollments` | studentEmail, batchId, upiRef, status (pending/approved/rejected), enrolledAt |
+| `materials` | batchId, title, description, url, type, createdBy, createdAt |
+| `messages` | batchId, text, sender, role, createdAt |
+
+---
+
+## Deployment
+
+### Vercel (Recommended)
+```bash
+npm i -g vercel
+vercel
+```
+Add all `.env.local` variables in Vercel → Settings → Environment Variables.
+
+> ⚠️ **Socket.io / WebRTC Note:** Vercel serverless functions have a 30s timeout. For production live classes with many concurrent students, deploy to **Railway** or **Render** which support persistent Node.js servers and WebSockets properly.
+
+### Railway (for full WebSocket support)
+1. Push to GitHub
+2. Create project at [railway.app](https://railway.app) → Deploy from GitHub
+3. Add environment variables
+4. Set start command: `npm start`
+
+---
+
+## Live Class Flow
+
+```
+Teacher clicks "Go Live"
+  → API sets batch.isLive = true
+  → Redirected to /live/teacher
+  → Grabs camera/mic via getUserMedia
+  → Connects to Socket.io room
+
+Student joins /live/student?batchId=xxx
+  → Sends WebRTC offer via Socket.io
+  → Teacher receives offer → sends answer
+  → ICE candidates exchanged
+  → Peer-to-peer video established
+```
+
+---
+
+## Auth Flow
+
+```
+User enters email → /api/auth/send-otp
+  → Generates 6-digit OTP
+  → Saves to memory store (10 min TTL)
+  → Sends email via Gmail
+
+User enters OTP → /api/auth/verify-otp
+  → Validates OTP
+  → Signs JWT (7d expiry)
+  → Sets httpOnly cookie
+
+All API routes → read cookie → verify JWT → get session
+```

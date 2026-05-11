@@ -1,0 +1,147 @@
+out<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | Era of MathAntics</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <style>
+        body { font-family: 'DM Sans', sans-serif; background: #faf8f4; color: #0a0a0f; }
+        h1, h2 { font-family: 'Syne', sans-serif; }
+    </style>
+</head>
+<body x-data="checkout()" x-init="init()">
+    <div class="max-w-3xl mx-auto px-6 py-20">
+        <div class="mb-10 flex items-center gap-4">
+            <a href="index.html" class="text-sm font-bold text-slate-400 hover:text-ink">← Back to Batches</a>
+        </div>
+
+        <template x-if="loading">
+            <div class="text-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent mx-auto mb-4"></div>
+                <p class="text-slate-500 font-bold">Securing your session...</p>
+            </div>
+        </template>
+
+        <template x-if="!loading && batch">
+            <div class="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-slate-100">
+                <div class="flex flex-col md:flex-row justify-between gap-8">
+                    <div class="flex-1">
+                        <span class="bg-blue-50 text-blue-600 text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-full mb-4 inline-block" x-text="'Class ' + batch.classLevel"></span>
+                        <h1 class="text-3xl font-extrabold mb-4" x-text="batch.name"></h1>
+                        <p class="text-slate-500 mb-8 leading-relaxed" x-text="batch.description || 'Complete syllabus coverage with live classes, notes, and expert mentorship.'"></p>
+                        
+                        <div class="space-y-4 mb-8">
+                            <div class="flex items-center gap-3 text-sm font-medium">
+                                <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-blue-600"><i class="fas fa-calendar"></i></div>
+                                <span x-text="batch.schedule"></span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm font-medium">
+                                <div class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-blue-600"><i class="fas fa-book"></i></div>
+                                <span x-text="batch.subjects.join(', ')"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="w-full md:w-72 bg-slate-50 rounded-2xl p-6 h-fit border border-slate-100">
+                        <h2 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-6">Order Summary</h2>
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-slate-600">Course Fee</span>
+                            <span class="text-sm font-bold" x-text="'₹' + batch.originalPrice"></span>
+                        </div>
+                        <div class="flex justify-between mb-6 text-green-600">
+                            <span class="text-sm">Discount</span>
+                            <span class="text-sm font-bold" x-text="'-₹' + (batch.originalPrice - batch.price)"></span>
+                        </div>
+                        <div class="border-t border-slate-200 pt-4 mb-8 flex justify-between items-end">
+                            <span class="font-bold">Total Amount</span>
+                            <span class="text-2xl font-black text-blue-600" x-text="'₹' + batch.price"></span>
+                        </div>
+
+                        <button @click="payNow()" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:bg-blue-600 transition-all shadow-lg">
+                            Complete Enrollment
+                        </button>
+                        <p class="text-[10px] text-center text-slate-400 mt-4">Secure payment via Razorpay</p>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </div>
+
+    <script>
+        function checkout() {
+            return {
+                loading: true,
+                batch: null,
+                batchId: new URLSearchParams(window.location.search).get('batchId'),
+                user: null,
+
+                async init() {
+                    const authRes = await fetch('/api/check-auth');
+                    const authData = await authRes.json();
+                    if (!authData.authenticated) {
+                        window.location.href = 'index.html#apply';
+                        return;
+                    }
+                    this.user = authData;
+
+                    // Fetch batch details
+                    const res = await fetch('/api/get-batches');
+                    const batches = await res.json();
+                    this.batch = batches.find(b => b.id === this.batchId);
+                    
+                    if (!this.batch) {
+                        alert('Batch not found');
+                        window.location.href = 'index.html';
+                    }
+                    this.loading = false;
+                },
+
+                payNow() {
+                    const options = {
+                        key: 'rzp_test_YOUR_KEY', // Replace with your actual Razorpay Key
+                        amount: this.batch.price * 100,
+                        currency: 'INR',
+                        name: 'Era of MathAntics',
+                        description: this.batch.name,
+                        handler: async (response) => {
+                            this.loading = true;
+                            try {
+                                const verifyRes = await fetch('/api/verify-payment', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        batchId: this.batchId
+                                    })
+                                });
+                                if (verifyRes.ok) {
+                                    alert('Welcome to the course! Enrollment successful.');
+                                    window.location.href = 'student.html';
+                                } else {
+                                    alert('Verification failed. Please contact support.');
+                                }
+                            } catch (e) {
+                                alert('Error verifying payment.');
+                            } finally {
+                                this.loading = false;
+                            }
+                        },
+                        prefill: {
+                            email: this.user.email,
+                            name: this.user.name || ''
+                        },
+                        theme: { color: '#1a56db' }
+                    };
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+                }
+            }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+</body>
+</html>

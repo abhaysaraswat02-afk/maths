@@ -873,6 +873,31 @@ app.post('/api/update-lesson-status', async (req, res) => {
   }
 });
 
+app.get('/api/get-my-courses', async (req, res) => {
+  if (!db) return res.status(500).json({ error: 'DB error' });
+  const cookies = req.headers.cookie ? require('cookie').parse(req.headers.cookie) : {};
+  const sessionCookie = cookies[COOKIE_NAME];
+  if (!sessionCookie) return res.status(401).json({ error: 'Unauthorized' });
+
+  try {
+    const decoded = jwt.verify(sessionCookie, JWT_SECRET, { algorithms: ['HS256'] });
+    const email = decoded.email.toLowerCase();
+
+    const enrollSnap = await db.collection('enrollments').where('email', '==', email).get();
+    if (enrollSnap.empty) return res.json([]);
+
+    const batchIds = enrollSnap.docs.map(doc => doc.data().batchId);
+    const batches = [];
+    for (const id of batchIds) {
+        const bDoc = await db.collection('batches').doc(id).get();
+        if (bDoc.exists) batches.push({ id: bDoc.id, ...bDoc.data() });
+    }
+    res.status(200).json(batches);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- Staff Management APIs ---
 
 app.get('/api/get-staff', async (req, res) => {
